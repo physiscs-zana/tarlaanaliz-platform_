@@ -1,0 +1,3 @@
+# PATH: config/rate_limits/base_limits.yaml
+# DESC: Rate limit (hız sınırı) profillerini tanımlamak.
+# TODO: Implement this file.

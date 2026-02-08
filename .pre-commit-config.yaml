@@ -1,0 +1,3 @@
+# PATH: .pre-commit-config.yaml
+# DESC: Commit öncesi otomatik kalite kontrolleri (format/lint).
+# TODO: Implement this file.

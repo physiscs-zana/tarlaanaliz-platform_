@@ -1,0 +1,3 @@
+# PATH: .github/workflows/frontend-ci.yml
+# DESC: pnpm/yarn build+lint+e2e (Playwright dahil).
+# TODO: Implement this file.

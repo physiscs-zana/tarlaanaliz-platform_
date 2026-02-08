@@ -1,0 +1,3 @@
+# PATH: CONTRACTS_SHA256.txt
+# DESC: Contracts paketinin içerik hash'i (supply-chain integrity).
+# TODO: Implement this file.
