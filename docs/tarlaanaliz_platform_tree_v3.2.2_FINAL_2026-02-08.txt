@@ -1,0 +1,675 @@
+# tarlaanaliz_platform_tree v3.2.2 FINAL — 2026-02-08
+# Baz: v3.2.1 (MASTER v3.2.0 + TKGM/Parsel Patch)
+
+tarlaanaliz-platform/ — v3.2.2 FINAL 
+├── .github/ — SDLC: Deploy/Verify — CI/CD
+│   └── workflows/
+│       ├── ci.yml — KR-041 SDLC kapıları kapsamında temel CI doğrulamalarını çalıştırmak.
+│       ├── contract_validation.yml
+│       ├── deploy-staging.yml — Staging deploy pipeline.
+│       ├── frontend-ci.yml — pnpm/yarn build+lint+e2e (Playwright dahil).
+│       └── security.yml — KR-040/KR-041 çizgisinde güvenlik taramalarını otomatikleştirmek.
+├── alembic/ — Subsystem: DB — Migrations
+│   ├── versions/ — Tarih sıralı migration dosyaları
+│   │   ├── 20260101_001_initial_users_roles.py — Kullanıcı ve rol tabloları
+│   │   ├── 20260101_002_initial_fields_crops.py — Tarla ve bitki tabloları
+│   │   ├── 20260101_003_initial_missions.py — Görev tabloları
+│   │   ├── 20260102_004_subscriptions.py — Abonelik tabloları
+│   │   ├── 20260102_005_pilots.py — Pilot ve kapasite tabloları
+│   │   ├── 20260102_006_experts.py — Uzman ve specialization tabloları
+│   │   ├── 20260103_007_analysis_jobs.py — Analiz işi ve kalibrasyon tabloları
+│   │   ├── 20260103_008_expert_reviews.py — Uzman inceleme tabloları
+│   │   ├── 20260104_009_weather_blocks.py — Hava engeli rapor tabloları
+│   │   ├── 20260104_010_audit_logs.py — Audit trail tablosu WORM
+│   │   ├── 20260104_011_weekly_schedules.py — Haftalık planlama tabloları
+│   │   ├── 20260105_012_indexes_performance.py — Performance optimization indexes
+│   │   ├── 20260105_013_full_text_search.py — Full-text search indexes optional
+│   │   ├── 20260129_kr033_payment_intents.py — KR-033 PaymentIntent tabloları.
+│   │   ├── 20260201_kr082_calibration_qc_records.py — KR-082 kalibrasyon ve QC kayıt tabloları.
+│   │   └── 20260204_add_weather_block_reports.py — WeatherBlockReport tabloları.
+│   ├── env.py — Alembic migration runtime'ını başlatmak ve metadata'yı bağlamak.
+│   └── script.py.mako — Yeni migration dosyası üretim şablonunu standardize etmek.
+├── config/ — Runtime config — Operate
+│   ├── rate_limits/
+│   │   ├── base_limits.yaml — Rate limit (hız sınırı) profillerini tanımlamak.
+│   │   └── seasonal_config.yaml — Sezonluk rate limit profilleri (Ekim-Aralık peak season).
+│   └── logging.yaml
+├── docs/ — SDLC: Design+Operate — canlı dokümantasyon
+│   ├── api/
+│   │   ├── authentication.md
+│   │   └── openapi.yaml
+│   ├── architecture/
+│   │   ├── adaptive_rate_limiting.md — Adaptive rate limiting stratejisi.
+│   │   ├── clean_architecture.md
+│   │   ├── event_driven_design.md
+│   │   ├── expert_portal_design.md — Expert portal mimari kararları.
+│   │   ├── subscription_scheduler_design.md — Subscription scheduler tasarımı.
+│   │   └── training_feedback_architecture.md — Training feedback loop mimarisi.
+│   ├── runbooks/ — Operasyon playbook'ları (runbook).
+│   │   ├── expert_onboarding_procedure.md
+│   │   ├── incident_response_payment_timeout.md
+│   │   ├── incident_response_sla_breach.md
+│   │   ├── payment_approval_procedure.md
+│   │   └── weather_block_verification_procedure.md
+│   ├── security/
+│   │   ├── ddos_mitigation_plan.md — DDoS mitigation planı.
+│   │   └── model_protection_strategy.md — YZ model koruma stratejisi.
+│   ├── views/
+│   │   ├── VIEW_3D_GROUPING.md
+│   │   ├── VIEW_CAPABILITIES.md
+│   │   └── VIEW_SDLC.md
+│   ├── KR-033_payment_flow.md — KR-033 ödeme akışı referansı.
+│   └── README.md
+├── scripts/ — Tooling: yardımcı işler
+│   ├── analyze_rate_limit_logs.py — Rate limit log analizi.
+│   ├── backup_database.sh
+│   ├── export_training_dataset.py — Training dataset export otomasyonu.
+│   ├── generate_openapi.py
+│   ├── seed_data.py
+│   └── seed_experts.py — Expert seed data otomasyonu.
+├── src/ — Subsystem: Backend — Build
+│   ├── application/ — Responsibility: UseCases — CQRS
+│   │   ├── commands/
+│   │   │   ├── __init__.py
+│   │   │   ├── approve_payment.py — Ödeme (KR-033) manuel onay use-case komutu.
+│   │   │   ├── assign_mission.py — Mission atama use-case komutu.
+│   │   │   ├── calculate_payroll.py — Pilot/uzman payroll hesaplama komutu.
+│   │   │   ├── create_field.py — Yeni tarla oluşturma use-case komutu.
+│   │   │   ├── create_subscription.py — Yeni abonelik oluşturma komutu (KR-022).
+│   │   │   ├── register_expert.py — Admin tarafından uzman hesabı oluşturma (curated onboarding) komutu.
+│   │   │   ├── report_weather_block.py — Pilotun "hava nedeniyle uçuş yapamadım" raporunu sisteme işlemek.
+│   │   │   ├── schedule_mission.py — Abonelik takviminde mission zamanlama komutu.
+│   │   │   ├── submit_expert_review.py — Uzmanın bir incelemeyi finalize edip göndermesi.
+│   │   │   ├── submit_training_feedback.py — Training feedback gönderme komutu (KR-019).
+│   │   │   ├── update_pilot_capacity.py — Pilot work_days / daily_capacity güncelleme komutu (KR-015).
+│   │   │   └── verify_weather_block.py — Admin/ops tarafından WeatherBlockReport doğrulama akışı.
+│   │   ├── dto/
+│   │   │   ├── __init__.py
+│   │   │   ├── analysis_result_dto.py
+│   │   │   ├── expert_dashboard_dto.py — Expert dashboard DTO.
+│   │   │   ├── expert_dto.py
+│   │   │   ├── expert_review_dto.py — Expert review DTO.
+│   │   │   ├── field_dto.py — Field DTO.
+│   │   │   ├── mission_dto.py — Mission DTO.
+│   │   │   ├── payment_intent_dto.py — PaymentIntent DTO (KR-033).
+│   │   │   ├── pilot_dto.py
+│   │   │   ├── subscription_dto.py — Subscription DTO.
+│   │   │   ├── training_export_dto.py — Training export DTO.
+│   │   │   ├── user_dto.py
+│   │   │   └── weather_block_dto.py — WeatherBlockReport DTO.
+│   │   ├── event_handlers/
+│   │   │   ├── analysis_completed_handler.py — Worker'dan gelen 'analysis completed' olayını işleyip sonuçları kalıcılaştırmak.
+│   │   │   ├── expert_review_completed_handler.py — Expert review tamamlanma olayı handler'ı.
+│   │   │   ├── mission_lifecycle_handler.py — Mission yaşam döngüsü olay handler'ı.
+│   │   │   └── subscription_created_handler.py — Subscription oluşturulma olayı handler'ı.
+│   │   ├── jobs/
+│   │   │   └── weekly_planning_job.py — Haftalık görev dağıtımını otomatik tetikleyen job.
+│   │   ├── payments/
+│   │   │   ├── dtos.py — Payment use-case DTO'ları (KR-033).
+│   │   │   └── service.py — Payment use-case orkestrasyon servisi (KR-033).
+│   │   ├── queries/
+│   │   │   ├── __init__.py
+│   │   │   ├── export_training_data.py — Training data export query'si.
+│   │   │   ├── get_active_price_plans.py
+│   │   │   ├── get_expert_queue_stats.py
+│   │   │   ├── get_expert_review_details.py — Expert review detay query'si.
+│   │   │   ├── get_field_details.py — Field detay query'si.
+│   │   │   ├── get_mission_timeline.py
+│   │   │   ├── get_pilot_available_slots.py
+│   │   │   ├── get_subscription_details.py — Subscription detay query'si.
+│   │   │   ├── list_pending_expert_reviews.py — Bekleyen expert review listesi.
+│   │   │   ├── list_pilot_missions.py — Pilot mission listesi.
+│   │   │   └── lookup_parcel_geometry.py — ParcelRef → Geometry lookup (TKGM/MEGSİS port'u üzerinden).
+│   │   ├── services/
+│   │   │   ├── __init__.py
+│   │   │   ├── audit_log_service.py — Audit olaylarını tek noktadan üretmek ve persistence'e append etmek.
+│   │   │   ├── calibration_gate_service.py — KR-018 'Tam Radyometrik Kalibrasyon' hard gate'i.
+│   │   │   ├── contract_validator_service.py — Contract-first (KR-081) JSON Schema doğrulaması.
+│   │   │   ├── expert_review_service.py — Expert review orkestrasyon servisi.
+│   │   │   ├── field_service.py — Field CRUD orkestrasyon servisi.
+│   │   │   ├── mission_lifecycle_manager.py — Mission yaşam döngüsü yönetimi.
+│   │   │   ├── mission_service.py — Mission orkestrasyon servisi.
+│   │   │   ├── planning_capacity.py — "dönüm → efor → kapasite" hesaplarını standardize etmek.
+│   │   │   ├── pricebook_service.py — PriceBook/PriceSnapshot yönetimi (KR-022).
+│   │   │   ├── qc_gate_service.py — QC gate değerlendirme (pass/warn/fail).
+│   │   │   ├── subscription_scheduler.py — Subscription sezonluk takvim üretimi ve mission zamanlama.
+│   │   │   ├── training_export_service.py — Training dataset export servisi.
+│   │   │   ├── training_feedback_service.py — Training feedback orkestrasyon servisi.
+│   │   │   ├── weather_block_service.py — Weather Block raporu alma/doğrulama ve yeniden planlama.
+│   │   │   └── weekly_window_scheduler.py — Haftalık görev penceresi hesaplama.
+│   │   ├── workers/
+│   │   │   └── replan_queue_worker.py — Replan kuyruğundaki Mission'lar için alternatif slot/pilot arama.
+│   │   └── __init__.py
+│   ├── core/ — Responsibility: Domain — iş kuralları
+│   │   ├── domain/
+│   │   │   ├── entities/ — Aggregate roots + entities
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── analysis_job.py — AnalysisJob; kalibrasyon gate (KR-018), QC gate, worker dispatch.
+│   │   │   │   ├── analysis_result.py — AnalysisResult; metadata + layer referansları.
+│   │   │   │   ├── audit_log_entry.py — Append-only (WORM) audit log kaydı.
+│   │   │   │   ├── calibration_record.py — CalibrationRecord; KR-018 radyometrik kalibrasyon kanıtı.
+│   │   │   │   ├── expert.py — Expert; curated onboarding, specialization, kota, bölge yetkisi (KR-019).
+│   │   │   │   ├── expert_review.py — ExpertReview; confidence eşiği aşılan analizlerin manuel incelemesi (KR-019).
+│   │   │   │   ├── feedback_record.py — FeedbackRecord; training feedback ve ground truth etiket kalitesi (KR-019).
+│   │   │   │   ├── field.py — Field; geometri (polygon) + parsel referansı + sezon bitkisi.
+│   │   │   │   ├── mission.py — Mission; ödeme doğrulama (KR-033), uçuş, veri yükleme, analiz dispatch.
+│   │   │   │   ├── payment_intent.py — PaymentIntent; dekont upload, manuel onay (KR-033), finansal integrity.
+│   │   │   │   ├── pilot.py — Pilot; kapasite (work_days, daily_capacity), bölge ataması, Drone.
+│   │   │   │   ├── price_snapshot.py — PriceSnapshot (immutable); ödeme/abonelik tutarlarının değişmemesi garantisi.
+│   │   │   │   ├── qc_report_record.py — QCReportRecord; kalibrasyon sonrası kalite kontrol raporu (KR-018).
+│   │   │   │   ├── subscription.py — Subscription; fiyat snapshot (KR-022), reschedule token (KR-015-5).
+│   │   │   │   ├── user.py — User; telefon + PIN kimlik doğrulama (email/TCKN/OTP yok).
+│   │   │   │   ├── user_pii.py — UserPII; KVKK uyumlu hassas veri (PII) izolasyonu.
+│   │   │   │   └── weather_block_report.py — WeatherBlockReport; hava nedeniyle uçuş iptal kanıt/akış modeli.
+│   │   │   ├── events/ — Domain event'ler
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── analysis_events.py — Analysis domain event'leri (KR-017, KR-018).
+│   │   │   │   ├── base.py — Domain event base class'ı; tüm event'ler için ortak yapı.
+│   │   │   │   ├── expert_events.py — Expert domain event'leri (ExpertRegistered, ExpertActivated, FeedbackProvided).
+│   │   │   │   ├── expert_review_events.py — Expert review domain event'leri (KR-019).
+│   │   │   │   ├── field_events.py — Field domain event'leri (FieldCreated, FieldUpdated, FieldCropUpdated, FieldDeleted).
+│   │   │   │   ├── mission_events.py — Mission domain event'leri (MissionAssigned, MissionStarted, DataUploaded, AnalysisRequested, MissionCompleted, MissionCancelled).
+│   │   │   │   ├── payment_events.py — Payment domain event'leri (PaymentIntentCreated, ReceiptUploaded, PaymentApproved, PaymentRejected).
+│   │   │   │   ├── subscription_events.py — Subscription domain event'leri (SubscriptionCreated, SubscriptionActivated, MissionScheduled, SubscriptionCompleted).
+│   │   │   │   └── training_feedback_events.py — Training feedback domain event'leri; feedback loop (KR-019).
+│   │   │   ├── services/ — Domain servisleri (saf iş kuralı; dış bağımlılık yok)
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── calibration_validator.py — Radyometrik kalibrasyon doğrulama (KR-018).
+│   │   │   │   ├── capacity_manager.py — Pilot kapasite hesaplama ve müsaitlik sorgusu (KR-015-1, KR-015-2).
+│   │   │   │   ├── confidence_evaluator.py — YZ confidence değerlendirme ve expert escalation kararı (KR-019).
+│   │   │   │   ├── coverage_calculator.py — Mission footprint ↔ field boundary kesişim hesabı (KR-016).
+│   │   │   │   ├── expert_assignment_service.py — Analiz sonucu → expert review matching (KR-019).
+│   │   │   │   ├── mission_planner.py — Mission planlama kuralları.
+│   │   │   │   ├── planning_engine.py — Mission takvimi optimizasyonu (KR-015).
+│   │   │   │   ├── pricebook_calculator.py — Fiyat hesaplama ve snapshot oluşturma (KR-022).
+│   │   │   │   ├── qc_evaluator.py — Kalite kontrol değerlendirme ve gate decision.
+│   │   │   │   ├── sla_monitor.py — SLA takip ve breach detection (KR-028).
+│   │   │   │   ├── subscription_planner.py — Sezonluk paket takvim hesaplama ve reschedule token (KR-015-5).
+│   │   │   │   └── weather_validator.py — Pilot hava raporu doğrulama (KR-015-5).
+│   │   │   ├── value_objects/ — Immutable VOs
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── ai_confidence.py — AIConfidence VO; güven skoru (0.0-1.0) ve eşik kuralları.
+│   │   │   │   ├── calibration_manifest.py — CalibrationManifest VO; radyometrik kalibrasyon kanıt paketi (KR-018).
+│   │   │   │   ├── confidence_score.py — ConfidenceScore VO; model confidence değeri (0.0-1.0).
+│   │   │   │   ├── crop_ops_profile.py — CropOpsProfile VO; bitki bazlı operasyonel parametreler.
+│   │   │   │   ├── crop_type.py — CropType VO; bitki tipi enum + CropOpsProfile entegrasyonu.
+│   │   │   │   ├── expert_specialization.py — ExpertSpecialization VO; uzman uzmanlık alanları (KR-019).
+│   │   │   │   ├── geometry.py — Geometry VO; polygon/point verileri Shapely ile sarmalama.
+│   │   │   │   ├── mission_status.py — MissionStatus VO; durum enum ve geçiş kuralları.
+│   │   │   │   ├── money.py — Money VO; para birimi + miktar; fiyat snapshot immutability (KR-022).
+│   │   │   │   ├── parcel_ref.py — ParcelRef VO; il/ilçe/mahalle-köy + ada/parsel hash tekilleştirme.
+│   │   │   │   ├── payment_status.py — PaymentStatus VO; ödeme durumu enum ve KR-033 gate.
+│   │   │   │   ├── price_snapshot.py — PriceSnapshot VO.
+│   │   │   │   ├── province.py — Province VO; Türkiye il listesi (81 il) ve KR-083 bölge yetkisi.
+│   │   │   │   ├── qc_flag.py — QCFlag VO; spesifik QC kontrol bayrakları (KR-018).
+│   │   │   │   ├── qc_report.py — QCReport VO; kalite kontrol raporu ve threshold kuralları.
+│   │   │   │   ├── qc_status.py — QCStatus VO; QC durum enum (KR-082).
+│   │   │   │   ├── recommended_action.py — RecommendedAction VO; QC sonrası aksiyon önerisi (KR-082).
+│   │   │   │   ├── role.py — Role VO; RBAC rolleri ve yetki kapsamları.
+│   │   │   │   ├── sla_metrics.py — SLAMetrics VO; mission SLA metrikleri.
+│   │   │   │   ├── sla_threshold.py — SLAThreshold VO; servis seviyesi eşikleri.
+│   │   │   │   ├── specialization.py — Specialization VO; uzman uzmanlık alanları enum (KR-019).
+│   │   │   │   ├── subscription_plan.py — SubscriptionPlan VO; abonelik plan detayları (immutable).
+│   │   │   │   ├── training_grade.py — TrainingGrade VO; training veri kalite derecesi.
+│   │   │   │   └── weather_block_status.py — WeatherBlockStatus VO; rapor durumu enum.
+│   │   │   └── __init__.py
+│   │   ├── ports/ — Interface'ler (Dependency Inversion — kategorize)
+│   │   │   ├── external/
+│   │   │   │   ├── ai_worker_feedback.py — AIWorkerFeedback portu: feedback loop dış bağımlılığı (KR-019).
+│   │   │   │   ├── parcel_geometry_provider.py — ParcelGeometryProvider portu: TKGM/MEGSİS parsel geometrisi.
+│   │   │   │   ├── payment_gateway.py — PaymentGateway portu: kartlı ödeme sağlayıcısı.
+│   │   │   │   ├── sms_gateway.py — SMSGateway portu: SMS gönderimi provider'dan bağımsız.
+│   │   │   │   └── storage_service.py — StorageService portu: dataset/manifest/report objelerinin saklanması.
+│   │   │   ├── messaging/
+│   │   │   │   └── event_bus.py — EventBus portu: event publish/subscribe mekanizması.
+│   │   │   └── repositories/
+│   │   │       ├── analysis_result_repository.py — AnalysisResult sorgulaması için repository portu.
+│   │   │       ├── audit_log_repository.py — AuditLogEntry yazma/okuma için repository portu.
+│   │   │       ├── calibration_record_repository.py — CalibrationRecord erişimi için repository portu.
+│   │   │       ├── expert_repository.py — ExpertRepository portu (KR-019).
+│   │   │       ├── expert_review_repository.py — ExpertReviewRepository portu (KR-019).
+│   │   │       ├── feedback_record_repository.py — FeedbackRecordRepository portu (KR-019).
+│   │   │       ├── field_repository.py — FieldRepository portu.
+│   │   │       ├── mission_repository.py — MissionRepository portu.
+│   │   │       ├── payment_intent_repository.py — PaymentIntentRepository portu.
+│   │   │       ├── pilot_repository.py — PilotRepository portu (KR-015).
+│   │   │       ├── price_snapshot_repository.py — PriceSnapshotRepository portu.
+│   │   │       ├── qc_report_repository.py — QCReportRepository portu.
+│   │   │       ├── subscription_repository.py — SubscriptionRepository portu (KR-015-5, KR-022).
+│   │   │       ├── user_repository.py — UserRepository portu.
+│   │   │       ├── weather_block_report_repository.py — WeatherBlockReportRepository portu.
+│   │   │       └── weather_block_repository.py — WeatherBlockRepository portu.
+│   │   └── __init__.py
+│   ├── infrastructure/ — Adapters
+│   │   ├── config/
+│   │   │   └── settings.py — Platform konfigürasyonunu ENV'den yüklemek.
+│   │   ├── contracts/
+│   │   │   ├── __init__.py
+│   │   │   └── schema_registry.py — Contract şemalarını (JSON Schema) versiyonlu yükleyen ve cache'leyen bileşen.
+│   │   ├── external/
+│   │   │   ├── __init__.py
+│   │   │   ├── payment_gateway_adapter.py — PaymentGateway portunun adapter implementasyonu.
+│   │   │   ├── sms_gateway_adapter.py — SMSGateway portunun adapter implementasyonu.
+│   │   │   ├── storage_adapter.py — StorageService portunun adapter implementasyonu.
+│   │   │   ├── tkgm_megsis_wfs_adapter.py — TKGM/MEGSİS WFS/WMS proxy üzerinden parsel geometrisi sorgulayan adapter (ParcelGeometryProvider impl).
+│   │   │   └── weather_api_adapter.py — Hava durumu API adapter'ı.
+│   │   ├── integrations/
+│   │   │   ├── cloudflare/
+│   │   │   │   └── ddos_protection.py — Cloudflare DDoS protection adapter.
+│   │   │   ├── payments/
+│   │   │   │   └── provider_gateway.py — PaymentGateway portunun seçilen sağlayıcı implementasyonu.
+│   │   │   ├── sms/
+│   │   │   │   ├── netgsm.py — NetGSM SMS adapter.
+│   │   │   │   └── twilio.py — Twilio SMS adapter.
+│   │   │   └── storage/
+│   │   │       └── s3_storage.py — StorageService portunun S3-uyumlu implementasyonu (AWS S3 / MinIO).
+│   │   ├── messaging/
+│   │   │   ├── rabbitmq/
+│   │   │   │   ├── ai_feedback_publisher.py — AI feedback publisher adapter.
+│   │   │   │   ├── consumer.py — RabbitMQ consumer adapter.
+│   │   │   │   ├── publisher.py — RabbitMQ publisher adapter.
+│   │   │   │   └── training_feedback_publisher.py — Training feedback publisher adapter.
+│   │   │   ├── websocket/
+│   │   │   │   └── notification_manager.py — WebSocket bildirim yöneticisi (uzman portalı).
+│   │   │   ├── __init__.py
+│   │   │   ├── event_publisher.py
+│   │   │   ├── rabbitmq_config.py
+│   │   │   └── rabbitmq_event_bus_impl.py — EventBus portunun RabbitMQ implementasyonu.
+│   │   ├── monitoring/
+│   │   │   ├── __init__.py
+│   │   │   ├── health_checks.py
+│   │   │   ├── prometheus_metrics.py — Prometheus metrics adapter.
+│   │   │   └── security_events.py — Security event logging adapter.
+│   │   ├── persistence/
+│   │   │   ├── models/
+│   │   │   │   ├── crop_ops_profile_model.py — CropOpsProfile DB modeli.
+│   │   │   │   ├── payment_intent_model.py — PaymentIntent DB modeli (KR-033).
+│   │   │   │   └── weather_block_report_model.py — WeatherBlockReport DB modeli.
+│   │   │   ├── redis/
+│   │   │   │   ├── cache.py — Redis cache adapter.
+│   │   │   │   └── rate_limiter.py — Redis rate limiter adapter.
+│   │   │   ├── sqlalchemy/
+│   │   │   │   ├── migrations/
+│   │   │   │   │   └── versions/
+│   │   │   │   │       ├── 2026_01_26_add_expert_portal_tables.py — Expert portal tabloları.
+│   │   │   │   │       ├── 2026_01_27_add_v2_6_0_tables.py — v2.6.0 yeni tablo eklentileri.
+│   │   │   │   │       └── 2026_02_02_add_pricebook_tables.py — KR-022 PriceBook tabloları.
+│   │   │   │   ├── models/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   ├── analysis_job_model.py
+│   │   │   │   │   ├── analysis_result_model.py — analysis_results ORM modeli.
+│   │   │   │   │   ├── audit_log_model.py — audit_logs ORM modeli (append-only).
+│   │   │   │   │   ├── expert_model.py
+│   │   │   │   │   ├── expert_review_model.py
+│   │   │   │   │   ├── field_model.py
+│   │   │   │   │   ├── mission_model.py
+│   │   │   │   │   ├── payment_intent_model.py
+│   │   │   │   │   ├── pilot_model.py
+│   │   │   │   │   ├── price_snapshot_model.py — price_snapshots ORM modeli.
+│   │   │   │   │   ├── subscription_model.py
+│   │   │   │   │   ├── user_model.py
+│   │   │   │   │   └── weather_block_model.py
+│   │   │   │   ├── repositories/ — Port implementasyonları (yalnızca _impl dosyaları; port tanımları → src/core/ports/repositories/)
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   ├── analysis_result_repository_impl.py — AnalysisResultRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── audit_log_repository_impl.py — AuditLogRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── calibration_record_repository_impl.py — CalibrationRecordRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── crop_ops_profile_repository_impl.py — CropOpsProfileRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── expert_repository_impl.py — ExpertRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── expert_review_repository_impl.py — ExpertReviewRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── feedback_record_repository_impl.py — FeedbackRecordRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── field_repository_impl.py — FieldRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── mission_repository_impl.py — MissionRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── payment_intent_repository_impl.py — PaymentIntentRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── pilot_repository_impl.py — PilotRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── price_snapshot_repository_impl.py — PriceSnapshotRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── qc_report_repository_impl.py — QCReportRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── subscription_repository_impl.py — SubscriptionRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── user_repository_impl.py — UserRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   ├── weather_block_report_repository_impl.py — WeatherBlockReportRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   │   └── weather_block_repository_impl.py — WeatherBlockRepository portunun SQLAlchemy implementasyonu.
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── base.py — SQLAlchemy Declarative Base ve ortak mixin'ler (id, timestamps, version).
+│   │   │   │   ├── models.py — Model registry.
+│   │   │   │   ├── session.py — DB engine ve request-scope Session üretimi.
+│   │   │   │   └── unit_of_work.py — Transaction sınırları ve atomicity (Unit of Work).
+│   │   │   ├── __init__.py
+│   │   │   └── database.py
+│   │   ├── security/
+│   │   │   ├── encryption.py — Encryption adapter.
+│   │   │   ├── jwt_handler.py — JWT handler adapter.
+│   │   │   ├── query_pattern_analyzer.py — SQL injection / anomaly detection adapter.
+│   │   │   └── rate_limit_config.py — Rate limit config adapter.
+│   │   └── __init__.py
+│   ├── presentation/
+│   │   ├── api/
+│   │   │   ├── middleware/
+│   │   │   │   ├── anomaly_detection_middleware.py — Anomaly detection middleware.
+│   │   │   │   ├── cors_middleware.py — CORS middleware.
+│   │   │   │   ├── jwt_middleware.py — JWT auth middleware.
+│   │   │   │   └── rate_limit_middleware.py — Rate limit middleware.
+│   │   │   ├── v1/
+│   │   │   │   ├── endpoints/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   ├── admin_audit.py — Admin audit log sorgulama/export endpoint'leri.
+│   │   │   │   │   ├── admin_pricing.py — Admin fiyat snapshot yayınlama endpoint'i.
+│   │   │   │   │   ├── auth.py — Telefon+PIN kimlik doğrulama endpoint'leri.
+│   │   │   │   │   ├── expert_portal.py — Expert Portal (KR-019) review kuyruğu ve gönderme API'leri.
+│   │   │   │   │   ├── experts.py — Expert yönetim endpoint'leri.
+│   │   │   │   │   ├── fields.py — Field CRUD endpoint'leri.
+│   │   │   │   │   ├── missions.py — Mission yönetim endpoint'leri.
+│   │   │   │   │   ├── parcels.py — Parsel lookup endpoint'i: ParcelRef → Geometry (TKGM/MEGSİS).
+│   │   │   │   │   ├── payment_webhooks.py — Ödeme sağlayıcı webhook alıcısı.
+│   │   │   │   │   ├── pilots.py — Pilot yönetim endpoint'leri.
+│   │   │   │   │   ├── pricing.py — Aktif PriceSnapshot listesi (çiftçi PWA'ya).
+│   │   │   │   │   ├── results.py — Analiz sonuçları (layer list + özet) endpoint'i.
+│   │   │   │   │   ├── subscriptions.py — Abonelik satın alma, görüntüleme, plan takvimi.
+│   │   │   │   │   ├── training_feedback.py — Training feedback endpoint'leri.
+│   │   │   │   │   ├── weather_block_reports.py — Weather Block raporlama ve doğrulama.
+│   │   │   │   │   └── weather_blocks.py — Weather block sorgulama.
+│   │   │   │   ├── schemas/
+│   │   │   │   │   ├── expert_review_schemas.py — Expert review request/response schema.
+│   │   │   │   │   ├── expert_schemas.py — Expert request/response schema.
+│   │   │   │   │   ├── field_schemas.py — Field request/response schema.
+│   │   │   │   │   ├── mission_schemas.py — Mission request/response schema.
+│   │   │   │   │   ├── parcel_schemas.py — Parsel lookup request/response schema.
+│   │   │   │   │   ├── payment_webhook_schemas.py — Webhook payload doğrulama schema.
+│   │   │   │   │   ├── subscription_schemas.py — Subscription request/response schema.
+│   │   │   │   │   ├── training_feedback_schemas.py — Training feedback request/response schema.
+│   │   │   │   │   └── weather_block_schemas.py — WeatherBlock request/response schema.
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── admin_payments.py — Admin ödeme yönetim endpoint'leri (KR-033).
+│   │   │   │   ├── calibration.py — Kalibrasyon kayıt API; CalibrationRecord alma/sorgulama (KR-018).
+│   │   │   │   ├── payments.py — Çiftçi tarafı ödeme endpoint'leri (KR-033).
+│   │   │   │   ├── qc.py — QC rapor API; kayıt/sorgulama, pass/warn/fail durumu (KR-018).
+│   │   │   │   └── sla_metrics.py — SLA dashboard API; servis seviyesi metrikleri ve breach takibi.
+│   │   │   ├── __init__.py
+│   │   │   ├── dependencies.py — FastAPI Dependency Injection container; port→adapter bağlama.
+│   │   │   └── main.py — FastAPI uygulama giriş noktası.
+│   │   ├── cli/
+│   │   │   ├── commands/
+│   │   │   │   ├── expert_management.py — Expert yönetim CLI komutu.
+│   │   │   │   ├── migrate.py — DB migration CLI komutu.
+│   │   │   │   ├── run_weekly_planner.py — Haftalık planlama job'unu manuel/cron ile çalıştırma.
+│   │   │   │   ├── seed.py — Seed data CLI komutu.
+│   │   │   │   └── subscription_management.py — Subscription yönetim CLI komutu.
+│   │   │   ├── __init__.py
+│   │   │   └── main.py — Platform CLI giriş noktası.
+│   │   └── __init__.py
+│   └── __init__.py — Package marker
+├── tests/ — SDLC: Verify — kalite kapıları
+│   ├── e2e/ — Uçtan uca (E2E) testler.
+│   │   ├── __init__.py
+│   │   ├── test_expert_journey.py
+│   │   ├── test_farmer_journey.py
+│   │   ├── test_payment_flow.py — KR-033 ödeme akışı E2E testi.
+│   │   └── test_pilot_journey.py
+│   ├── fixtures/
+│   │   ├── __init__.py
+│   │   └── domain_fixtures.py — Domain entity factory'leri (Field, Mission, User, Expert, Subscription, PaymentIntent).
+│   ├── integration/
+│   │   ├── __init__.py
+│   │   ├── test_api_calibration_qc.py
+│   │   ├── test_api_fields.py
+│   │   ├── test_api_payments_and_webhooks.py
+│   │   ├── test_api_weather_block_reports.py
+│   │   ├── test_event_bus.py
+│   │   ├── test_field_repository.py
+│   │   └── test_mission_repository.py
+│   ├── performance/
+│   │   ├── __init__.py
+│   │   ├── locustfile.py
+│   │   └── test_mission_assignment_load.py
+│   ├── unit/
+│   │   ├── application/
+│   │   │   ├── commands/
+│   │   │   │   ├── test_assign_mission.py
+│   │   │   │   └── test_create_field.py
+│   │   │   └── services/
+│   │   │       └── test_payment_orchestration.py
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   ├── test_field.py
+│   │   │   │   ├── test_mission.py
+│   │   │   │   └── test_payment_intent.py
+│   │   │   ├── services/
+│   │   │   │   ├── test_capacity_manager.py
+│   │   │   │   └── test_planning_engine.py
+│   │   │   └── value_objects/
+│   │   │       ├── test_geometry.py
+│   │   │       └── test_parcel_ref.py
+│   │   ├── __init__.py
+│   │   ├── test_calibration_gate.py
+│   │   ├── test_payment_intent_manual_approval.py
+│   │   └── test_weather_block_replan.py
+│   ├── __init__.py
+│   └── conftest.py — Pytest global fixtures ve test configuration.
+├── web/ — Subsystem: Frontend — Build
+│   ├── .storybook/ — [v3.2.2 YENİ] Storybook component documentation config
+│   │   ├── main.ts — Storybook ana konfigürasyon (framework, addons, story glob).
+│   │   └── preview.ts — Storybook preview ayarları (decorators, global parameters, Tailwind import).
+│   ├── e2e/ — [v3.2.2 YENİ] Playwright E2E browser testleri
+│   │   ├── admin-journey.spec.ts — Admin full journey E2E: login → dashboard → fiyat yönetimi → audit → expert yönetimi.
+│   │   ├── expert-journey.spec.ts — Expert full journey E2E: login → kuyruk → inceleme → verdict → feedback.
+│   │   ├── farmer-journey.spec.ts — Farmer full journey E2E: login → tarla → abonelik → ödeme → sonuç.
+│   │   └── pilot-journey.spec.ts — Pilot full journey E2E: login → kapasite → görev → uçuş → weather block.
+│   ├── public/
+│   │   ├── icons/
+│   │   │   ├── icon-192x192.png
+│   │   │   └── icon-512x512.png
+│   │   ├── sounds/
+│   │   │   └── notification.mp3 — Bildirim sesi (expert portal push).
+│   │   ├── manifest.json
+│   │   ├── robots.txt
+│   │   └── service-worker.js
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── (admin)/
+│   │   │   │   ├── analytics/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── audit-viewer/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── dashboard/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── expert-management/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── payments/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── price-management/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── layout.tsx
+│   │   │   ├── (auth)/
+│   │   │   │   ├── login/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── register/
+│   │   │   │       └── page.tsx
+│   │   │   ├── (expert)/
+│   │   │   │   ├── profile/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── queue/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── reviews/
+│   │   │   │   │   └── [id]/
+│   │   │   │   │       └── page.tsx
+│   │   │   │   └── layout.tsx
+│   │   │   ├── (farmer)/
+│   │   │   │   ├── fields/
+│   │   │   │   │   ├── [id]/
+│   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── missions/
+│   │   │   │   │   ├── [id]/
+│   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── profile/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── results/
+│   │   │   │   │   └── [missionId]/
+│   │   │   │   │       └── page.tsx
+│   │   │   │   ├── subscriptions/
+│   │   │   │   │   ├── create/
+│   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── layout.tsx
+│   │   │   ├── (pilot)/
+│   │   │   │   ├── capacity/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── missions/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── profile/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── weather-block/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── layout.tsx
+│   │   │   ├── admin/
+│   │   │   │   ├── experts/
+│   │   │   │   │   └── page.tsx — Admin expert yönetim ekranı.
+│   │   │   │   ├── subscriptions/
+│   │   │   │   │   └── page.tsx — Admin subscription yönetim ekranı.
+│   │   │   │   └── weather-block/
+│   │   │   │       └── page.tsx — Admin Weather Block doğrulama ekranı.
+│   │   │   ├── expert/
+│   │   │   │   ├── dashboard/
+│   │   │   │   │   └── page.tsx — Expert dashboard; günlük iş yükü, bekleyen incelemeler, performans.
+│   │   │   │   ├── history/
+│   │   │   │   │   └── page.tsx — Expert geçmiş inceleme listesi.
+│   │   │   │   ├── reviews/
+│   │   │   │   │   ├── [id]/
+│   │   │   │   │   │   └── page.tsx — Tekil inceleme; model çıktısı + uzman anotasyonu.
+│   │   │   │   │   └── page.tsx — Expert bekleyen inceleme listesi.
+│   │   │   │   └── layout.tsx — Expert layout.
+│   │   │   ├── farmer/
+│   │   │   │   ├── missions/
+│   │   │   │   │   ├── [id]/
+│   │   │   │   │   │   └── page.tsx — Tekil görev detayı ve analiz/sonuç durumu.
+│   │   │   │   │   └── page.tsx — Çiftçi görev listesi.
+│   │   │   │   ├── results/
+│   │   │   │   │   └── [missionId]/
+│   │   │   │   │       └── page.tsx — Analiz sonuçları harita/katman görünümü (raster+vektör).
+│   │   │   │   └── subscriptions/
+│   │   │   │       └── page.tsx — Çiftçi abonelik listesi, ödeme durumu, plan takvimi.
+│   │   │   ├── pilot/
+│   │   │   │   └── weather-block/
+│   │   │   │       └── page.tsx — Pilot Weather Block rapor giriş ekranı.
+│   │   │   ├── layout.tsx
+│   │   │   ├── page.tsx
+│   │   │   ├── robots.ts
+│   │   │   └── sitemap.ts
+│   │   ├── components/
+│   │   │   ├── features/
+│   │   │   │   ├── dataset/
+│   │   │   │   │   └── DatasetUploadModal.tsx
+│   │   │   │   ├── expert/
+│   │   │   │   │   └── AnnotationCanvas.tsx
+│   │   │   │   ├── field/
+│   │   │   │   │   └── AddFieldModal.tsx
+│   │   │   │   ├── map/
+│   │   │   │   │   ├── FieldMap.tsx
+│   │   │   │   │   └── MapLayerViewer.tsx
+│   │   │   │   ├── mission/
+│   │   │   │   │   └── MissionTimeline.tsx
+│   │   │   │   ├── payment/
+│   │   │   │   │   └── DekontViewer.tsx
+│   │   │   │   ├── results/
+│   │   │   │   │   ├── LayerList.tsx
+│   │   │   │   │   └── MetricsDashboard.tsx
+│   │   │   │   └── subscription/
+│   │   │   │       └── CreateSubscriptionFlow.tsx
+│   │   │   ├── ui/
+│   │   │   │   ├── badge.tsx
+│   │   │   │   ├── button.tsx
+│   │   │   │   ├── card.tsx
+│   │   │   │   ├── input.tsx
+│   │   │   │   ├── modal.tsx
+│   │   │   │   ├── select.tsx
+│   │   │   │   └── toast.tsx
+│   │   │   └── AccessibilityProvider.tsx
+│   │   ├── features/
+│   │   │   ├── expert-portal/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── ExpertNotificationBell.tsx — Expert bildirim zili bileşeni.
+│   │   │   │   │   ├── ImageViewer.tsx — Multispektral görüntü viewer.
+│   │   │   │   │   ├── ReviewCard.tsx — Expert review kart bileşeni.
+│   │   │   │   │   └── VerdictForm.tsx — Expert verdict form bileşeni.
+│   │   │   │   ├── hooks/
+│   │   │   │   │   ├── useExpertNotifications.ts — Expert bildirim hook'u.
+│   │   │   │   │   └── useExpertReviews.ts — Expert review listesi hook'u.
+│   │   │   │   └── services/
+│   │   │   │       └── expertReviewService.ts — Expert review API istemci servisi.
+│   │   │   ├── results/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── LayerList.tsx — Sonuç katmanları listesi ve görünürlük kontrolü.
+│   │   │   │   │   └── MapLayerViewer.tsx — Raster/vektör katman render bileşeni.
+│   │   │   │   ├── hooks/
+│   │   │   │   │   └── useResults.ts — Sonuç verisi ve yükleme durumu hook'u.
+│   │   │   │   └── services/
+│   │   │   │       └── resultService.ts — Results API istemci servisi.
+│   │   │   ├── subscriptions/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── MissionScheduleCalendar.tsx — Mission takvim bileşeni.
+│   │   │   │   │   ├── SubscriptionCard.tsx — Subscription kart bileşeni.
+│   │   │   │   │   └── SubscriptionPlanSelector.tsx — Plan seçim bileşeni.
+│   │   │   │   ├── hooks/
+│   │   │   │   │   └── useSubscriptions.ts — Subscription hook'u.
+│   │   │   │   └── services/
+│   │   │   │       └── subscriptionService.ts — Subscription API istemci servisi.
+│   │   │   ├── training-feedback/
+│   │   │   │   ├── components/
+│   │   │   │   │   └── FeedbackQualityIndicator.tsx — Feedback kalite göstergesi.
+│   │   │   │   └── services/
+│   │   │   │       └── trainingFeedbackService.ts — Training feedback API istemci servisi.
+│   │   │   └── weather-block/
+│   │   │       ├── components/
+│   │   │       │   └── WeatherBlockReportCard.tsx — WeatherBlock rapor kart bileşeni.
+│   │   │       └── services/
+│   │   │           └── weatherBlockService.ts — Weather Block API istemci servisi.
+│   │   ├── hooks/
+│   │   │   ├── useAdminExperts.ts
+│   │   │   ├── useAdminPayments.ts
+│   │   │   ├── useAuditLogs.ts
+│   │   │   ├── useAuth.ts
+│   │   │   ├── useExpertQueue.ts
+│   │   │   ├── useExpertReview.ts
+│   │   │   ├── useFields.ts
+│   │   │   ├── useMissions.ts
+│   │   │   ├── useOfflineQueue.ts
+│   │   │   ├── usePilotCapacity.ts
+│   │   │   ├── usePricing.ts
+│   │   │   ├── useResults.ts
+│   │   │   ├── useSubscriptions.ts
+│   │   │   └── useWeatherBlock.ts
+│   │   ├── i18n/
+│   │   │   ├── ar.json
+│   │   │   ├── ku.json
+│   │   │   └── tr.json
+│   │   ├── lib/
+│   │   │   ├── websocket/
+│   │   │   │   └── expertNotificationClient.ts — WebSocket expert bildirim istemcisi.
+│   │   │   ├── api-client.ts
+│   │   │   ├── constants.ts
+│   │   │   ├── format-utils.ts
+│   │   │   ├── performance.ts
+│   │   │   └── validation-schemas.ts
+│   │   └── middleware.ts — [v3.2.2 YENİ] Next.js middleware; JWT auth guard + role-based route protection + rate limit.
+│   ├── .env.example
+│   ├── jest.config.js
+│   ├── next.config.js
+│   ├── package.json
+│   ├── playwright.config.ts
+│   ├── sentry.client.config.ts
+│   ├── sentry.server.config.ts
+│   ├── tailwind.config.js
+│   └── tsconfig.json
+├── .dockerignore — Docker build context ignore.
+├── .env.example — Gerekli ENV anahtarlarını isim/format olarak şablonlamak.
+├── .gitignore — Git ignore kuralları.
+├── .pre-commit-config.yaml — Commit öncesi otomatik kalite kontrolleri (format/lint).
+├── alembic.ini — Alembic migration aracı yapılandırması.
+├── CHANGELOG.md — Sürüm notları.
+├── CONTRACTS_SHA256.txt — Contracts paketinin içerik hash'i (supply-chain integrity).
+├── CONTRACTS_VERSION.md — Contract sürüm sabitleme.
+├── docker-compose.yml — Local dev (db + broker + platform + web) orkestrasyonu.
+├── Dockerfile — Backend container tanımı.
+├── MANIFEST_CANONICAL.md
+├── pyproject.toml — Python packaging, bağımlılıklar ve tooling.
+└── README.md — Repo onboarding.

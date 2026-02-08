@@ -1,0 +1,1457 @@
+# TarlaAnaliz – Tek Kaynak Gerçek (SSOT)
+## Single Source of Truth v1.0.0
+
+**Sürüm:** 1.0.0 | **Tarih:** 2026-02-08 | **Format:** AI-Ready Unified Document (Sadeleştirilmiş)
+
+**🧱 v1.0.0 Baz Sürüm Notları (Kod Üretimi Başlangıcı):**
+- Bu doküman, TarlaAnaliz için **tek kanonik SSOT** olarak kabul edilir ve kod üretiminde “normatif kaynak”tır.
+- Kritik sabitler:
+  - Kimlik: **telefon + 6 haneli PIN**, e-posta/TCKN yok, OTP/SMS doğrulama yok → **[KR-050]**
+  - YZ izolasyonu ve tek yönlü sonuç akışı → **[KR-017]** (operasyonel özet: **[KR-070]**, SOP: **BÖLÜM 2.6**)
+  - Tam radyometrik kalibrasyon “hard gate” → **[KR-018 / KR-082]**
+  - Contract-first (makine-doğrulanabilir şema) → **[KR-081]**
+  - Ödeme + manuel onay akışı → **[KR-033]**
+  - RBAC kanonik matrisi → **[KR-063]** (özet rol anlatımı: **[KR-011]**)
+
+# BÖLÜM 1: KANONİK KURALLAR [KR-xxx]
+
+> ⚠️ **KRİTİK:** Bu bölümdeki kurallar değiştirilemez. Tüm kod bu kurallara uymalıdır.
+
+## [KR-000] Bu doküman seti nasıl okunur?
+
+- Saha adımları ve DJI entegrasyon ayrıntıları ayrı bir SOP dokümanında tutulur
+- Geliştirici promptları, API ve test/acceptance şablonları ayrı bir geliştirici paketinde tutulur
+- Kimlik modeli: **bkz. [KR-050]** (normatif tek referans)
+- Doküman dilinde 'kapsama-izi' terimi kullanılır. Sistem/API tarafında aynı kavram teknik olarak 'footprint' (observed footprint) olarak geçebilir; ikisi eş anlamlıdır
+- Bu dokümanda kanonik (normatif) kurallar, bölüm başlıklarının başında [KR-xxx] etiketi ile tanımlanır
+- Sürümleme politikası: Bu SSOT **SemVer** ile sürümlenir (1.0.0 başlangıç). Değişiklikler için CHANGELOG tutulur; **breaking change → major**, geriye uyumlu ekleme → minor, yazım/düzeltme → patch.
+
+---
+
+## [KR-001] Proje Özeti
+
+**Amaç:** Çiftçilerin ürün kaybını erken uyarı ile azaltmak ve dönüm bazlı analiz hizmeti satmak. Başlangıç bölgesi GAP, ardından Türkiye geneline ölçekleme.
+
+**Sabit Çerçeve (Değişmez):**
+- Drone: DJI Mavic 3M
+- Veri: RGB + multispektral (NDVI/NDRE)
+- YZ sadece analiz yapar; ilaçlama/gübreleme kararı **VERMEZ**
+- Sonuçlar web (PWA) uygulamasında harita üzerinde renk + desen/ikon ile gösterilir
+
+---
+
+## [KR-002] Harita Katmanı Anlamları (Renk + Desen)
+
+| Katman | Renk | Desen |
+|--------|------|-------|
+| Sağlık (Health) | Yeşil | - |
+| Hastalık (Disease) | Turuncu | - |
+| Zararlı Böcek (Pest) | Kırmızı | - |
+| Mantar (Fungus) | Mor | - |
+| Yabancı Ot (Weed) | Sarı/Hardal | Noktalı desen |
+| Su Stresi | Mavi | Damla noktalı desen |
+| Azot Stresi | Soluk gri | Çapraz çizgili desen |
+
+---
+
+## [KR-010] Web (PWA) - Genel
+
+## [KR-011] Kullanıcı Rolleri ve Temel Yaklaşım
+
+> **Not:** Detaylı rol kodları + yetki matrisi (RBAC) kanonik olarak **[KR-063]**'tedir. Bu bölüm sadece özet görünüm sağlar.
+
+| Rol | Sorumluluk |
+|-----|------------|
+| Çiftçi | Kendi tarlalarını kaydeder, bitki türlerini tanımlar, analiz talebi oluşturur, sonuçları görür |
+| Kooperatif/Üreticiler Birliği | Kurumsal hesapla üye olur; üye çiftçileri davet eder/aktarır; yetkisine göre tarlaları yönetir ve analiz talebi açabilir |
+| Drone Pilotu | Sadece DJI Mavic 3M ile uçuş yapar; görüntüleri her gün hafıza kartıyla yerel istasyona aktarır; **sonuç raporunu GÖRMEZ** |
+| İl Operatörü (temsilci) | **PII görmeden** ticari KPI + kapasite planlama metriklerini izler; sözleşmeye göre gelir payı alır |
+| Merkez Yönetim | KVKK/PII erişimi olan tek yetkili katman; kullanıcı/kooperatif doğrulama ve sistem politikalarını yönetir |
+
+---
+
+## [KR-012] İş Planlaması
+
+## [KR-013] Çiftçi Üyeliği ve Tarla Yönetimi
+
+**Üyelik:** PWA veya web üzerinden üye olunur. İl, ilçe, ad, soyad ve telefon numarası alınır; üye olunca kendi sayfasına yönlendirilir.
+
+**Tarla Kaydı:** Her tarla için il, ilçe, mahalle/köy, ada, parsel ve alan (m²) girilir. Sistem benzersiz FieldID üretir.
+
+**Tekil Kayıt Kuralı:**
+```
+Aynı il + ilçe + mahalle/köy + ada + parsel kombinasyonu 
+ikinci kez kaydedilemez.
+```
+
+**Bitki Türü Tanımı:** Her tarla için ekili bitki türü seçilir. Birden fazla bitki varsa her biri ayrı seçilir ve alan (m²) girilir.
+
+**Analiz Talebi:** Bitki türü bazında oluşturulur. Seçenekler: yıllık abonelik veya tek seferlik analiz.
+
+**Bitki Türü Değiştirme Kuralı:**
+```
+Yılda yalnızca 1 defa değiştirilebilir.
+Sadece 1 Ekim - 31 Aralık aralığında.
+Tarih dışında değişiklik backend tarafından ENGELLENİR.
+```
+
+---
+
+## [KR-014] Kooperatif/Üretici Birliği Üyeliği ve İşleyiş
+
+**Doğrulama:** Hesap 'Onay Bekliyor' açılır. Evrak kontrolü sonrası Merkez yönetim 'Aktif' yapar; eksik evrak varsa aktif edilemez.
+
+**Üye Çiftçi Dahil Etme:**
+- (a) Davet (QR / 6 haneli davet kodu)
+- (b) Toplu içe aktarım (Excel/CSV)
+- Çiftçi kooperatif bağlantısını kendi hesabından onaylar
+
+**Tarla ve Analiz:** Tarla benzersizliği aynıdır. Kooperatif yetkisine göre üyeleri adına analiz talebi açabilir. "Tarla kaydı tekil, sahiplik/erişim ayrı" yaklaşımı uygulanır.
+
+**Yetki Matrisi:**
+- COOP_OWNER
+- COOP_ADMIN
+- COOP_AGRONOMIST (aksiyon kararı vermez)
+- COOP_VIEWER
+
+---
+
+## [KR-015] Drone Pilotları (DJI Mavic 3M ile Uçuş)
+
+**Üyelik/Kayıt:** İl, ilçe, ad soyad, telefon; drone modeli ve seri numarası; hizmet verdiği mahalle/köy listesi (başlangıçta opsiyonel). Drone seri numarası doğrulama referansıdır.
+
+**Günlük Veri Teslimi:** Uçuş çıktısı her gün hafıza kartı ile yerel istasyona aktarılır. **Her uçuşta farklı hafıza kartı kullanılır.**
+
+> **Not:** DJI tarafındaki kart kilidi/şifre/PIN gibi özellikler cihaz ve sürüme göre değişebilir; güvenlik garantisi olarak değil, **sadece ek katman** olarak değerlendirilir.
+
+**Her Aktarım Log Üretir:** pilot kimliği, drone seri no, tarih/saat, batch id, tarla eşleştirme durumu.
+
+**Eşleştirme Zorunlu:** Yüke gelen veri seti mutlaka kayıtlı bir tarla ile otomatik eşleşir; minimum: il, ilçe, mahalle/köy, ada, parsel, bitki türü (varsa FieldID). **Eşleştirme yoksa işlenmez.**
+
+[KR-015-1] Pilot Çalışma Günleri ve Günlük Kapasite Tanımı
+
+Amaç: Pilotların çalışacağı günleri seçebilmesi ve sistemin planlama motoruna net kapasite kısıtları sağlaması.
+
+[ZORUNLU] Pilot, haftalık çalışma günlerini work_days olarak seçer (Pzt–Paz kümesi).
+
+[ZORUNLU] |work_days| ≤ 6 (pilot en fazla 6 gün çalışabilir).
+
+[ZORUNLU] Pilot için daily_capacity_donum aralığı: 2500–3000 dönüm/gün.
+
+[ZORUNLU] Varsayılan kapasite (atanmamışsa): 2750 dönüm/gün.
+[ZORUNLU] Bitki türü bazlı kapasite profili (CropOpsProfile): admin, her CropType için daily_capacity_donum (varsayılan 2750; önerilen aralık 2500–3000) ve SYSTEM_SEED_QUOTA (varsayılan 1500) değerlerini tanımlar; planlama motoru Mission.crop_type profiline göre kota/kapasite uygular.
+
+[ZORUNLU] Kapasite aşım toleransı yalnızca “acil durum” için %10 olabilir; üst sınır: daily_capacity_donum × 1.10.
+
+[OPSİYONEL] Pilot, sezon yoğunluğuna göre kapasiteyi “gelecek hafta geçerli olacak şekilde” güncelleyebilir (anlık değişiklik yok; operasyon stabilitesi).
+
+[KR-015-2] Seed + Pull İş Dağıtım Politikası (Sistem Verir + Pilot/Çiftçi Seçimi)
+
+Amaç: İlk işlerin sistem tarafından garanti edilmesi; kalan kapasitenin ise çiftçinin pilot seçimi / pilotun müşteri bulmasıyla dolması.
+
+[ZORUNLU] Her pilot için günlük kapasite iki kotaya bölünür:
+
+SYSTEM_SEED_QUOTA: günlük kapasitenin “sistem tarafından verilen” kısmı
+
+PULL_QUOTA: kalan kapasite (çiftçi seçimi / pilot getirdiği iş)
+
+[ZORUNLU] SYSTEM_SEED_QUOTA varsayılan: 1500 dönüm/gün.
+
+[ZORUNLU] PULL_QUOTA varsayılan: daily_capacity_donum - 1500.
+
+[ZORUNLU] SYSTEM_SEED görevleri:
+
+sistem otomatik atar (yakınlık + bölge/territory + SLA + güvenilirlik)
+
+pilot bu kotayı reddedemez (sözleşme/operasyon gereği)
+
+[ZORUNLU] PULL görevleri:
+
+çiftçi “uygun pilot listesi”nden seçim yapabilir ve/veya pilot kendi getirdiği işi sisteme bağlayabilir
+
+kapasite uygunsa pilota “kabul/ret” hakkı tanınabilir (operasyonel esneklik)
+
+[ZORUNLU] Pilot, çiftçi PII görmeden çalışır; görevler MissionID + Field/ParcelRef + konum düzeyinde sunulur.
+
+[KR-015-3] Pilot İptal / Uygun Değilim Bildirimi ve Otomatik Yeniden Atama
+
+Amaç: Pilot görev yapamayacaksa zamanında bildirsin; sistem görevi başka pilota aktarsın.
+
+[ZORUNLU] Pilot, kendisine atanmış günlük/haftalık işi yapamayacaksa en az 12 saat önce bildirim yapmalıdır.
+
+[OPSİYONEL] Önerilen bildirim süresi: 24 saat.
+
+[ZORUNLU] Bildirim geldiğinde:
+
+görev “yeniden atama kuyruğu”na alınır
+
+sistem alternatif pilot atar
+
+eski/yeni pilota bildirim gönderilir (uygulama içi)
+
+[ZORUNLU] Bildirimsiz “no-show” durumları pilot güvenilirlik skorunu düşürür ve admin inceleme sürecini tetikleyebilir.
+
+[ZORUNLU] Tüm iptal ve yeniden atamalar audit log’a yazılır:
+
+actor (pilot/admin)
+
+timestamp
+
+reason
+
+eski/yeni pilot
+
+etkilenen mission(lar)
+
+[KR-015-4] Admin Atama Değişikliği ve Otomatik Yeniden Dengeleme
+
+Amaç: Sistem otomatik atar; admin gerekirse değiştirir; sistem çakışmaları otomatik toparlar.
+
+[ZORUNLU] Sistem pilot atamasını otomatik yapar (Auto-Dispatcher).
+
+[ZORUNLU] Admin, herhangi bir Mission için pilot atamasını değiştirebilir (override).
+
+[ZORUNLU] Admin override zorunlu alanları:
+
+new_pilot_id
+
+override_reason (boş olamaz)
+
+admin_id (audit)
+
+[ZORUNLU] Override sonrası sistem:
+
+sadece “etkilenen gün/pencere” için planı yeniden dengeler (kapasite çakışması, SLA riski)
+
+admin’in seçtiği pilotu “geri alma” yoluyla otomatik bozmaz; sadece diğer görevleri ayarlar.
+
+[KR-015-5] Sezonluk Abonelikte Tarama Takvimi, Görünürlük ve Sınırlı Gün Değiştirme
+
+Amaç: Çiftçi sezon başında tarih aralığı + sıklık seçer; tüm sezon tarama günlerini görür; sezonda 2–3 kez gün kaydırabilir; pilot onayı gerekir.
+
+[ZORUNLU] “Yıllık abonelik” terminolojisi UI’da ve ürün dilinde “Sezonluk Paket” olarak adlandırılır. (KR-027 uyarlanır.) 
+
+
+[ZORUNLU] Sezonluk paket seçerken çiftçi:
+
+start_date, end_date
+
+interval_days (örn. pamuk: 7)
+
+toplam analiz sayısı (N) ve toplam fiyatı (snapshot üzerinden) görür
+
+[ZORUNLU] Çiftçi ekranında tüm sezon için “planlanan tarama günleri” takvim görünümünde gösterilir (computed schedule).
+
+[ZORUNLU] Sezonda sınırlı gün değiştirme hakkı:
+
+reschedule_tokens_per_season: varsayılan 2 (opsiyonel 3)
+- Hava engeli (Weather Block) / force majeure nedeniyle yapılan ertelemeler **reschedule token tüketmez**; sistem otomatik yeniden planlar ve audit log’a yazar.
+
+her token, planlı bir tarama gününü “pencere içinde” başka bir güne kaydırma talebidir
+
+[ZORUNLU] Gün değiştirme akışı:
+
+çiftçi “yeni gün önerir”
+
+sistem kapasite/SLA uygunluğuna göre alternatif slot/pilot önerir
+
+ilgili pilot(lar)a bildirim gider
+
+pilot onaylarsa yeni gün kesinleşir; onaylamazsa eski plan korunur
+
+[ZORUNLU] Gün değiştirme, audit log’a “kim, neyi, ne zaman değiştirdi” şeklinde yazılır.
+
+[KR-015-6] Büyük Alanlarda Çoklu Pilot Planlama (Pencere Bazlı Bölme)
+
+Amaç: Büyük alanlarda (örn. 10.000 dönüm) 7 günlük pencere içinde birden fazla pilotla tarama yapılabilsin.
+
+[ZORUNLU] Sistem, sezonluk abonelikte her interval_days penceresi için “hedef tarama tamamlanma” kuralı uygular.
+
+[OPSİYONEL] Büyük alan eşiği aşıldığında sistem, pencereyi “iş paketlerine” bölebilir:
+
+aynı pencere içinde 2–N pilot atanabilir
+
+her paket bağımsız uçuş/upload kanıtı üretir
+
+[ZORUNLU] Çoklu pilot atamalarında denetlenebilirlik:
+
+her pilot katkısı ayrı kanıt (flown/uploaded) üretir
+
+sonuç raporu tek sezonsal zaman serisine birleşir
+---
+
+## [KR-016] Drone - Tarla - Bitki Eşleştirme Politikası (Routing)
+
+**Amaç:** Veri setini doğru FieldID ve o tarihte geçerli bitki türü ile eşleştirip doğru bitki-özel YZ modelini otomatik seçmek.
+
+**Tarla Sınırı:** Ada/parsel girilir; TKGM/MEGSIS ile parsel geometrisi alınarak field boundary saklanır.
+
+**Uçuş Görevi:** Field boundary üzerinden görev dosyası üretilir (KML/KMZ/WPML). Pilot DJI Pilot 2 ile içe aktarıp standard mapping görevini başlatır.
+
+**Görev Dosyası Adlandırma Standardı:**
+```
+{MissionID}_{ParcelRef}_{YYYYMMDD}.kmz
+```
+(Dosya adında PII bulunmaz; MissionID dosya adında ve metadata içinde yer alır)
+
+**İşlenmiş Çıktılar:** DJI Terra (Agriculture Module) veya Pix4Dfields ile üretilen GeoTIFF standart kabul edilir.
+
+**Yükleme Anı:** İstasyon batch metadata'dan Drone Seri No + MissionID (varsa) + kapsama-izi/footprint alanını alır. **Öncelik MissionID; yoksa kapsama-izi-boundary kesişimi.**
+
+**Bitki Türü:** FieldID için sezon bitkisi kaydı esas (1 Ekim - 31 Aralık aralığında güncellenebilir).
+
+---
+
+## [KR-017] YZ Modeli ile Analiz (Kanonik: İzolasyon + Tek Yönlü Akış + Job Semantiği)
+
+[ZORUNLU]
+- AnalysisJob açılırken kimlik: **FieldID + CropType + MissionID (varsa)**; **PII taşınmaz**
+- Bitkiye özel YZ modeli routing (yönlendirme) ile otomatik seçilir. Bu karar; **MissionID, FieldID ve bitki türü** ile kayıt altına alınır (model_id / model_version).
+- Pilot tarafında görünen görev bilgisi: **MissionID, il/ilçe/mahalle-köy, ada/parsel (ParcelRef), bitki türü, hedef tarama penceresi, teslim son tarihi**. **Çiftçi adı/telefonu gösterilmez**
+- Hafıza kartları yerel istasyonda güvenlik kontrollerinden (hash manifest, virüs tarama, allowlist uzantılar, karantina) geçmeden analize girmez
+- EdgeKiosk/istasyon tarafında **model çalıştırma yoktur** (model hırsızlığı riskine karşı)
+- Worker (YZ/processing) **inbound istek kabul etmez**; job yalnızca dispatch/queue ile alınır. Web (PWA) ve public backend Worker ağına **doğrudan erişemez** (inbound kapalı)
+- Worker, **[KR-018 / KR-082]** kalibrasyon “hard gate” şartı sağlanmadan işi kabul etmez (`requires_calibrated=true`)
+- Sonuçlar **kesinlikle tek yönlü** yayımlanır: **FieldID + CropType + katmanlar + skor/uyarı** → sonuç servisi → web (PWA)
+- Erişim denemeleri/deny olayları ve kritik adımlar audit/WORM log’a düşer (bkz. **BÖLÜM 3**)
+
+**İlgili maddeler:** [KR-016], [KR-018 / KR-082], [KR-063], [KR-066], [KR-040-043], EK-SOP-SEC, BÖLÜM 3, BÖLÜM 4
+
+---
+## [KR-018 / KR-082] RADIOMETRY - Tam Radyometrik Kalibrasyon Zorunluluğu (Radiometric Calibration: ışık/sensör etkilerini düzeltme)
+
+## Amaç
+- Model eğitimi (training: modelin öğrenmesi) ve saha sonuçları arasında tutarlılık (training-serving parity: eğitim/çalıştırma aynı dağılım).
+- Müşteri memnuniyeti için zaman serisi (time-series: haftalık takip) ve tarlalar arası kıyasın (cross-field comparison: farklı tarlaları karşılaştırma) güvenilir olması.
+
+## Kural (Hard Gate: sert kapı)
+- **Calibrated Dataset (kalibre veri seti)** üretilmeden **AnalysisJob (analiz işi)** başlatılamaz.
+- Worker (AI/Processing: yapay zekâ işleyici) **ham DN (Digital Number: sensör ham sayısal değeri)** veya kalibrasyonu belirsiz veriyi kabul etmez.
+
+## İstasyon Akışı (Real-world: saha şartlarına uygun)
+1) **Offline Security PC (internetsiz güvenlik makinesi)**:
+   - AV (Anti-Virus: zararlı yazılım taraması) + manifest/hash (bütünlük kanıtı) + quarantine (karantina: izolasyon)
+2) **Online Producer Workstation (izole internetli kalibrasyon makinesi)**:
+   - Producer (DJI Terra / Pix4Dfields vb.) ile **tam radyometrik kalibrasyon**
+   - Reflectance Panel (yansıma paneli: ışığı bilinen hedef) kullanımı SOP’a (Standard Operating Procedure: standart iş akışı) göre zorunlu
+   - Processing Report (işleme raporu) + Calibration Result (kalibrasyon çıktısı) + QC Report (Quality Control: kalite raporu)
+3) **Dispatch/Upload (gönderim)**:
+   - Calibrated Dataset + raporlar + manifest/hash → Worker’a gönder
+
+## Platform Sorumluluğu (Backend: sunucu)
+- Calibration Gate (kalibrasyon kapısı): calibrated yoksa job açma
+- QC Gate (kalite kapısı): PASS/WARN/FAIL (geç/uyarı/kal) kararını sakla, UI’a taşı, audit trail (denetim izi) üret
+
+## Çıktı Sözleşmeleri (Contracts: ortak veri şemaları)
+- CalibrationJob / CalibrationResult
+- QCReport (pass_warn_fail + flags + recommended_action)
+- AnalysisJob yalnızca `requires_calibrated=true` ile açılır
+
+## [KR-083] İl Operatörü
+
+**Rol Kodu:** ProvinceOperator
+**Gelir Payı:** Sözleşmeye göre %5-%15 kar payı alır (admin panelden tanımlanır).
+
+**İhtiyaç:** KPI + kapasite planlama (abonelik sayısı, hizmet verilen alan, ödeme toplamı, ilçe yoğunluğu, SLA).
+
+**PII Kuralı:** İl Operatörü **PII GÖRMEZ**.
+
+**Sunum İki Katmanlı:**
+- (A) Merkez - PII ayrı
+- (B) Operatör - SubscriberRef + ilçe veya 1-2 km grid
+
+---
+
+## [KR-019] Expert Portal (Uzman İnceleme)
+
+- Uzman portalı, modelin düşük güven verdiği veya çelişkili durumlarda manuel inceleme için kullanılır (**PII görünmez**)
+- Üyelik self-signup **değildir**: uzman hesabı ADMIN kontrollü açılır (curated onboarding)
+- Bildirim kanalları: **SMS + web portal içi gerçek zamanlı bildirim (WebSocket)**; e-posta kullanılmaz
+- Erişim kuralı: uzman **yalnızca kendisine atanmış** incelemeleri görür (ownership check zorunlu)
+- Uzman karar formatı (özet): `confirmed | corrected | rejected | needs_more_expert`
+- Uzman geri bildirimi `training_grade` ile etiketlenir: `enum A|B|C|D|REJECT`; ayrıca `grade_reason` alanı tutulur (max 200 karakter)
+
+---
+
+## [KR-020] Ücretlendirme
+
+## [KR-021] Genel Prensip
+
+- Ücretler bitki türü ve analiz seçeneğine göre: tek seferlik analiz veya yıllık abonelik
+- Birim: **dönüm**. Kullanıcı m² girse bile sistem dönüme çevirip hesaplar
+- Yıllık abonelikte periyot seçilebilir; sistem bitkiye göre önerir. Öneri dışında seçimde uyarı gösterilir
+
+---
+
+## [KR-022] Fiyat Yönetimi Politikası
+
+- Fiyatlar uygulamada serbest **yazılmaz**; tek kaynak **PriceBook** (Fiyat Kataloğu)
+- Değişiklik sadece **ADMIN** rolünden yönetim paneliyle
+- Versiyonlu + tarih aralıklı; geçmiş siparişlerin fiyatı sonradan **değişmez**
+- Sipariş/abonelik oluşurken fiyat snapshot siparişe yazılır
+- Değişiklikler **audit log'a yazılır**
+
+---
+## [KR-023] Örnek Fiyat Kurgusu (Pamuk)
+
+| Seçenek | Liste Fiyat | İlk Yıl / Abonelik Kurgusu |
+|---------|-------------|---------------------------|
+| Tek seferlik analiz | 50 TL/dönüm/analiz | İlk yıl tanıtım: %50 indirim → 25 TL/dönüm/analiz |
+| Yıllık abonelik | - | Tanıtım fiyatı üzerinden ekstra %25 indirim → 20 TL/dönüm (yıllık birim) |
+---
+
+## [KR-024] Önerilen Tarama Periyodu (Gün)
+
+| Bitki | Önerilen Periyot (gün) |
+|-------|------------------------|
+| Pamuk | 7-10 |
+| Antep Fıstığı | 10-15 |
+| Mısır | 15-20 |
+| Buğday | 10-15 |
+| Ayçiçeği | 7-10 |
+| Üzüm | 7-10 |
+| Zeytin | 15-20 |
+| Kırmızı Mercimek | 10-15 |
+
+---
+
+## [KR-025] Analiz İçeriği (Hizmet Kapsamı)
+
+**Temel İlke:** Sistem ilaçlama kararı **vermez**; yalnızca tespit, risk skoru ve erken uyarı sağlar.
+
+**Rapor Çıktısı (tarla + bitki bazında):**
+- Health Score
+- Su/azot stresi
+- Hastalık/mantar bulguları
+- Zararlı böcek riski
+- Yabancı ot yoğunluğu
+
+---
+
+## [KR-026] Sunum Biçimi
+
+- Harita katmanları (ısı haritası / grid / zonlama)
+- Zaman serisi (yıllık abonelikte karşılaştırma)
+- Özet rapor (PDF ve/veya uygulama içi rapor)
+
+---
+
+## [KR-027] Abonelik Planlayıcı (Subscription Scheduler)
+
+**Amaç:** Yıllık abonelik seçen kullanıcılar için otomatik, periyodik Mission üretimi.
+
+**Tek Seferlik vs Yıllık:**
+- **Tek seferlik:** Kullanıcı talep eder → 1 Mission → tamamlanır
+- **Yıllık:** Kullanıcı periyot seçer → ilk Mission + scheduler → otomatik yeni Missionlar
+
+**Veri Modeli:**
+
+```sql
+create table subscriptions (
+  subscription_id uuid primary key,
+  farmer_user_id uuid not null,
+  field_id uuid not null,
+  crop_type text not null,
+  analysis_type text not null,
+  interval_days int not null check (interval_days > 0),
+  start_date date not null,
+  end_date date not null,
+  next_due_at timestamptz not null,
+  status text not null check (status in ('PENDING_PAYMENT','ACTIVE','PAUSED','CANCELLED')),
+  price_snapshot_id uuid not null,
+  payment_intent_id uuid null references payment_intents(payment_intent_id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index idx_subscriptions_due on subscriptions(status, next_due_at);
+create index idx_subscriptions_field on subscriptions(field_id, status);
+create index idx_subscriptions_payment_intent on subscriptions(payment_intent_id);
+```
+
+**Scheduler Kuralı:**
+1. Her gün/saat cron job çalışır
+2. `status=ACTIVE AND next_due_at <= now()` abonelikleri bulur
+3. Her biri için yeni Mission oluşturur (status=PLANNED)
+4. `next_due_at = next_due_at + interval_days` güncellenir
+5. Duplicate önlemek için `FOR UPDATE SKIP LOCKED` kullanılır
+
+**Scheduler SQL:**
+```sql
+select subscription_id
+from subscriptions
+where status='ACTIVE' and next_due_at <= now()
+for update skip locked;
+```
+
+**API Endpoint'leri:**
+- `POST /subscriptions` — yeni abonelik oluştur
+- `GET /subscriptions/{id}` — detay görüntüle
+- `POST /subscriptions/{id}/pause` — duraklat (PAUSED)
+- `POST /subscriptions/{id}/resume` — devam ettir (ACTIVE)
+- `POST /subscriptions/{id}/cancel` — iptal et (CANCELLED)
+
+---
+
+## [KR-028] Mission Yaşam Döngüsü ve SLA Alanları
+
+**Mission Tanımı:** Bir tarlanın belirli bir tarihte yapılacak tek analiz görevi. Tek seferlik talepten veya yıllık abonelikten oluşabilir.
+
+**Veri Modeli:**
+
+```sql
+create table missions (
+  mission_id uuid primary key,
+  field_id uuid not null,
+  subscription_id uuid null references subscriptions(subscription_id),
+  payment_intent_id uuid null references payment_intents(payment_intent_id),
+  requested_by_user_id uuid not null,
+  crop_type text not null,
+  analysis_type text not null,
+  status text not null check (status in (
+    'PLANNED','ASSIGNED','ACKED','FLOWN','UPLOADED','ANALYZING','DONE','FAILED','CANCELLED'
+  )),
+  -- SLA zaman damgaları
+  planned_at timestamptz null,
+  due_at timestamptz null,
+  flown_at timestamptz null,
+  uploaded_at timestamptz null,
+  analyzed_at timestamptz null,
+  price_snapshot_id uuid not null,
+  created_at timestamptz not null default now()
+);
+
+create index idx_missions_status_due on missions(status, due_at);
+create index idx_missions_field_created on missions(field_id, created_at desc);
+create index idx_missions_subscription on missions(subscription_id, created_at desc);
+create index idx_missions_payment_intent on missions(payment_intent_id);
+
+-- Mission plan / rota dosyası (KML/KMZ/WPML)
+create table mission_route_files (
+  mission_id uuid primary key references missions(mission_id),
+  parcel_ref text not null,
+  route_file_type text not null check (route_file_type in ('KML','KMZ','WPML')),
+  route_file_version text null,
+  route_file_hash_sha256 text null,
+  created_at timestamptz not null default now()
+);
+
+create index idx_route_files_parcel on mission_route_files(parcel_ref);
+```
+
+**Status Geçişleri:**
+```
+PLANNED → ASSIGNED → ACKED → FLOWN → UPLOADED → ANALYZING → DONE
+                                                          ↘ FAILED
+                                                          ↘ CANCELLED
+```
+
+**Pilot Inbox (Bekleyen Görevler):**
+```sql
+select mission_id, field_id, crop_type, analysis_type, planned_at, due_at, status
+from missions
+where status in ('PLANNED','ASSIGNED','ACKED')
+order by due_at nulls last, created_at asc;
+```
+
+**Mission - Subscription İlişkisi:**
+- `subscription_id` null ise: tek seferlik analiz
+- `subscription_id` dolu ise: yıllık abonelikten otomatik üretilmiş
+
+---
+
+## [KR-029] YZ Eğitim Geri Bildirimi (Training Feedback Loop)
+
+**Amaç:** Uzman düzeltmelerini YZ modeline geri beslemek ve model iyileştirmesi yapmak.
+
+**Veri Modeli:**
+
+```sql
+create table feedback_records (
+  feedback_id uuid primary key,
+  review_id uuid not null,
+  mission_id uuid not null,
+  model_id text not null,
+  verdict text not null check (verdict in ('confirmed','corrected','rejected','needs_more_expert')),
+  corrected_class text null,
+  notes text null,
+  time_spent_seconds int null,
+  training_grade text not null check (training_grade in ('A','B','C','D','REJECT')),
+  grade_reason text null,
+  expert_confidence numeric(4,3) null,
+  image_quality numeric(4,3) null,
+  no_conflict boolean null,
+  created_at timestamptz not null default now()
+);
+
+create index idx_feedback_grade on feedback_records(training_grade, created_at desc);
+create index idx_feedback_mission_created on feedback_records(mission_id, created_at desc);
+```
+
+**Uzman Verdict Payload (API):**
+```json
+{
+  "verdict": "confirmed | corrected | rejected | needs_more_expert",
+  "corrected_class": "string (verdict=corrected ise zorunlu)",
+  "notes": "string (corrected/rejected ise zorunlu)",
+  "time_spent_seconds": 123
+}
+```
+
+**RabbitMQ Mesaj Şeması (`ai.feedback.v1`):**
+```json
+{
+  "schema_version": "ai.feedback.v1",
+  "feedback_id": "uuid",
+  "mission_id": "uuid",
+  "model_id": "string",
+  "crop_type": "pamuk",
+  "analysis_type": "disease",
+  "verdict": "corrected",
+  "corrected_class": "verticillium_wilt",
+  "training_grade": "A",
+  "grade_reason": "high_conf + high_quality",
+  "asset_refs": {
+    "rgb_uri": "s3://.../rgb.tif",
+    "ms_uri": "s3://.../ms.tif"
+  },
+  "created_at": "2026-01-27T00:00:00Z"
+}
+```
+
+**Expert_reviews vs Feedback_records:**
+- `expert_reviews` → Uzman portal UI için (review assignment, status tracking)
+- `feedback_records` → YZ training pipeline için (pure data export)
+- İlişki: `feedback_records.review_id` → `expert_reviews.review_id`
+
+---
+
+## [KR-032] Training Export Standardı
+
+**Amaç:** Uzman feedback'lerini standart formatta export ederek model eğitim pipeline'ına aktarmak.
+
+### Format 1: JSONL (Sınıflandırma Düzeltmeleri)
+
+**Dosya adı:** `training_feedback_cls_v1.jsonl`  
+**Schema:** `training.feedback.cls.v1`  
+**Format:** Her satır bir JSON örneği
+
+```json
+{"schema_version":"training.feedback.cls.v1","feedback_id":"...","mission_id":"...","crop_type":"pamuk","analysis_type":"disease","model_id":"m1","model_pred":"fusarium_wilt","model_conf":0.68,"expert_verdict":"corrected","corrected_class":"verticillium_wilt","training_grade":"A","grade_reason":"corrected+high_conf","rgb_uri":"s3://.../rgb.tif","ms_uri":"s3://.../ms.tif","created_at":"2026-01-27T00:00:00Z"}
+```
+
+### Format 2: GeoJSON (Segmentation/Alan Verileri)
+
+**Dosya adı:** `training_feedback_geo_v1.geojson`  
+**Schema:** `training.feedback.geo.v1`
+
+```json
+{
+  "type": "FeatureCollection",
+  "schema_version": "training.feedback.geo.v1",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "feedback_id": "...",
+        "mission_id": "...",
+        "crop_type": "pamuk",
+        "analysis_type": "disease",
+        "training_grade": "B",
+        "verdict": "confirmed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[29.0,41.0],[29.1,41.0],[29.1,41.1],[29.0,41.1],[29.0,41.0]]]
+      }
+    }
+  ]
+}
+```
+
+### Admin Export Endpoint
+
+**Endpoint:** `POST /admin/training/export`
+
+**Request:**
+```json
+{
+  "format": "JSONL_CLS_V1 | GEOJSON_V1",
+  "from": "2026-01-01",
+  "to": "2026-01-31",
+  "min_grade": "B"
+}
+```
+
+**Export SQL:**
+```sql
+select *
+from feedback_records
+where created_at::date between :from and :to
+  and training_grade in ('A','B')  -- min_grade parametresine göre
+order by created_at asc;
+```
+
+**Schema Versiyonlama:**
+- v1.x: geriye uyumlu eklemeler (optional field)
+- v2.0: breaking change (schema migration gerektirir)
+
+---
+
+## [KR-030] Notlar, Sınırlar ve Uyum
+
+- **Drone standardı:** Başlangıçta DJI Mavic 3M dışında veri kabul edilmez (sonraki fazda değerlendirilir)
+- Görüntüler yerel istasyon üzerinden sisteme alınır; log kayıtları denetim izi oluşturur
+- **KVKK:** PII ile operasyon/raporlama verisi ayrıdır; il operatörü PII görmez
+- Model çıktısı karar değildir; nihai aksiyon çiftçi ve/veya ziraat mühendisinin sorumluluğundadır
+
+---
+
+## [KR-031] Pilot Hakediş ve Ödeme Politikası
+
+- Pilotlar, bir ay içinde **ONAYLANMIŞ** görevlerde taradıkları alan üzerinden hakediş kazanır
+- Ödeme dönemi: takip eden ayın ilk haftası (1-7 arası) toplu ödeme
+- Birim fiyat: **varsayılan 3 TL/dönüm**; il bazında CENTRAL_ADMIN tanımlayabilir (PilotRateByProvince)
+- Öneri: ay sonu 23:59 cut-off + 3 iş günü itiraz penceresi + ilk 7 gün içinde ödeme
+- **Observed kapsama-izi olmadan ödeme YOK; MissionID eşleşmeden ödeme YOK**
+
+
+## [KR-033] Ödeme ve Manuel Onay (Müşteri Tahsilat Akışı)
+
+**Amaç:** Çiftçi / Kooperatif / Üretici Birliği tarafından açılan **tek seferlik Mission** veya **yıllık Subscription** taleplerinde tahsilatı standartlaştırmak ve talebin “işlenebilir” hale gelmesini **ödeme onayına** bağlamak.
+
+> ⚠️ **PII Notu:** Kimlik modeli gereği kullanıcı e-postası sistemde zorunlu alan değildir. IBAN/EFT ile ödeme senaryosunda kullanıcı dekontu **odeme@tarlaanaliz.com** adresine kendi e-postasıyla gönderebilir; platform DB’de e-posta adresi tutulmaz. Dekont/ek yönetimi için platform DB’de yalnızca `receipt_blob_id` gibi opak bir referans tutulur (object store / PII vault).  
+
+### 1) Ödeme Yöntemleri (Payment Method)
+
+- `CREDIT_CARD` (Kredi kartı / online): Ödeme sağlayıcısı üzerinden tahsilat (hosted checkout / payment session).  
+- `IBAN_TRANSFER` (Havale/EFT): Kullanıcı IBAN’a transfer yapar; açıklamaya `PaymentRef` yazar; dekontu e-posta ile iletir; **Merkez Yönetim (CENTRAL_ADMIN)** manuel onay verir.
+
+### 2) Ödeme Durumları (Payment Status)
+
+`PaymentIntent.status` kanonik durumları:
+
+- `PAYMENT_PENDING` → ödeme bekleniyor (intent açıldı, tahsilat doğrulanmadı)
+- `PAID` → ödeme tamamlandı (provider webhook veya manuel admin onayı)
+- `REJECTED` → ödeme reddedildi (dekont/uyuşmazlık/eksik bilgi)
+- `EXPIRED` → süre aşıldı (örn. 7 gün içinde ödeme gelmezse)
+- `CANCELLED` → ödeme intent’i iptal edildi (kullanıcı/admin; **PAID olmadan**)
+- `REFUNDED` → ödeme iade edildi (**yalnızca PAID sonrası**)
+
+**Kural-1 (Mission):** `PAID` olmadan Mission **ASSIGNED** olamaz.  
+**Kural-2 (Subscription):** `PAID` olmadan Subscription **ACTIVE** olamaz; `PENDING_PAYMENT` durumunda scheduler Mission üretmez.  
+**Kural-3 (İptal):** `PAYMENT_PENDING` iken kullanıcı `CANCELLED` yapabilir.  
+**Kural-4 (İade):** `REFUNDED` yalnızca `PAID` sonrası admin aksiyonu ile olur; iade edilen ödeme, hedefe göre aşağıdaki politikayı tetikler.
+
+### 3) Müşteri Tahsilat Akışı (Payment Flow)
+
+**Tek seferlik analiz (Mission)**
+1. Kullanıcı Mission talebi oluşturur → sistem `price_snapshot_id` üretir.
+2. Sistem bir `PaymentIntent` üretir (`PAYMENT_PENDING`) ve kullanıcıya yöntem seçtirir.
+3. `CREDIT_CARD`: hosted checkout → webhook/redirect → `PAID` → Mission “işlenebilir” hale gelir.
+4. `IBAN_TRANSFER`: uygulama IBAN + `PaymentRef` + dekont e-posta talimatı gösterir → admin manuel kontrol → `PAID` veya `REJECTED`.
+5. `PAID` olunca Mission atama kuyruğuna girer (PLANNED/ASSIGNED akışına uygun).
+
+**Yıllık abonelik (Subscription)**
+1. Kullanıcı aboneliği başlatır → Subscription `PENDING_PAYMENT` açılır, `price_snapshot_id` yazılır.
+2. Sistem Subscription hedefli bir `PaymentIntent` üretir (`PAYMENT_PENDING`).
+3. `PAID` olunca Subscription `ACTIVE` olur ve scheduler çalışır.
+
+**IBAN Talimat Ekranı (PWA)**
+- IBAN (kopyala)
+- Alıcı adı
+- Tutar
+- `PaymentRef` (kopyala)
+- “Açıklamaya PaymentRef yaz; dekontu odeme@tarlaanaliz.com adresine gönder; konu satırı PaymentRef olsun.”
+
+### 4) Veri Modeli (PostgreSQL)
+
+```sql
+-- Payment intent: hedefi Mission veya Subscription olabilir
+create table payment_intents (
+  payment_intent_id uuid primary key,
+
+  payer_user_id uuid not null,
+  coop_id uuid null,
+
+  target_type text not null check (target_type in ('MISSION','SUBSCRIPTION')),
+  target_id uuid not null,
+
+  amount_kurus bigint not null check (amount_kurus > 0),
+  currency text not null default 'TRY',
+
+  method text not null check (method in ('CREDIT_CARD','IBAN_TRANSFER')),
+  status text not null check (status in ('PAYMENT_PENDING','PAID','REJECTED','EXPIRED','CANCELLED','REFUNDED')),
+
+  payment_ref text not null unique,     -- örn: PAY-20260129-4F8K2Q
+  price_snapshot_id uuid not null,      -- immutable pricing snapshot
+
+  -- Kredi kartı tarafı (opsiyonel; kart bilgisi asla tutulmaz)
+  provider text null,                   -- iyzico/paytr/...
+  provider_session_id text null,
+  provider_payment_id text null,
+
+  -- Havale dekontu (platform DB PII tutmaz)
+  receipt_blob_id text null,            -- object store referansı
+  receipt_meta jsonb null,              -- {"source":"email","message_id_hash":"..."} (PII içermez)
+
+  -- Manuel onay / iade / iptal
+  approved_by_admin_user_id uuid null,
+  approved_at timestamptz null,
+  paid_at timestamptz null,
+
+  rejected_at timestamptz null,
+  rejected_reason text null,
+
+  cancelled_at timestamptz null,
+  cancelled_reason text null,
+
+  refunded_at timestamptz null,
+  refund_amount_kurus bigint null,
+  refund_reason text null,
+
+  expires_at timestamptz null,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index idx_payment_intents_target on payment_intents(target_type, target_id);
+create index idx_payment_intents_status on payment_intents(status, created_at desc);
+create index idx_payment_intents_payer on payment_intents(payer_user_id, created_at desc);
+```
+
+**Mission / Subscription Bağlantısı (şema güncellemesi)**
+
+```sql
+-- Tek seferlik Mission'lar payment_intent_id taşır; subscription üzerinden gelen Mission'lar null olabilir
+alter table missions add column payment_intent_id uuid null references payment_intents(payment_intent_id);
+create index idx_missions_payment_intent on missions(payment_intent_id);
+
+-- Subscription ödeme bekleme durumu + payment intent ilişkisi
+-- Not: status seti KR-027 ile güncellenir (PENDING_PAYMENT eklenir)
+alter table subscriptions add column payment_intent_id uuid null references payment_intents(payment_intent_id);
+create index idx_subscriptions_payment_intent on subscriptions(payment_intent_id);
+```
+
+### 5) API Endpoint’leri (Platform)
+
+**Farmer/Coop**
+- `POST /payments/intents` — PaymentIntent oluştur (mission/subscription için)
+- `GET /payments/intents/{id}` — durum görüntüle
+- `GET /payments/intents/{id}/instructions` — IBAN talimatı / provider checkout bilgisi
+- `POST /payments/intents/{id}/cancel` — (PENDING iken) iptal
+
+**Provider callback**
+- `POST /payments/webhook/{provider}` — ödeme sağlayıcı callback/webhook
+
+**Admin (CENTRAL_ADMIN)**
+- `GET /admin/payments/intents?status=PAYMENT_PENDING` — bekleyen tahsilatlar
+- `POST /admin/payments/intents/{id}/attach-receipt` — dekont referansı ekle (`receipt_blob_id`)
+- `POST /admin/payments/intents/{id}/mark-paid` — manuel onay
+- `POST /admin/payments/intents/{id}/reject` — manuel red
+- `POST /admin/payments/intents/{id}/refund` — iade (PAID → REFUNDED)
+
+### 6) Otomatik Süre Dolma Politikası (Expire)
+
+- `IBAN_TRANSFER` için intent açıldıktan sonra **7 gün** içinde ödeme doğrulanmazsa:
+  - `PAYMENT_PENDING → EXPIRED`
+  - kullanıcıya SMS + uygulama içi bildirim
+
+### 7) Bildirimler (SMS + Uygulama İçi)
+
+- `PAYMENT_PENDING` → “Ödeme bekleniyor. Ref: {PaymentRef}. IBAN ekranındaki talimata göre dekontu odeme@tarlaanaliz.com adresine gönder.”
+- `PAID` → “Ödemeniz alındı. Talebiniz işleme alındı.”
+- `REJECTED` → “Ödemeniz reddedildi. Neden: {reason}”
+- `EXPIRED` → “Ödeme süresi doldu. Ref: {PaymentRef}”
+- `CANCELLED` → “Talebiniz iptal edildi. Ref: {PaymentRef}”
+- `REFUNDED` → “Ödemeniz iade edildi. Ref: {PaymentRef}”
+
+### 8) İptal / İade Politikası (Kanonik)
+
+- **İptal (CANCELLED):** yalnızca `PAYMENT_PENDING` iken yapılır.  
+- **İade (REFUNDED):** yalnızca `PAID` iken admin aksiyonu ile yapılır.
+- **İade + Mission ilişkisi:** Mission henüz `FLOWN` aşamasına gelmediyse Mission `CANCELLED` yapılabilir; `FLOWN/UPLOADED/ANALYZING/DONE` sonrası iade kararı ticari politikadır ama sistemde `REFUNDED` tutulabilir (geri ödeme ayrı gateway işlemi olabilir).
+- **İade + Subscription ilişkisi:** Subscription `ACTIVE` iken iade edilirse Subscription `CANCELLED` yapılır ve yeni Mission üretilmez (mevcut Missionlar ayrıca iptal edilebilir).
+
+### 9) Audit Log (WORM) — Minimum Olaylar
+
+- `PAYMENT.INTENT_CREATED`
+- `PAYMENT.MARK_PAID` / `PAYMENT.WEBHOOK_PAID`
+- `PAYMENT.REJECTED`
+- `PAYMENT.EXPIRED`
+- `PAYMENT.CANCELLED`
+- `PAYMENT.REFUNDED`
+
+> Bu olaylar BÖLÜM 3 log standardına uygun şekilde JSONL olarak üretilir; `correlation_id` zorunludur; PII yoktur.
+
+---
+
+## [KR-040] Güvenlik Kabul Kriterleri/Test Checklist (SDLC Entegrasyonu)
+
+**Amaç:** TXT repo mantalitesindeki savunma-derinliği (defense-in-depth) güvenlik yaklaşımını, ölçülebilir kabul kriterlerine ve SDLC kapılarına (PR/CI/Release/Ops) bağlamak.
+
+**Yer:** İş Planı seviyesinde politika ve denetim beklentileri. Bu ek, ürün ve saha dokümanları için bağlayıcı kabul kriteridir.
+
+---
+
+## [KR-041] SDLC Kapıları (Gate) - Zorunlu Kontroller
+
+### PR Gate (merge öncesi)
+- Contracts pinleme: CONTRACTS_VERSION (SemVer) + CONTRACTS_SHA256 zorunlu; değişiklikte breaking-change kontrolü
+- Unit test: kritik güvenlik fonksiyonları (hash, imza doğrulama, allowlist, RBAC) %80+ satır kapsama hedefi
+- Secret scan: repo içinde anahtar/sertifika/PIN bulunmayacak (pre-commit + CI)
+- Lint/Type-check: statik analiz hatasız; şema validasyonu (OpenAPI/JSON Schema) çalışır
+
+### CI Gate (pipeline)
+- Integration test: EdgeKiosk → Backend mTLS el sıkışması + cihaz kimliği doğrulama
+- Contract test: DTO/Schema üretimi + geriye dönük uyumluluk (backward-compatible) kontrolü
+- SAST/Dependency scan: bilinen kritik zafiyet yok (CVSS yüksek olanlar blok)
+- Container scan + SBOM: imaj taraması temiz; SBOM üretilir ve arşivlenir
+
+### Release Gate (prod'a çıkış)
+- Sürümleme: release notları + migration planı; breaking change varsa sürüm artışı ve geriye uyumluluk stratejisi
+- Smoke test: uçtan uca örnek akış (Mission create → ingest → worker → sonuç → harita katmanı) başarılı
+- Sertifika yönetimi: kiosk sertifikaları basılı/dağıtılmış; rotasyon takvimi kayıtlı
+- Rollback planı: veri bütünlüğünü bozmadan geri dönüş adımları tanımlı
+
+### Ops Checklist (günlük/haftalık)
+- Karantina kuyruğu: bekleyen dosya/mission sayısı ve sebepleri raporlanır
+- Audit/WORM log doğrulaması: logların değişmediği kontrol edilir, saklama süresi politikası izlenir
+- Anahtar/sertifika rotasyonu: süre dolumu yaklaşanlar listelenir, planlı yenileme yapılır
+- Anomali izleme: olağandışı ingest hızı, tekrar eden başarısız doğrulama, şüpheli IP/cihaz hareketleri alarm üretir
+
+---
+
+## [KR-042] Kabul Kriterleri Matrisi
+
+| Güvenlik Katmanı | Kabul Kriteri (DoD) | Test Kanıtı | SDLC Gate |
+|------------------|---------------------|-------------|-----------|
+| Kimlik & Yetki (RBAC) + PII ayrımı | İl Operatörü ve saha rolleri PII görmez; sadece FieldID/özet KPI görür. Admin işlemleri audit log üretir. | RBAC unit + API yetki e2e; negatif test: yetkisiz erişim 403. Audit log kaydı doğrulanır. | PR + CI |
+| Cihaz kimliği + mTLS | Sadece kayıtlı kiosk cihazı, sertifikalı mTLS ile ingest endpoint'ine erişebilir; sertifika iptali anında bloklar. | Integration test: mTLS başarılı/başarısız senaryolar; sertifika revocation testi. | CI + Release |
+| Veri bütünlüğü: SHA-256 manifest + imza | Her ingest paketi için manifest (dosya listesi + hash) ve imza zorunlu; hash uyuşmazsa karantina. | Unit test (hash/manifest), e2e: bozuk dosya → karantina + alarm. | PR + CI |
+| Allowlist / içerik doğrulama | Sadece izinli uzantı/MIME; maksimum boyut/çözünürlük limitleri; zip-slip ve path traversal engelli. | Unit test: uzantı/MIME; fuzz test örnekleri; e2e negatif senaryo. | PR + CI |
+| Zararlı taraması (AV/EDR) + karantina | AV taraması geçmeden hiçbir dosya iş akışına giremez; şüpheli içerik karantinaya alınır, etiketlenir. | E2e senaryo: EICAR test dosyası → karantina + olay kaydı. | CI + Ops |
+| Air-gapped karantina PC + tek yönlü aktarım | Karantina PC internetsiz; dış medya steril prosedürü; çıktı sadece imzalı paket olarak ilerler. | SOP denetim checklisti + örnek denetim kaydı. | Release + Ops |
+| Zincir-of-custody + immutable (WORM) audit | MissionID/BatchID/CardID ve işlem adımları değiştirilemez logda; log saklama süresi uygulanır. | Log bütünlüğü kontrolü + denetim raporu; e2e: ingest adımı log zinciri. | CI + Ops |
+| Secrets yönetimi (rotasyon) | Hiçbir secret repo'da yok; vault/secret store; rotasyon periyodu tanımlı; sızma halinde iptal prosedürü. | Secret scan raporu + rotasyon kaydı + revocation drill çıktısı. | PR + Release + Ops |
+| Rate limiting + anomali tespiti | Ingest ve auth endpoint'lerinde rate limit; tekrar eden başarısız doğrulama alarmları. | Load test + saldırı simülasyonu (çoklu deneme) → 429 ve alarm. | CI + Ops |
+| AI izolasyonu + least privilege | Worker sadece job kuyruğu/sonuç yazma yetkisine sahip; ham PII yok; ağ erişimi minimum. | IAM policy testi + container/network policy doğrulama; e2e job akışı. | CI + Release |
+
+---
+
+## [KR-043] Test Checklist (Senaryo Bazlı)
+
+| Senaryo | Adımlar (özet) | Beklenen Sonuç | Kanıt/Artefakt |
+|---------|----------------|----------------|----------------|
+| SC-01: Normal ingest (offline → senkron) | Pilot görev dosyası → uçuş → SD ingest → manifest doğrula → AV tarama → upload/queue → worker sonuç → harita katmanı | Tüm adımlar başarılı; sonuç katmanı oluşur; audit zinciri tam | E2E test raporu + log zinciri + sonuç ekran görüntüsü |
+| SC-02: Hash uyuşmazlığı | Manifestteki bir dosyayı değiştir → ingest | Karantina; olay kaydı; işleme alınmaz | Karantina kaydı + alarm kaydı |
+| SC-03: Yetkisiz cihaz | mTLS sertifikası olmayan cihazla ingest dene | Erişim reddi; audit log + alarm | Integration test çıktısı + log |
+| SC-04: EICAR/zararlı içerik | Test imzası bulunan dosyayı ingest et | AV blok + karantina | AV raporu + karantina kaydı |
+| SC-05: PII sızma testi | İl Operatörü rolüyle PII endpoint'ine erişmeyi dene | 403; veri dönmez; deneme audit log'a düşer | RBAC e2e raporu |
+| SC-06: Contract breaking change | Schema'da alan sil/isim değiştir | CI breaking-change detector fail; merge/release blok | CI artefaktı + diff raporu |
+
+---
+
+## [KR-050] Kimlik Doğrulama ve Üyelik Akışı (Sade Model)
+
+- Kimlik bilgisi olarak yalnızca **Telefon Numarası** kullanılır (E-posta ve TCKN **toplanmaz**)
+- **Kayıt:** Telefon Numarası girilir ve 6 haneli sayısal PIN belirlenir
+- **Giriş:** Telefon Numarası + 6 haneli PIN ile yapılır
+- **Doğrulama adımı yoktur**; süreç bilinçli olarak sadeleştirilmiştir
+- **PIN unutulursa:** Merkez/Kooperatif/İl Operatörü panelinden PIN sıfırlanır; kullanıcı ilk girişte yeni PIN belirler
+- Kullanıcıyı yormayan minimum korumalar: giriş deneme sınırı (rate limit) ve kısa süreli kilitleme (lockout)
+
+---
+
+## [KR-060] Ürün/Teknik Spesifikasyondan Normatif
+
+## [KR-061] Amaç ve Sabit Çerçeve
+
+Bu bölüm, **[KR-001] Proje Özeti** içindeki "Sabit Çerçeve" maddelerinin **normatif özeti/aynısıdır**.
+
+- Kanonik kaynak: **[KR-001]**
+- Bu bölümde tekrar eden maddeler kaldırıldı (kural değişmedi).
+
+---
+
+## [KR-062] Tasarım İlkeleri
+
+1. **Tek kaynak gerçek:** API ve veri modeli. Web (PWA) iş kuralı kopyalamaz.
+2. **Offline-first:** Yerel istasyon internetsiz çalışabilir; senkronizasyon opsiyonel ve güvenli.
+3. **Denetlenebilirlik (Audit Log):** Fiyat, kurum onayı, eşleştirme ve hakediş adımlarında zorunlu log.
+4. **Eşleştirme hiyerarşisi:** MissionID → BatchID → FieldID → CropSeason. MissionID yoksa coğrafi kesişim + manuel kuyruk.
+
+---
+
+## [KR-063] Roller ve Yetkiler (RBAC)
+
+| Rol Kodu | Kısa Tanım | Özet Yetki |
+|----------|------------|------------|
+| FARMER_SINGLE | Tekil çiftçi | Tarla ekle, analiz talebi aç, rapor görüntüle |
+| FARMER_MEMBER | Kurum üyesi çiftçi | Kendi tarlaları için rapor gör, kurum bağlantısını onayla |
+| COOP_OWNER | Kooperatif sahibi/yetkili | Paket satın alma, kullanıcı yönetimi, analiz talebi, dashboard |
+| COOP_ADMIN | Kooperatif admin | Üye yönetimi, tarla ekleme, analiz talebi |
+| COOP_AGRONOMIST | Kooperatif agronomist | Rapor gör, not gir (aksiyon kararı yok) |
+| COOP_VIEWER | Kooperatif izleyici | Sadece özet/rapor |
+| PILOT | Drone pilotu | Görev gör, uçuş yap, veri teslim et, hakediş önizle |
+| STATION_OPERATOR | Yerel istasyon operatörü | Kiosk ingest, eşleştirme, karantina/antivirüs sonuçları |
+| IL_OPERATOR | İl Operatörü | PII görmeden KPI/özet gelir ve operasyon metrikleri |
+| CENTRAL_ADMIN | Merkez yönetici | Fiyat/PriceBook, kurum onayı, rol atama, audit |
+| AI_SERVICE | YZ analiz servisi | Job tüket, rapor üret, sonuç yaz |
+| EXPERT | Uzman | İnceleme görüntüle, verdict ver, PII görmez |
+
+---
+
+## [KR-064] Harita Katman Standardı (Layer Registry)
+
+Katmanlar web (PWA) arayüzünde aynı Layer Registry üzerinden tanımlanır. Renk + desen/ikon + opaklık + öncelik tutarlı olmalıdır.
+
+| LayerCode | Legend | Renk | Desen/İkon | Opaklık | Öncelik | Çıktı Tipi |
+|-----------|--------|------|------------|---------|---------|------------|
+| HEALTH | Sağlık | Yeşil | Leaf ikon + gradient heatmap | 0.55 | 10 | Raster/Heatmap |
+| WEED | Yabancı ot | Sarı/Hardal | Noktalı desen + weed ikon | 0.60 | 60 | Polygon/Zone |
+| DISEASE | Hastalık | Turuncu | Çapraz çizgi + stethoscope ikon | 0.65 | 70 | Polygon/Zone |
+| PEST | Zararlı böcek | Kırmızı | X/desen + bug ikon | 0.70 | 80 | Polygon/Zone |
+| FUNGUS | Mantar | Mor | Çapraz tarama + mushroom ikon | 0.65 | 75 | Polygon/Zone |
+| WATER_STRESS | Su stresi | Mavi | Damla noktalı desen + droplet ikon | 0.45 | 50 | Raster/Zone |
+| N_STRESS | Azot stresi | Soluk gri | Çapraz çizgili desen + N ikon | 0.45 | 40 | Raster/Zone |
+
+**Çakışma kuralı:** priority yüksek katman üstte görünür. **Erişilebilirlik için ikon + desen zorunludur.**
+
+---
+
+## [KR-065] Pilot Hakediş Doğrulama (Expected vs Observed)
+
+- **Expected Area:** FieldBoundary veya Mission flightplan sınırı (m²)
+- **Observed Area:** GeoTIFF/ortomozaik kapsama-izi (kapsama) poligonu (m²)
+
+```python
+coverage_ratio = Area(intersection(observed, expected)) / Area(expected)
+```
+
+**Hakediş kuralı:**
+- `coverage_ratio >= 0.95` → TAM ödeme
+- `0.80 <= coverage_ratio < 0.95` → KISMİ + opsiyonel inceleme
+- `coverage_ratio < 0.80` → TEKRAR UÇUŞ veya itiraz/inceleme
+
+---
+
+## [KR-066] Güvenlik ve KVKK
+
+- PII ayrı veri alanında tutulur; raporlama ve KPI katmanı pseudonymous kimliklerle çalışır
+- İl operatörü: ilçe veya 1-2 km grid yoğunluk; isim/telefon/IBAN alanlarına **erişemez**
+- Yerel istasyon: offline karantina, hash doğrulama, antivirüs raporu ve zincir log (chain-of-custody)
+- Drone seri no ve kart kimliği doğrulama sahte veri enjeksiyon riskini azaltır
+- Fiyat ve kurum onayı değişiklikleri audit log zorunlu; snapshot ile geçmiş siparişler etkilenmez
+
+---
+
+## [KR-070] YZ Analiz İzolasyonu
+**Amaç:** YZ (Worker) altyapısının, web/platform tarafından “sorgulanabilir bir servis” gibi kullanılmasını engellemek; model/ham veri yüzeyini küçültmek.
+
+[ZORUNLU]
+- YZ analiz altyapısı **inbound istek kabul etmez**; yalnızca paket/dispatch ile job alır (bkz. **[KR-017]**)
+- Web (PWA) ve public backend, Worker ağına **doğrudan erişemez** (ayrı ağ segmenti + mTLS + allowlist)
+- EdgeKiosk/istasyon tarafında **model çalıştırma yoktur** (model hırsızlığı riskini azaltmak için)
+- Model/servis erişimleri ve deny olayları audit/WORM log’a düşer (bkz. **BÖLÜM 3**)
+
+**İlgili maddeler:** [KR-066], [KR-017], [KR-040-043], EK-SOP-SEC, BÖLÜM 3, BÖLÜM 4
+---
+
+## [KR-080] Ana İş Akışları için Teknik Kurallar
+
+Bu bölüm; ana iş akışlarının iş planı anlatısında zaten bulunan kısımlarını tekrar etmez. Sadece teknik spesifikasyonda eklenen/sertleştirilen kuralları listeler.
+
+**Tarla Ekleme:**
+- il/ilçe/mahalle/köy + ada/parsel + alan (m²); sistem FieldID üretir
+- Tekil kayıt kuralı: il+ilçe+mahalle/köy+ada+parsel kombinasyonu tekrar edemez
+- Bitki türü tanımı (tarla bazında); birden fazla bitki varsa alan (m²) ile ayrı ayrı
+- Analiz talebi: bitki türü bazında; yıllık abonelik veya tek seferlik
+- Bitki türü değişimi: yılda 1 defa, sadece 1 Ekim - 31 Aralık (backend kuralı)
+
+**Kooperatif:**
+- Başvuru: evrak + 'Onay Bekliyor' durumunda açılır; admin onayı ile 'Aktif' olur
+- Üye daveti: QR / 6 haneli davet kodu; çiftçi hesabından bağlantıyı onaylar (onay olmadan kooperatif adına işlem kısıtlanabilir)
+- Tarla tekil; sahiplik/erişim ayrı yaklaşımı önerilir (çakışma/yanlış ekleme riskine karşı)
+
+**Pilot:**
+- Pilot sadece DJI Mavic 3M kullanır; drone seri numarası doğrulama referansıdır
+- Günlük teslim: uçuş çıktısı her gün hafıza kartı ile yerel istasyona aktarılır
+- Her uçuşta farklı hafıza kartı kullanılır. DJI tarafındaki kart kilidi/PIN gibi özellikler varsa opsiyonel ek katmandır; güvenlik garantisi değildir (bkz. [KR-015])
+- Eşleştirme zorunlu: Yüklenen çekimler kayıtlı tarla ile eşleşmezse işlenmez
+- Pilot sonuç raporunu görmez; sadece operasyon durumu görür
+
+**İl Operatörü:**
+- İl operatörü PII görmez; sadece ticari KPI ve kapasite planlama metrikleri görür
+- Coğrafya: ilçe düzeyi veya 1-2 km grid yoğunluk katmanı (pseudonymous)
+
+---
+
+## [KR-081] Kontrat Şemaları (Contract-First) — Kanonik JSON Schema
+
+**Amaç:** "olmalı" seviyesinden çıkıp, kodlamadan önce ortak dilin **makine-doğrulanabilir** (machine-verifiable) hale gelmesi.
+
+Bu bölümde iki kanonik payload tanımı dokümana gömülüdür ve `shared/contracts` üretiminin tek kaynağı olarak kabul edilir.
+
+### KR-081.1 AnalysisJob — JSON Schema (draft 2020-12)
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tarlaanaliz.example/contracts/analysis_job.v1.schema.json",
+  "title": "AnalysisJob",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "job_id", "created_at", "field", "crop", 
+    "mission", "capture_set", "inputs", "processing", "pricing_snapshot", "status"
+  ],
+  "properties": {
+    "schema_version": { "const": "analysis_job.v1" },
+    "job_id": { "type": "string", "pattern": "^[0-9a-fA-F-]{36}$" },
+    "idempotency_key": { "type": "string", "maxLength": 128 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "field": {
+      "type": "object",
+      "required": ["field_id", "area_donum", "parcel_ref"],
+      "properties": {
+        "field_id": { "type": "string", "maxLength": 64 },
+        "parcel_ref": { "type": "string", "maxLength": 128 },
+        "area_donum": { "type": "number", "minimum": 0 }
+      }
+    },
+    "crop": {
+      "type": "object",
+      "required": ["crop_code", "crop_name"],
+      "properties": {
+        "crop_code": { "type": "string", "maxLength": 32 },
+        "crop_name": { "type": "string", "maxLength": 64 }
+      }
+    },
+    "mission": {
+      "type": "object",
+      "required": ["mission_id", "flight_date", "drone"],
+      "properties": {
+        "mission_id": { "type": "string", "maxLength": 64 },
+        "flight_date": { "type": "string", "format": "date" }
+      }
+    }
+  }
+}
+```
+
+### KR-081.2 AnalysisResult — JSON Schema
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tarlaanaliz.example/contracts/analysis_result.v1.schema.json",
+  "title": "AnalysisResult",
+  "type": "object",
+  "required": ["schema_version", "result_id", "job_id", "created_at", "status"],
+  "properties": {
+    "schema_version": { "const": "analysis_result.v1" },
+    "result_id": { "type": "string", "pattern": "^[0-9a-fA-F-]{36}$" },
+    "job_id": { "type": "string", "pattern": "^[0-9a-fA-F-]{36}$" },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["finding_code", "label"],
+        "properties": {
+          "finding_code": { "type": "string", "maxLength": 64 },
+          "label": { "type": "string", "maxLength": 256 },
+          "severity": { "type": "number", "minimum": 0, "maximum": 1 },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "area_donum": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["overall_health_index", "notes"],
+      "properties": {
+        "overall_health_index": { "type": "number", "minimum": 0, "maximum": 1 },
+        "notes": { "type": "string", "maxLength": 4000, "description": "YZ analizidir; ilaçlama kararı vermez." }
+      }
+    }
+  }
+}
+```
+
+**Sürümleme kuralı (SemVer):**
+- `v1.x`: geriye uyumlu (backward compatible) eklemeler serbest (optional field eklenebilir)
+- `v2.0`: breaking change; `CONTRACTS_VERSION` ve `CONTRACTS_SHA256` zorunlu güncellenir
+
+---
+
+# BÖLÜM 2: SAHA OPERASYONLARI (SOP)
+
+> **Kaynak:** SAHA_OPERASYON_SOP.md
+
+## 2.1 Temel Kavramlar ve Kimlikler
+
+| Kimlik | Açıklama |
+|--------|----------|
+| FieldID | Sistemde üretilen benzersiz tarla kimliği (Tarla ID) |
+| MissionID | Bir tarlanın belirli bir tarih penceresinde planlanan tek görev kimliği (sistem tarafından üretilir) |
+| BatchID | Yerel istasyona tek seferde yüklenen veri paketi kimliği |
+| CardID | Hafıza kartına verilen envanter kimliği (QR/etiket) |
+| ParcelRef | Ada/parsel referansı (resmi referans), PII değildir |
+
+---
+
+## 2.2 Görev Dosyası Standardı: KMZ içinde WPML
+
+**Pratik standart:** KMZ paketinin içinde WPML ile tanımlı waypoint/waylines görev verisi bulunur (wpmz/template.kml + wpmz/waylines.wpml).
+
+**Görev dosyası adlandırma:**
+```
+{MissionID}_{ParcelRef}_{YYYYMMDD}.kmz
+```
+(Dosya adında PII bulunmaz; MissionID dosya adında ve metadata içinde yer alır)
+
+**Seed-KMZ önerisi:** Pilot 2 ile bir kez "doğru ayarlı" örnek görev oluşturulup export edilen KMZ şablon kabul edilir; sistem sadece sınır/parametre alanlarını günceller. Bu, sürüm farklarında kırılmayı azaltır.
+
+---
+
+## 2.3 Pilot 2 Operatör SOP (Saha Adımları)
+
+### 2.3.1 Görev Import
+1. Kumandaya (RC) SD kart veya dahili depolamaya görev KMZ dosyasını kopyala
+2. DJI Pilot 2 > Flight Route > Import Route (KMZ/KML) > dosyayı seç
+3. Görev türünü onayla ve görevi Run/Start ile başlat
+
+### 2.3.2 Görev Bitişi ve Teslim
+1. Görev tamamlandığında, karttaki dosya sayısı/boyutu mantıklı mı kontrol et (aşırı düşükse eksik çekim şüphesidir)
+2. Kart, yerel istasyona teslim edilir
+3. **Pilot PII görmez; sadece MissionID/ParcelRef seviyesinde görev bilgisi görür**
+
+---
+
+## 2.4 Yerel İstasyon: QC + Bütünlük + Eşleştirme
+
+**Öncelik eşleştirme:**
+- MissionID → FieldID
+- MissionID yoksa, kapsama-izi/footprint - field boundary kesişimi ile aday eşleştirme yapılır
+- Düşük güven veya çakışma varsa manuel inceleme kuyruğuna (gerekirse Expert Portal) alınır
+
+**Bütünlük:** MANIFEST.json + SHA-256 hash (dosya listesi, boyutlar, zaman damgaları)
+
+**Hızlı QC (MVP):**
+- coverage_ratio
+- blur/overexposure bayrakları
+- CRS/extent kontrolü (GeoTIFF)
+- eksik bant/indeks bayrakları
+
+**Karantina:** hash uyuşmazlığı, malware şüphesi veya eşleştirme hatası olan paketler quarantine klasörüne alınır, audit log'a yazılır.
+
+---
+
+## 2.5 DJI Terra / Pix4Dfields Çıktı Standardı (GeoTIFF)
+
+**Hedef çıktılar:**
+- Ortomozaik
+- İndeks haritaları (NDVI/NDRE vb.)
+- Bant kompozitleri
+
+**Format:** Coğrafi referanslı GeoTIFF (CRS bilgisi ve extent doğru olmalı)
+
+> **Not:** DJI Terra Operation Guide v4.2; NDVI ve NDRE gibi vegetation index çıktılarının desteklendiğini belirtir.
+
+---
+
+## 2.6 YZ Modeli ile Analiz: İzolasyon ve Tek Yönlü Akış
+
+Bu SOP maddesi, operasyonel hatırlatma niteliğindedir.
+
+- Tek yönlü akışın **kanonik normatif tanımı**: **[KR-017]**
+- YZ izolasyon “çerçevesi”: **[KR-070]**
+- Saha güvenlik adımları/checklist: **EK-SOP-SEC**
+- Eşleştirme + QC + karantina: **[KR-016]** + **[KR-066]** + **2.4**
+
+---
+
+## 2.7 Uçuş Manifesti: Pratik ve Sürdürülebilir Yöntem
+
+- Manifesti karta "elle yazmak" yerine, manifesti dijital olarak MissionID merkezli tut
+- Pilot uygulamasında görev check-in/out, yerel istasyonda kart intake taraması
+- **CardID için QR etiket kullan:** pilot göreve başlarken CardID + MissionID eşleştirmesini tek tıkla kaydeder; istasyon teslimde aynı eşleşmeyi doğrular
+- DJI Pilot 2 uçuş kayıtları ihtiyaç halinde kumandadan export edilebilir (Flight Record / log export). Bu kayıtlar, manifestin kanıt katmanıdır.
+
+---
+
+## 2.8 Kaynaklar
+
+- DJI Cloud API - WPML dokümantasyonu: template.kml ve waylines.wpml referansları (developer.dji.com, 2025)
+- DJI Terra Operation Guide v4.2 (djicdn.com, 2024-10-08)
+- DJI Pilot 2 Flight Record / log export kılavuzu (support.dji.com)
+
+---
+
+## EK-SOP-SEC: Saha Güvenlik Checklist (Pilot + İstasyon)
+
+Bu ek, saha operasyonunda veri bütünlüğü ve zincir izlenebilirliğini (chain-of-custody) korumak için minimum kontrol listesidir.
+
+### Pilot Checklist
+- [ ] Görev dosyası (KMZ) yalnızca kanonik formatta olmalı ve MissionID/ParcelRef/Date alanları doğrulanmalı
+- [ ] Uçuş sonrası SD kartta beklenmeyen dosya/klasör var mı hızlı kontrol (allowlist dışı ise istasyona bildirim)
+- [ ] SD kart, mühür/etiket ile istasyona teslim; teslim anında CardID/MissionID eşleştirmesi yapılır
+
+### İstasyon (Kiosk/Karantina) Checklist
+- [ ] CardID + MissionID + BatchID kaydı açılır; giriş zamanı ve teslim alan kişi loglanır
+- [ ] Dosya allowlist/MIME/size kontrolü yapılır; uygunsuz içerik karantinaya alınır
+- [ ] SHA-256 manifest üretilir veya doğrulanır; hash uyuşmazlığı varsa karantina + alarm
+- [ ] AV taraması (EICAR dahil test prosedürü) geçmeden hiçbir dosya işlenmez
+- [ ] **Karantina PC internetsiz**; dış medya steril prosedürü uygulanır; çıktılar imzalı paket olarak aktarılır
+- [ ] Upload/queue sonrası worker sonucu geldiğinde MissionID üzerinden sonuç-tarla eşleşmesi doğrulanır
+- [ ] Tüm adımlar audit log'a yazılır; günlük karantina raporu üretilir
+
+### Minimum Kanıt (Denetim İçin)
+- Manifest dosyası + hash raporu
+- AV tarama raporu
+- Karantina kayıtları (varsa)
+- MissionID tabanlı ingest/işleme log zinciri
+
+---
+
+# BÖLÜM 3: GÖZLEMLENEBİLİRLİK (OBSERVABILITY) STANDARDI
+
+## 3.1 Log Şeması + Correlation ID
+
+Bu standart, **istasyon offline** akışları dahil uçtan uca iz sürmek (trace) ve denetim (audit) için **zorunludur**.
+PII minimizasyonu gereği loglar **PII içermez**; `actor_id_hash` gibi tek-yönlü kimlikler kullanılır.
+
+### Zorunlu Alanlar (JSONL — her satır 1 olay)
+
+```json
+{
+  "ts": "2026-01-27T10:15:30.123+03:00",
+  "level": "INFO",
+  "service": "station_kiosk | backend | ai_worker | web_pwa",
+  "env": "prod | stage | dev",
+  "app_version": "semver",
+  "event_type": "INGEST | AUTH | RBAC | PRICING | JOB | RESULT | SECURITY | SYSTEM",
+  "event_action": "CREATE | VALIDATE | UPLOAD | QUEUE | START | FINISH | DENY | UPDATE",
+  "outcome": "SUCCESS | FAIL",
+  "correlation_id": "corr_8f3a1e0c6f0d4e3d",
+  "trace_id": "w3c_trace_id_optional",
+  "span_id": "w3c_span_id_optional",
+  "actor_type": "farmer | pilot | il_operator | admin | system",
+  "actor_id_hash": "hash/opaque-id",
+  "device_id": "kiosk_device_id",
+  "field_id": "FieldID",
+  "mission_id": "MissionID",
+  "batch_id": "BatchID",
+  "card_id": "CardID",
+  "station_ingest_run_id": "SIR-...",
+  "job_id": "uuid",
+  "http": {"method": "POST", "path": "/api/v1/ingest", "status": 201},
+  "latency_ms": 123,
+  "error": {"code": "HASH_MISMATCH", "message": "short-safe"},
+  "pii": false
+}
+```
+
+**Kurallar:**
+- `correlation_id` **her zaman zorunlu** ve tüm servislerde aynen taşınır
+- `error.message` max 120 karakter, **PII yok**, stacktrace ayrı (sadece güvenli ortamda)
+
+### Correlation ID Üretimi ve Taşınması (Propagation)
+
+- **Üretim noktası:** `station_kiosk` ingest başlatınca üretir: `corr_<16-32 hex>`
+- **HTTP header:** `X-Correlation-Id: <correlation_id>` zorunlu
+- **W3C Trace Context:** Mümkünse `traceparent` kullanılır; yoksa sadece correlation id yeterlidir
+- **Offline paketleme:** `manifest.json` içine `correlation_id` yazılır ve paket imzasına dahil edilir
+
+### Audit Log (WORM) — Minimum Olay Seti
+
+WORM/immutable audit olayları:
+- `PRICING.UPDATE` (admin) — eski/yeni snapshot hash + kim yaptı
+- `RBAC.ROLE_ASSIGN/ROLE_REVOKE`
+- `EXPERT.ASSIGN/UNASSIGN`
+- `INGEST.QUARANTINE/RELEASE`
+- `JOB.CANCEL`
+- `SECURITY.DENY` (mTLS fail, allowlist fail, signature fail)
+- `RESULT.SIGNATURE_FAIL`
+
+---
+
+# BÖLÜM 4: THREAT MODEL ONE-PAGER
+
+| Varlık (Asset) | Tehdit | Saldırı Yüzeyi | Kontrol / Mitigasyon | Tespit / Kanıt |
+|----------------|--------|----------------|----------------------|----------------|
+| SD Kart | Zararlı dosya / trojan | Pilotun karta dosya eklemesi | Allowlist (uzantı/MIME), boyut limit, AV taraması, karantina | `INGEST.QUARANTINE` audit + AV raporu hash'li |
+| SD Kart | Sahte/eksik içerik | Eksik set, sonradan ekleme | SHA-256 manifest + imza doğrulama | `HASH_MISMATCH` olayı + immutable log |
+| Quarantine PC (air-gapped) | Offline PC enfeksiyonu | USB/SD üzerinden bulaş | Tek yön veri akışı, OS hardening, sadece allowlist device | AV imzaları + boot attestation log (varsa) |
+| EdgeKiosk cihaz kimliği | Cihaz taklidi | mTLS sertifika çalınması | Cihaz kayıt + mTLS + sertifika rotasyonu + iptal listesi | `SECURITY.DENY` + sertifika fingerprint |
+| Backend API | Yetki aşımı | Endpoint suistimali | RBAC, policy testleri, deny-by-default | 403 negatif test kanıtı + audit |
+| Pricing | Fiyat geçmişi bozulması | Admin güncellemesi | PriceBook snapshot + immutable audit | `PRICING.UPDATE` audit + snapshot sha256 |
+| Expert Portal | PII sızıntısı | Panel ekranları | PII yok; sadece FieldID/KPI; maskeleme | Otomatik PII testleri + redaction raporu |
+| Model ağırlıkları | Model çalınması | Worker disk erişimi | Ayrı ağ segmenti, minimal IAM, watermarking | Anomali tespiti + erişim logları |
+| Model zehirleme | Kötü veri girişi | Sahte etiket/uzman | Expert review + provenance + hash zinciri | Review trail + dataset manifest |
+| Job Queue | Replay / duplicate job | Idempotency eksikliği | `idempotency_key` + dedupe | `JOB.DEDUPE` log + metrik |
+| Sonuç katmanları | Manipüle sonuç | Sonuç dosyası değiştirme | Sonuç artifact sha256 + imzalı paket | `RESULT.SIGNATURE_FAIL` |
+| Mobil/Web | Hesap ele geçirme | PIN brute force | Rate limit, lockout, cihaz bazlı throttle | `AUTH.DENY` metrik + audit |
+
+---
+
+### Repository İlişkileri
+
+```
+┌───────────────────────────────────────────┐
+│  tarlaanaliz-contracts (Source of Truth)                  │
+│  - API schemas, OpenAPI specs, enum definitions           │
+│  - Contract validation + breaking change detection        │
+└───────────────────────────────────────────┘
+           ↓ (git submodule)           ↓              ↓
+    ┌──────────┐        ┌──────────┐  ┌──────────┐
+    │   Platform   │         │   Worker   │   │     Edge    │
+    │  (Backend +  │←─RMQ─→│  (AI/ML)   │   │   (Kiosk)   │
+    │   Frontend)  │         │            │   │  (Offline)  │
+    └──────────┘        └──────────┘  └──────────┘
+           ↑                                            ↓
+           └────────────── HTTPS + mTLS ───────┘
+```
+
+
+---
+
+# BÖLÜM 5: GÜVENLİK VE DENETLENEBİLİRLİK — NAVİGASYON
+
+Bu bölüm, güvenlik kurallarını **tekrar etmek** için değil; SSOT içinde “tek bakışta” doğru yerlere yönlendirmek için vardır.
+
+- **Kimlik + brute-force korumaları:** [KR-050] + (testler: SC-SEC-01/02)
+- **RBAC ve PII ayrımı (KVKK):** [KR-063] + [KR-066]
+- **YZ izolasyonu / one-way akış:** [KR-017] (stub: [KR-070], kaldırıldı: [KR-071])
+- **Radyometrik kalibrasyon hard gate:** [KR-018] (alias: [KR-082])
+- **SDLC güvenlik kapıları + kabul kriterleri:** [KR-040]–[KR-043]
+- **Audit/WORM olay şeması + correlation_id:** BÖLÜM 3
+- **Threat model:** BÖLÜM 4
+- **Saha güvenlik checklist:** EK-SOP-SEC
+
+
+# BÖLÜM 6: TEST SENARYOLARI
+
+## 6.1 Expert Portal Tests
+
+| Senaryo | Test Adımı | Beklenen Sonuç |
+|---------|------------|----------------|
+| SC-EXP-01 | Low confidence (0.68 < 0.75) | Expert review oluşturulur + SMS gönderilir |
+| SC-EXP-02 | Uzman login | Dashboard'da pending count görünür |
+| SC-EXP-03 | İnceleme aç | RGB/NIR görüntüler + Model tahmini |
+| SC-EXP-04 | Verdict submit | Feedback AI Worker'a gönderilir |
+| SC-EXP-05 | SLA aşımı (4s+) | Yedek uzman'a escalation |
+
+## 6.2 Güvenlik Tests
+
+| Senaryo | Test | Sonuç |
+|---------|------|-------|
+| SC-SEC-01 | Rate limit 61 req/min | HTTP 429 |
+| SC-SEC-02 | Brute force 16 fail | 30 min lock |
+| SC-SEC-03 | Model extraction 50+ req/day | Anomaly > 0.8 → Throttle |
+| SC-SEC-04 | SQL injection WAF | HTTP 403 |
+| SC-SEC-05 | Watermark verify | Match > 0.9 → Forensic |
+
+---
