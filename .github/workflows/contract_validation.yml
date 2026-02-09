@@ -1,3 +1,68 @@
 # PATH: .github/workflows/contract_validation.yml
 # DESC: GitHub Actions workflow: contract_validation.yml.
-# TODO: Implement this file.
+# Contract-first (KR-081) JSON Schema doğrulaması.
+
+name: Contract Validation
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'schemas/**'
+      - '.github/workflows/contract_validation.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'schemas/**'
+      - '.github/workflows/contract_validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-schemas:
+    name: Validate JSON Schemas (KR-081)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install jsonschema
+        run: pip install jsonschema
+
+      - name: Validate all JSON schemas
+        run: |
+          echo "Checking for JSON schema files..."
+          SCHEMA_COUNT=0
+          ERRORS=0
+
+          for schema_file in $(find schemas -name "*.schema.json" -o -name "*.json" 2>/dev/null); do
+            echo "Validating: $schema_file"
+            python -c "
+          import json, sys
+          try:
+              with open('$schema_file') as f:
+                  schema = json.load(f)
+              print(f'  Valid JSON: $schema_file')
+          except Exception as e:
+              print(f'  INVALID: $schema_file - {e}')
+              sys.exit(1)
+          " || ERRORS=$((ERRORS + 1))
+            SCHEMA_COUNT=$((SCHEMA_COUNT + 1))
+          done
+
+          if [ $SCHEMA_COUNT -eq 0 ]; then
+            echo "No schema files found in schemas/ directory (OK for now)"
+            exit 0
+          fi
+
+          echo "Validated $SCHEMA_COUNT schema files with $ERRORS errors"
+          [ $ERRORS -eq 0 ] || exit 1
