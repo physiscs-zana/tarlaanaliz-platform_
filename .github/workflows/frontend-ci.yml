@@ -1,6 +1,5 @@
 # PATH: .github/workflows/frontend-ci.yml
 # DESC: pnpm/yarn build+lint+e2e (Playwright dahil).
-# TODO: Implement this file.
 name: Frontend CI
 
 # Web (PWA) uygulaması için build, lint ve E2E testleri (Playwright)
@@ -8,13 +7,17 @@ name: Frontend CI
 
 on:
   push:
+    branches: [main, develop]
     paths:
       - 'web/**'
       - 'shared/**'
+      - '.github/workflows/frontend-ci.yml'
   pull_request:
+    branches: [main, develop]
     paths:
       - 'web/**'
       - 'shared/**'
+      - '.github/workflows/frontend-ci.yml'
 
 permissions:
   contents: read

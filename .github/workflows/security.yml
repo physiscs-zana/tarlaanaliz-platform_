@@ -1,3 +1,92 @@
 # PATH: .github/workflows/security.yml
 # DESC: KR-040/KR-041 çizgisinde güvenlik taramalarını otomatikleştirmek.
-# TODO: Implement this file.
+
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'  # Her Pazartesi 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Run pip-audit
+        run: |
+          pip install -e "." 2>/dev/null || pip install -r <(python -c "
+          import tomllib
+          with open('pyproject.toml', 'rb') as f:
+              data = tomllib.load(f)
+          for dep in data.get('project', {}).get('dependencies', []):
+              print(dep)
+          ") 2>/dev/null || true
+          pip-audit --desc --fix --dry-run || echo "Audit completed with findings"
+
+  bandit-scan:
+    name: Bandit Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install bandit
+        run: pip install bandit[toml]
+
+      - name: Run bandit
+        run: bandit -r src/ -c pyproject.toml --severity-level medium -f json -o bandit-report.json || true
+
+      - name: Display results
+        if: always()
+        run: |
+          if [ -f bandit-report.json ]; then
+            python -c "
+          import json
+          with open('bandit-report.json') as f:
+              data = json.load(f)
+          results = data.get('results', [])
+          if results:
+              print(f'Found {len(results)} issue(s):')
+              for r in results:
+                  print(f\"  [{r['issue_severity']}] {r['issue_text']} - {r['filename']}:{r['line_number']}\")
+          else:
+              print('No security issues found')
+          "
+          fi
+
+      - name: Upload bandit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
+          retention-days: 30
