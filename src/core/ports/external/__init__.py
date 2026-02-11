@@ -8,6 +8,18 @@ from src.core.ports.external.ai_worker_feedback import (
     FeedbackSubmissionResult,
     TrainingDatasetExport,
 )
+from src.core.ports.external.ddos_protection import (
+    DDoSProtection,
+    IPAccessAction,
+    IPAccessRule,
+    IPAccessRuleResult,
+    ProtectionStatus,
+    SecurityEvent,
+    SecurityEventAction,
+    SecurityEventsPage,
+    SecurityLevel,
+    ZoneAnalytics,
+)
 from src.core.ports.external.parcel_geometry_provider import (
     ParcelGeometry,
     ParcelGeometryProvider,
@@ -37,6 +49,17 @@ __all__: list[str] = [
     "FeedbackSubmissionResult",
     "TrainingDatasetExport",
     "FeedbackPipelineStatus",
+    # DDoS Protection
+    "DDoSProtection",
+    "ProtectionStatus",
+    "IPAccessAction",
+    "IPAccessRule",
+    "IPAccessRuleResult",
+    "SecurityEvent",
+    "SecurityEventAction",
+    "SecurityEventsPage",
+    "SecurityLevel",
+    "ZoneAnalytics",
     # Parcel Geometry (KR-013, KR-016)
     "ParcelGeometryProvider",
     "ParcelGeometry",

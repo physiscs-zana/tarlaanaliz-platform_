@@ -1,5 +1,11 @@
 # PATH: src/infrastructure/messaging/__init__.py
-# DESC: Infrastructure adapter/implementation: __init__.py.
-# TODO: Implement this file.
+# DESC: Infrastructure messaging package: event bus ve kuyruk adapter'ları.
+"""Infrastructure messaging adapters."""
 
-__all__: list[str] = []
+from src.infrastructure.messaging.rabbitmq.ai_feedback_publisher import (
+    AIFeedbackPublisher,
+)
+
+__all__: list[str] = [
+    "AIFeedbackPublisher",
+]
