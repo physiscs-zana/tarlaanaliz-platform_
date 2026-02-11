@@ -172,6 +172,14 @@ class Settings(BaseSettings):
     ai_worker_timeout_seconds: int = 60
 
     # ------------------------------------------------------------------
+    # Cloudflare (DDoS Protection)
+    # ------------------------------------------------------------------
+    cloudflare_api_url: str = "https://api.cloudflare.com/client/v4"
+    cloudflare_api_token: SecretStr = SecretStr("")
+    cloudflare_zone_id: str = ""
+    cloudflare_timeout_seconds: int = 15
+
+    # ------------------------------------------------------------------
     # Observability
     # ------------------------------------------------------------------
     sentry_dsn: str = ""
