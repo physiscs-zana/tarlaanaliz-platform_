@@ -22,6 +22,9 @@ from src.core.ports.repositories.payment_intent_repository import (
     PaymentIntentRepository,
 )
 from src.core.ports.repositories.pilot_repository import PilotRepository
+from src.core.ports.repositories.price_snapshot_repository import (
+    PriceSnapshotRepository,
+)
 
 __all__ = [
     "AnalysisResultRepository",
@@ -34,4 +37,5 @@ __all__ = [
     "MissionRepository",
     "PaymentIntentRepository",
     "PilotRepository",
+    "PriceSnapshotRepository",
 ]
