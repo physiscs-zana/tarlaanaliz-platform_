@@ -25,6 +25,17 @@ from src.core.ports.repositories.pilot_repository import PilotRepository
 from src.core.ports.repositories.price_snapshot_repository import (
     PriceSnapshotRepository,
 )
+from src.core.ports.repositories.qc_report_repository import QCReportRepository
+from src.core.ports.repositories.subscription_repository import (
+    SubscriptionRepository,
+)
+from src.core.ports.repositories.user_repository import UserRepository
+from src.core.ports.repositories.weather_block_report_repository import (
+    WeatherBlockReportRepository,
+)
+from src.core.ports.repositories.weather_block_repository import (
+    WeatherBlockRepository,
+)
 
 __all__ = [
     "AnalysisResultRepository",
@@ -38,4 +49,9 @@ __all__ = [
     "PaymentIntentRepository",
     "PilotRepository",
     "PriceSnapshotRepository",
+    "QCReportRepository",
+    "SubscriptionRepository",
+    "UserRepository",
+    "WeatherBlockReportRepository",
+    "WeatherBlockRepository",
 ]
