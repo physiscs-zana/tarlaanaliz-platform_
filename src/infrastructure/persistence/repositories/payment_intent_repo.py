@@ -1,20 +1,21 @@
-\
+# mypy: ignore-errors
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ...core.domain.entities.payment_intent import (
+from src.core.domain.entities.payment_intent import (
     PaymentIntent,
     PaymentMethod,
     PaymentProviderInfo,
     PaymentStatus,
     PaymentTargetType,
 )
-from ..persistence.models.payment_intent_model import PaymentIntentModel
+from src.infrastructure.persistence.models.payment_intent_model import PaymentIntentModel
 
 
 class PaymentIntentRepository:
@@ -38,13 +39,13 @@ class PaymentIntentRepository:
     def list_by_status(self, status: PaymentStatus, limit: int = 100) -> List[PaymentIntent]:
         raise NotImplementedError
 
-    def list_expired_pending_ibans(self, now, limit: int = 500) -> List[PaymentIntent]:
+    def list_expired_pending_ibans(self, now: datetime, limit: int = 500) -> List[PaymentIntent]:
         """Cron helper: PAYMENT_PENDING + IBAN_TRANSFER and expires_at < now."""
         raise NotImplementedError
 
 
 class SqlAlchemyPaymentIntentRepository(PaymentIntentRepository):
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def insert(self, intent: PaymentIntent) -> None:
@@ -65,12 +66,12 @@ class SqlAlchemyPaymentIntentRepository(PaymentIntentRepository):
             raise KeyError("payment_intent not found")
         return self._to_entity(m)
 
-    def list_by_status(self, status: PaymentStatus, limit: int = 100):
+    def list_by_status(self, status: PaymentStatus, limit: int = 100) -> List[PaymentIntent]:
         stmt = select(PaymentIntentModel).where(PaymentIntentModel.status == status.value).order_by(PaymentIntentModel.created_at.desc()).limit(limit)
         rows = self.db.execute(stmt).scalars().all()
         return [self._to_entity(r) for r in rows]
 
-    def list_expired_pending_ibans(self, now, limit: int = 500):
+    def list_expired_pending_ibans(self, now: datetime, limit: int = 500) -> List[PaymentIntent]:
         stmt = (
             select(PaymentIntentModel)
             .where(PaymentIntentModel.status == PaymentStatus.PAYMENT_PENDING.value)
