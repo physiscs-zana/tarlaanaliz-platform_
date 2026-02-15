@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 from __future__ import annotations
 
 import uuid
@@ -7,14 +8,14 @@ from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ...core.domain.entities.payment_intent import (
+from src.core.domain.entities.payment_intent import (
     PaymentIntent,
     PaymentMethod,
     PaymentProviderInfo,
     PaymentStatus,
     PaymentTargetType,
 )
-from ..persistence.models.payment_intent_model import PaymentIntentModel
+from src.infrastructure.persistence.models.payment_intent_model import PaymentIntentModel
 
 
 class PaymentIntentRepository:

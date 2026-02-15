@@ -71,7 +71,7 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Run mypy
-        run: mypy src/ --ignore-missing-imports
+        run: python -m mypy --config-file pyproject.toml src
 
   unit-tests:
     name: Unit Tests (pytest)
