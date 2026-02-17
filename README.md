@@ -133,3 +133,6 @@ pytest --cov=src --cov-report=html
 ## Lisans
 
 Proprietary — TarlaAnaliz
+
+<!-- ci ping 2026-02-17T23:22:51 -->
+
