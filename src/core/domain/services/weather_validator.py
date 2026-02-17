@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 
 
@@ -32,20 +32,22 @@ class FlightRecommendation(Enum):
 
 
 # Geçerli hava koşulları
-VALID_WEATHER_CONDITIONS: frozenset[str] = frozenset({
-    "rain",
-    "heavy_rain",
-    "wind",
-    "strong_wind",
-    "cloud",
-    "overcast",
-    "fog",
-    "hail",
-    "snow",
-    "storm",
-    "dust",
-    "clear",
-})
+VALID_WEATHER_CONDITIONS: frozenset[str] = frozenset(
+    {
+        "rain",
+        "heavy_rain",
+        "wind",
+        "strong_wind",
+        "cloud",
+        "overcast",
+        "fog",
+        "hail",
+        "snow",
+        "storm",
+        "dust",
+        "clear",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -138,14 +140,10 @@ class WeatherValidator:
                 warnings.append("Rüzgar hızı negatif olamaz.")
             elif weather_data.wind_speed_kmh > self.MAX_WIND_SPEED_KMH:
                 severity = max(severity, WeatherSeverity.HIGH, key=_severity_rank)
-                conditions_met.append(
-                    f"Rüzgar hızı aşırı: {weather_data.wind_speed_kmh:.1f} km/h"
-                )
+                conditions_met.append(f"Rüzgar hızı aşırı: {weather_data.wind_speed_kmh:.1f} km/h")
             elif weather_data.wind_speed_kmh > self.WIND_WARNING_KMH:
                 severity = max(severity, WeatherSeverity.MODERATE, key=_severity_rank)
-                warnings.append(
-                    f"Rüzgar hızı yüksek: {weather_data.wind_speed_kmh:.1f} km/h"
-                )
+                warnings.append(f"Rüzgar hızı yüksek: {weather_data.wind_speed_kmh:.1f} km/h")
 
         # Görüş mesafesi kontrolü
         if weather_data.visibility_km is not None:
@@ -154,14 +152,10 @@ class WeatherValidator:
                 warnings.append("Görüş mesafesi negatif olamaz.")
             elif weather_data.visibility_km < self.MIN_VISIBILITY_KM:
                 severity = max(severity, WeatherSeverity.HIGH, key=_severity_rank)
-                conditions_met.append(
-                    f"Görüş mesafesi yetersiz: {weather_data.visibility_km:.1f} km"
-                )
+                conditions_met.append(f"Görüş mesafesi yetersiz: {weather_data.visibility_km:.1f} km")
             elif weather_data.visibility_km < self.VISIBILITY_WARNING_KM:
                 severity = max(severity, WeatherSeverity.MODERATE, key=_severity_rank)
-                warnings.append(
-                    f"Görüş mesafesi düşük: {weather_data.visibility_km:.1f} km"
-                )
+                warnings.append(f"Görüş mesafesi düşük: {weather_data.visibility_km:.1f} km")
 
         # Yağış kontrolü
         if weather_data.precipitation_mm is not None:
@@ -170,14 +164,10 @@ class WeatherValidator:
                 warnings.append("Yağış miktarı negatif olamaz.")
             elif weather_data.precipitation_mm > self.MAX_PRECIPITATION_MM:
                 severity = max(severity, WeatherSeverity.HIGH, key=_severity_rank)
-                conditions_met.append(
-                    f"Yağış miktarı aşırı: {weather_data.precipitation_mm:.1f} mm"
-                )
+                conditions_met.append(f"Yağış miktarı aşırı: {weather_data.precipitation_mm:.1f} mm")
             elif weather_data.precipitation_mm > self.PRECIPITATION_WARNING_MM:
                 severity = max(severity, WeatherSeverity.MODERATE, key=_severity_rank)
-                warnings.append(
-                    f"Yağış miktarı yüksek: {weather_data.precipitation_mm:.1f} mm"
-                )
+                warnings.append(f"Yağış miktarı yüksek: {weather_data.precipitation_mm:.1f} mm")
 
         # Bulut örtüsü kontrolü (multispektral analiz kalitesini etkiler)
         if weather_data.cloud_cover_percent is not None:
@@ -201,7 +191,7 @@ class WeatherValidator:
             is_valid_report=is_valid,
             conditions_met=tuple(conditions_met),
             warnings=tuple(warnings),
-            validated_at=datetime.now(timezone.utc),
+            validated_at=datetime.now(UTC),
         )
 
     def _determine_recommendation(

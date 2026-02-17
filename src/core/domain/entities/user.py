@@ -7,13 +7,13 @@ User domain entity.
 Kimlik modeli: telefon numarasi + 6 haneli PIN (KR-050).
 Roller: KR-063 kanonik RBAC matrisi.
 """
+
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Optional
 
 
 class UserRole(str, Enum):
@@ -50,7 +50,7 @@ class User:
     created_at: datetime
     updated_at: datetime
     must_reset_pin: bool = False
-    coop_id: Optional[uuid.UUID] = None
+    coop_id: uuid.UUID | None = None
 
     # ------------------------------------------------------------------
     # Invariants
@@ -70,7 +70,7 @@ class User:
     # ------------------------------------------------------------------
     def _touch(self) -> None:
         """Stamp updated_at to current UTC time."""
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     # ------------------------------------------------------------------
     # Domain methods
@@ -104,10 +104,7 @@ class User:
     def link_to_coop(self, coop_id: uuid.UUID) -> None:
         """Kullaniciyi bir kooperatife bagla (KR-014)."""
         if self.coop_id is not None:
-            raise ValueError(
-                f"User {self.user_id} is already linked to coop {self.coop_id}. "
-                "Unlink first."
-            )
+            raise ValueError(f"User {self.user_id} is already linked to coop {self.coop_id}. Unlink first.")
         self.coop_id = coop_id
         self._touch()
 

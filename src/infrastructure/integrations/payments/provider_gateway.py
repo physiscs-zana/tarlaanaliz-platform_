@@ -32,13 +32,14 @@ Notlar/SSOT: Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
   Aynı kavram başka yerde tekrar edilmez.
   KR-033: PaymentIntent olmadan paid state olmaz; dekont + manuel onay + audit.
 """
+
 from __future__ import annotations
 
 import hashlib
 import hmac
 import json
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 import structlog
@@ -126,9 +127,9 @@ class ProviderPaymentGateway(PaymentGateway):
         payment_ref: str,
         amount_kurus: int,
         currency: str,
-        description: Optional[str] = None,
-        callback_url: Optional[str] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        description: str | None = None,
+        callback_url: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> PaymentSessionResponse:
         """Ödeme oturumu başlat (KR-033). Retry YAPILMAZ."""
         if amount_kurus <= 0:

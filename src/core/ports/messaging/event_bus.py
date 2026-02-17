@@ -28,13 +28,13 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Awaitable, Callable, Optional
+from collections.abc import Awaitable, Callable
 
 from src.core.domain.events.base import DomainEvent
-
 
 # ------------------------------------------------------------------
 # Type aliases
@@ -119,7 +119,7 @@ class EventBus(ABC):
         event_type: str,
         handler: EventHandler,
         *,
-        group_id: Optional[str] = None,
+        group_id: str | None = None,
     ) -> str:
         """Belirli bir event tipine handler kaydet.
 

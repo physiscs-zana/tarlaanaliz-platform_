@@ -30,12 +30,13 @@ Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_i
   v3.2.2'de redundant çiftler kaldırıldı.
   KR-033: PaymentIntent olmadan paid state olmaz; dekont + manuel onay + audit.
 """
+
 from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 # ------------------------------------------------------------------
@@ -51,8 +52,8 @@ class PaymentSessionResponse:
 
     provider_session_id: str
     checkout_url: str
-    expires_at: Optional[str] = None  # ISO-8601
-    provider_metadata: Optional[dict[str, Any]] = None
+    expires_at: str | None = None  # ISO-8601
+    provider_metadata: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -109,9 +110,9 @@ class PaymentGateway(ABC):
         payment_ref: str,
         amount_kurus: int,
         currency: str,
-        description: Optional[str] = None,
-        callback_url: Optional[str] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        description: str | None = None,
+        callback_url: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> PaymentSessionResponse:
         """Ödeme oturumu başlat (KR-033).
 

@@ -1,5 +1,6 @@
 # PATH: src/core/domain/events/mission_events.py
-# DESC: Mission domain event'leri (MissionAssigned, MissionStarted, DataUploaded, AnalysisRequested, MissionCompleted, MissionCancelled).
+# DESC: Mission domain event'leri (MissionAssigned, MissionStarted, DataUploaded,
+#       AnalysisRequested, MissionCompleted, MissionCancelled).
 
 from __future__ import annotations
 
@@ -25,12 +26,14 @@ class MissionAssigned(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "mission_id": str(self.mission_id),
-            "pilot_id": str(self.pilot_id),
-            "field_id": str(self.field_id),
-            "assignment_source": self.assignment_source,
-        })
+        base.update(
+            {
+                "mission_id": str(self.mission_id),
+                "pilot_id": str(self.pilot_id),
+                "field_id": str(self.field_id),
+                "assignment_source": self.assignment_source,
+            }
+        )
         return base
 
 
@@ -43,10 +46,12 @@ class MissionStarted(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "mission_id": str(self.mission_id),
-            "pilot_id": str(self.pilot_id),
-        })
+        base.update(
+            {
+                "mission_id": str(self.mission_id),
+                "pilot_id": str(self.pilot_id),
+            }
+        )
         return base
 
 
@@ -63,11 +68,13 @@ class DataUploaded(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "mission_id": str(self.mission_id),
-            "batch_id": str(self.batch_id),
-            "pilot_id": str(self.pilot_id),
-        })
+        base.update(
+            {
+                "mission_id": str(self.mission_id),
+                "batch_id": str(self.batch_id),
+                "pilot_id": str(self.pilot_id),
+            }
+        )
         return base
 
 
@@ -81,11 +88,13 @@ class MissionAnalysisRequested(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "mission_id": str(self.mission_id),
-            "field_id": str(self.field_id),
-            "crop_type": self.crop_type,
-        })
+        base.update(
+            {
+                "mission_id": str(self.mission_id),
+                "field_id": str(self.field_id),
+                "crop_type": self.crop_type,
+            }
+        )
         return base
 
 
@@ -98,10 +107,12 @@ class MissionCompleted(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "mission_id": str(self.mission_id),
-            "pilot_id": str(self.pilot_id),
-        })
+        base.update(
+            {
+                "mission_id": str(self.mission_id),
+                "pilot_id": str(self.pilot_id),
+            }
+        )
         return base
 
 
@@ -118,11 +129,13 @@ class MissionCancelled(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "mission_id": str(self.mission_id),
-            "cancel_reason": self.cancel_reason,
-            "cancelled_by": str(self.cancelled_by) if self.cancelled_by else None,
-        })
+        base.update(
+            {
+                "mission_id": str(self.mission_id),
+                "cancel_reason": self.cancel_reason,
+                "cancelled_by": str(self.cancelled_by) if self.cancelled_by else None,
+            }
+        )
         return base
 
 
@@ -138,8 +151,10 @@ class MissionReplanQueued(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "mission_id": str(self.mission_id),
-            "replan_reason": self.replan_reason,
-        })
+        base.update(
+            {
+                "mission_id": str(self.mission_id),
+                "replan_reason": self.replan_reason,
+            }
+        )
         return base

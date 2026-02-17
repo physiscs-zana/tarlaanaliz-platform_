@@ -7,13 +7,13 @@ ExpertReview domain entity.
 Modelin dusuk guven verdigi veya celiskili durumlarda manuel inceleme (KR-019).
 Uzman karar formati: confirmed | corrected | rejected | needs_more_expert.
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Optional
 
 
 class ExpertReviewStatus(str, Enum):
@@ -41,9 +41,9 @@ class ExpertReview:
     status: ExpertReviewStatus
     assigned_at: datetime
     created_at: datetime
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    verdict: Optional[str] = None  # confirmed|corrected|rejected|needs_more_expert
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    verdict: str | None = None  # confirmed|corrected|rejected|needs_more_expert
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -58,11 +58,9 @@ class ExpertReview:
     def start_review(self) -> None:
         """Uzman incelemeye baslar (PENDING -> IN_PROGRESS)."""
         if self.status != ExpertReviewStatus.PENDING:
-            raise ValueError(
-                f"Can only start_review from PENDING, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only start_review from PENDING, current: {self.status.value}")
         self.status = ExpertReviewStatus.IN_PROGRESS
-        self.started_at = datetime.now(timezone.utc)
+        self.started_at = datetime.now(UTC)
 
     def submit_verdict(self, verdict: str) -> None:
         """Uzman karari gonder (IN_PROGRESS -> COMPLETED|REJECTED).
@@ -70,15 +68,11 @@ class ExpertReview:
         Gecerli verdict degerleri: confirmed, corrected, rejected, needs_more_expert.
         """
         if self.status != ExpertReviewStatus.IN_PROGRESS:
-            raise ValueError(
-                f"Can only submit_verdict from IN_PROGRESS, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only submit_verdict from IN_PROGRESS, current: {self.status.value}")
         if verdict not in _VALID_VERDICTS:
-            raise ValueError(
-                f"Invalid verdict: '{verdict}'. Must be one of: {sorted(_VALID_VERDICTS)}"
-            )
+            raise ValueError(f"Invalid verdict: '{verdict}'. Must be one of: {sorted(_VALID_VERDICTS)}")
         self.verdict = verdict
-        self.completed_at = datetime.now(timezone.utc)
+        self.completed_at = datetime.now(UTC)
         if verdict == "rejected":
             self.status = ExpertReviewStatus.REJECTED
         else:

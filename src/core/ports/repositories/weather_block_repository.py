@@ -27,11 +27,11 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
-from typing import List, Optional
 
 from src.core.domain.entities.weather_block_report import WeatherBlockReport
 from src.core.domain.value_objects.weather_block_status import WeatherBlockStatus
@@ -66,9 +66,7 @@ class WeatherBlockRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, weather_block_id: uuid.UUID
-    ) -> Optional[WeatherBlockReport]:
+    async def find_by_id(self, weather_block_id: uuid.UUID) -> WeatherBlockReport | None:
         """weather_block_id ile WeatherBlockReport getir.
 
         Args:
@@ -82,9 +80,7 @@ class WeatherBlockRepository(ABC):
     # Liste sorguları
     # ------------------------------------------------------------------
     @abstractmethod
-    async def list_by_status(
-        self, status: WeatherBlockStatus
-    ) -> List[WeatherBlockReport]:
+    async def list_by_status(self, status: WeatherBlockStatus) -> list[WeatherBlockReport]:
         """Belirli durumdaki tüm hava engeli kayıtlarını getir.
 
         Admin paneli, raporlama ve toplu durum geçişleri için kullanılır.
@@ -97,9 +93,7 @@ class WeatherBlockRepository(ABC):
         """
 
     @abstractmethod
-    async def list_blocking_by_mission_id(
-        self, mission_id: uuid.UUID
-    ) -> List[WeatherBlockReport]:
+    async def list_blocking_by_mission_id(self, mission_id: uuid.UUID) -> list[WeatherBlockReport]:
         """Bir görevi engelleyen (PENDING/CONFIRMED) hava engeli kayıtlarını getir.
 
         KR-028: PENDING veya CONFIRMED durumda görev uçurulamaz.
@@ -116,8 +110,8 @@ class WeatherBlockRepository(ABC):
         self,
         field_id: uuid.UUID,
         *,
-        status: Optional[WeatherBlockStatus] = None,
-    ) -> List[WeatherBlockReport]:
+        status: WeatherBlockStatus | None = None,
+    ) -> list[WeatherBlockReport]:
         """Bir tarlaya ait hava engeli kayıtlarını getir (durum filtresi opsiyonel).
 
         Args:

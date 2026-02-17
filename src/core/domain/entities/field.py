@@ -8,14 +8,15 @@ Her tarla icin il, ilce, mahalle/koy, ada, parsel ve alan (m2) tutulur.
 Tekil kayit kurali: il+ilce+mahalle/koy+ada+parsel kombinasyonu tekrar edemez.
 Bitki turu degisimi: yilda 1 defa, sadece 1 Ekim - 31 Aralik (KR-013).
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class FieldStatus(str, Enum):
@@ -43,9 +44,9 @@ class Field:
     status: FieldStatus
     created_at: datetime
     updated_at: datetime
-    crop_type: Optional[str] = None
-    crop_type_updated_at: Optional[date] = None
-    geometry: Optional[Dict[str, Any]] = None
+    crop_type: str | None = None
+    crop_type_updated_at: date | None = None
+    geometry: dict[str, Any] | None = None
 
     # ------------------------------------------------------------------
     # Computed properties
@@ -81,7 +82,7 @@ class Field:
     # Internal helpers
     # ------------------------------------------------------------------
     def _touch(self) -> None:
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     # ------------------------------------------------------------------
     # Domain methods
@@ -108,13 +109,12 @@ class Field:
             )
 
         # KR-013: Yilda yalnizca 1 defa
-        if self.crop_type_updated_at is not None:
-            if self.crop_type_updated_at.year == as_of.year:
-                raise ValueError(
-                    f"Bitki turu bu yil ({as_of.year}) icinde zaten degistirildi "
-                    f"(son degisiklik: {self.crop_type_updated_at}). "
-                    f"Yilda yalnizca 1 defa degistirilebilir (KR-013)."
-                )
+        if self.crop_type_updated_at is not None and self.crop_type_updated_at.year == as_of.year:
+            raise ValueError(
+                f"Bitki turu bu yil ({as_of.year}) icinde zaten degistirildi "
+                f"(son degisiklik: {self.crop_type_updated_at}). "
+                f"Yilda yalnizca 1 defa degistirilebilir (KR-013)."
+            )
 
         self.crop_type = new_crop_type.strip()
         self.crop_type_updated_at = as_of

@@ -8,13 +8,13 @@ Bir tarlanin belirli bir tarihte yapilacak tek analiz gorevi.
 Tek seferlik talepten veya yillik abonelikten olusabilir (KR-028).
 PAID olmadan Mission ASSIGNED olamaz (KR-033 Kural-1).
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Optional
 
 
 class MissionStatus(str, Enum):
@@ -61,14 +61,14 @@ class Mission:
     status: MissionStatus
     price_snapshot_id: uuid.UUID
     created_at: datetime
-    subscription_id: Optional[uuid.UUID] = None
-    payment_intent_id: Optional[uuid.UUID] = None
-    pilot_id: Optional[uuid.UUID] = None
-    planned_at: Optional[datetime] = None
-    due_at: Optional[datetime] = None
-    flown_at: Optional[datetime] = None
-    uploaded_at: Optional[datetime] = None
-    analyzed_at: Optional[datetime] = None
+    subscription_id: uuid.UUID | None = None
+    payment_intent_id: uuid.UUID | None = None
+    pilot_id: uuid.UUID | None = None
+    planned_at: datetime | None = None
+    due_at: datetime | None = None
+    flown_at: datetime | None = None
+    uploaded_at: datetime | None = None
+    analyzed_at: datetime | None = None
 
     # ------------------------------------------------------------------
     # Invariants
@@ -109,24 +109,24 @@ class Mission:
         """Pilot gorevi onaylar (ASSIGNED -> ACKED)."""
         self._transition_status(MissionStatus.ACKED)
 
-    def mark_flown(self, flown_at: Optional[datetime] = None) -> None:
+    def mark_flown(self, flown_at: datetime | None = None) -> None:
         """Ucus tamamlandi (ACKED -> FLOWN)."""
         self._transition_status(MissionStatus.FLOWN)
-        self.flown_at = flown_at or datetime.now(timezone.utc)
+        self.flown_at = flown_at or datetime.now(UTC)
 
-    def mark_uploaded(self, uploaded_at: Optional[datetime] = None) -> None:
+    def mark_uploaded(self, uploaded_at: datetime | None = None) -> None:
         """Veri yuklendi (FLOWN -> UPLOADED)."""
         self._transition_status(MissionStatus.UPLOADED)
-        self.uploaded_at = uploaded_at or datetime.now(timezone.utc)
+        self.uploaded_at = uploaded_at or datetime.now(UTC)
 
     def start_analysis(self) -> None:
         """Analiz basladi (UPLOADED -> ANALYZING)."""
         self._transition_status(MissionStatus.ANALYZING)
 
-    def complete(self, analyzed_at: Optional[datetime] = None) -> None:
+    def complete(self, analyzed_at: datetime | None = None) -> None:
         """Analiz tamamlandi (ANALYZING -> DONE)."""
         self._transition_status(MissionStatus.DONE)
-        self.analyzed_at = analyzed_at or datetime.now(timezone.utc)
+        self.analyzed_at = analyzed_at or datetime.now(UTC)
 
     def fail(self) -> None:
         """Gorev basarisiz oldu (herhangi bir aktif durum -> FAILED)."""

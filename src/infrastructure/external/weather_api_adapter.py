@@ -8,10 +8,11 @@ KR-015-5: Hava durumu engeli, görev planlamasını etkiler.
 
 Retry: Transient hatalarda exponential backoff.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 import structlog
@@ -44,7 +45,7 @@ class WeatherData:
         cloud_cover_pct: float,
         visibility_km: float,
         conditions: str,
-        raw_data: Optional[dict[str, Any]] = None,
+        raw_data: dict[str, Any] | None = None,
     ) -> None:
         self.latitude = latitude
         self.longitude = longitude

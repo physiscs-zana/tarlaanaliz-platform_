@@ -30,6 +30,7 @@ Bağımlılıklar: FastAPI WebSocket, structlog, asyncio.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -37,8 +38,8 @@ import json
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 import structlog
 
@@ -52,10 +53,8 @@ class WebSocketConnection:
     connection_id: str
     user_id: str
     websocket: Any  # FastAPI WebSocket instance
-    connected_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
-    last_ping: Optional[datetime] = None
+    connected_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    last_ping: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -67,9 +66,7 @@ class Notification:
     title: str
     body: str
     data: dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
         """JSON-serializable dict dönüşümü."""
@@ -122,7 +119,7 @@ class WebSocketNotificationManager:
 
         # Ping/pong ayarları
         self._ping_interval = ping_interval_seconds
-        self._ping_task: Optional[asyncio.Task[None]] = None
+        self._ping_task: asyncio.Task[None] | None = None
 
     @property
     def active_connection_count(self) -> int:
@@ -261,7 +258,7 @@ class WebSocketNotificationManager:
         self,
         notification: Notification,
         *,
-        exclude_user_ids: Optional[set[str]] = None,
+        exclude_user_ids: set[str] | None = None,
     ) -> int:
         """Tüm bağlı kullanıcılara bildirim gönder.
 
@@ -388,7 +385,7 @@ class WebSocketNotificationManager:
         for conn_id, connection in list(self._connections.items()):
             try:
                 await connection.websocket.send_json({"type": "ping"})
-                connection.last_ping = datetime.now(timezone.utc)
+                connection.last_ping = datetime.now(UTC)
             except Exception:
                 dead_connections.append(conn_id)
 
@@ -411,7 +408,7 @@ class WebSocketNotificationManager:
                 if connection:
                     await connection.websocket.close()
             except Exception:
-                pass
+                logger.debug("websocket_close_error", conn_id=conn_id)
             await self.disconnect(conn_id)
 
         logger.info("websocket_all_connections_closed")

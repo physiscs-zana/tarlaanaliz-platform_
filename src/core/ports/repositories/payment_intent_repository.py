@@ -30,11 +30,11 @@ Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_i
   v3.2.2'de redundant çiftler kaldırıldı.
   KR-033: PaymentIntent olmadan paid state olmaz; dekont + manuel onay + audit.
 """
+
 from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
-from typing import List, Optional
 
 from src.core.domain.entities.payment_intent import (
     PaymentIntent,
@@ -71,9 +71,7 @@ class PaymentIntentRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, payment_intent_id: uuid.UUID
-    ) -> Optional[PaymentIntent]:
+    async def find_by_id(self, payment_intent_id: uuid.UUID) -> PaymentIntent | None:
         """payment_intent_id ile PaymentIntent getir.
 
         Args:
@@ -84,9 +82,7 @@ class PaymentIntentRepository(ABC):
         """
 
     @abstractmethod
-    async def find_by_payment_ref(
-        self, payment_ref: str
-    ) -> Optional[PaymentIntent]:
+    async def find_by_payment_ref(self, payment_ref: str) -> PaymentIntent | None:
         """payment_ref ile PaymentIntent getir.
 
         Benzersiz ödeme referansı (PAY-YYYYMMDD-XXXXXX) ile arama.
@@ -103,7 +99,7 @@ class PaymentIntentRepository(ABC):
         self,
         target_type: PaymentTargetType,
         target_id: uuid.UUID,
-    ) -> Optional[PaymentIntent]:
+    ) -> PaymentIntent | None:
         """Hedef türü ve ID ile PaymentIntent getir.
 
         Bir Mission veya Subscription'a ait ödeme niyetini bulmak için kullanılır.
@@ -124,8 +120,8 @@ class PaymentIntentRepository(ABC):
         self,
         payer_user_id: uuid.UUID,
         *,
-        status: Optional[PaymentStatus] = None,
-    ) -> List[PaymentIntent]:
+        status: PaymentStatus | None = None,
+    ) -> list[PaymentIntent]:
         """Bir kullanıcının ödeme niyetlerini getir (durum filtresi opsiyonel).
 
         Args:
@@ -137,9 +133,7 @@ class PaymentIntentRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_status(
-        self, status: PaymentStatus
-    ) -> List[PaymentIntent]:
+    async def list_by_status(self, status: PaymentStatus) -> list[PaymentIntent]:
         """Belirli durumdaki tüm ödeme niyetlerini getir.
 
         Süre aşımı kontrolü, raporlama ve admin paneli için kullanılır.

@@ -29,12 +29,12 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 # ------------------------------------------------------------------
@@ -60,8 +60,8 @@ class SmsResult:
     message_id: str
     status: SmsDeliveryStatus
     phone_number_masked: str = ""  # ör: +90***1234
-    error_code: Optional[str] = None
-    error_message: Optional[str] = None
+    error_code: str | None = None
+    error_message: str | None = None
 
 
 @dataclass(frozen=True)
@@ -101,7 +101,7 @@ class SMSGateway(ABC):
         *,
         phone_number: str,
         message: str,
-        sender_id: Optional[str] = None,
+        sender_id: str | None = None,
     ) -> SmsResult:
         """Tek bir SMS mesajı gönder.
 
@@ -128,7 +128,7 @@ class SMSGateway(ABC):
         *,
         recipients: list[str],
         message: str,
-        sender_id: Optional[str] = None,
+        sender_id: str | None = None,
     ) -> SmsBatchResult:
         """Birden fazla alıcıya aynı mesajı gönder.
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 class PricebookError(Exception):
@@ -163,9 +163,7 @@ class PricebookCalculator:
 
         rule = self.find_matching_rule(crop_type, area_m2)
         if not rule:
-            raise PricebookError(
-                f"Fiyat kuralı bulunamadı: crop_type={crop_type}, area_m2={area_m2}"
-            )
+            raise PricebookError(f"Fiyat kuralı bulunamadı: crop_type={crop_type}, area_m2={area_m2}")
 
         area_hectares = area_m2 / 10_000.0
         base_amount = int(area_hectares * rule.base_price_per_hectare_kurus)
@@ -185,7 +183,7 @@ class PricebookCalculator:
             total_amount_kurus=total_amount,
             currency=rule.currency,
             rule_id=rule.rule_id,
-            calculated_at=datetime.now(timezone.utc),
+            calculated_at=datetime.now(UTC),
         )
 
     def create_snapshot(
@@ -220,7 +218,7 @@ class PricebookCalculator:
             discount_percentage=discount_pct,
             currency=calculation.currency,
             rule_id=calculation.rule_id,
-            captured_at=datetime.now(timezone.utc),
+            captured_at=datetime.now(UTC),
         )
 
     def calculate_subscription_price(
@@ -268,5 +266,5 @@ class PricebookCalculator:
             total_amount_kurus=total_amount,
             currency=single.currency,
             rule_id=single.rule_id,
-            calculated_at=datetime.now(timezone.utc),
+            calculated_at=datetime.now(UTC),
         )

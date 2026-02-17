@@ -31,13 +31,13 @@ Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon ta�
   Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
   Aynı kavram başka yerde tekrar edilmez.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 
 # ------------------------------------------------------------------
@@ -87,7 +87,7 @@ class ProtectionStatus:
     under_attack_mode: bool
     ddos_l7_enabled: bool
     active_rule_count: int = 0
-    last_checked_at: Optional[str] = None  # ISO-8601
+    last_checked_at: str | None = None  # ISO-8601
 
 
 @dataclass(frozen=True)
@@ -101,7 +101,7 @@ class IPAccessRule:
     ip_address: str
     action: IPAccessAction
     notes: str = ""
-    created_at: Optional[str] = None  # ISO-8601
+    created_at: str | None = None  # ISO-8601
 
 
 @dataclass(frozen=True)
@@ -129,7 +129,7 @@ class SecurityEvent:
     uri: str = ""
     user_agent: str = ""
     rule_id: str = ""
-    occurred_at: Optional[str] = None  # ISO-8601
+    occurred_at: str | None = None  # ISO-8601
 
 
 @dataclass(frozen=True)
@@ -287,7 +287,7 @@ class DDoSProtection(ABC):
         self,
         *,
         zone_id: str,
-        action: Optional[IPAccessAction] = None,
+        action: IPAccessAction | None = None,
         page: int = 1,
         per_page: int = 50,
     ) -> tuple[list[IPAccessRule], int]:
@@ -315,8 +315,8 @@ class DDoSProtection(ABC):
         self,
         *,
         zone_id: str,
-        since: Optional[datetime] = None,
-        until: Optional[datetime] = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
         limit: int = 50,
         cursor: str = "",
     ) -> SecurityEventsPage:
@@ -347,8 +347,8 @@ class DDoSProtection(ABC):
         self,
         *,
         zone_id: str,
-        since: Optional[datetime] = None,
-        until: Optional[datetime] = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
     ) -> ZoneAnalytics:
         """Zone güvenlik analitiklerini al.
 

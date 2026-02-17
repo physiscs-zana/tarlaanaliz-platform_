@@ -20,13 +20,15 @@ Testler: Unit test (mock bağımlılıklar), integration test (gerçek bağıml�
 Bağımlılıklar: Settings, structlog, asyncio.
 Notlar/SSOT: Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
 """
+
 from __future__ import annotations
 
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any
 
 import structlog
 
@@ -51,7 +53,7 @@ class CheckResult:
     status: HealthStatus
     latency_ms: float
     detail: str = ""
-    error: Optional[str] = None
+    error: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """JSON-serializable dict."""
@@ -73,9 +75,7 @@ class HealthReport:
 
     status: HealthStatus
     checks: list[CheckResult]
-    checked_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    checked_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
         """JSON-serializable dict."""
@@ -176,7 +176,7 @@ class HealthChecker:
                 latency_ms=latency_ms,
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             latency_ms = (time.monotonic() - start_time) * 1000
             logger.warning(
                 "health_check_timeout",
@@ -223,9 +223,7 @@ class HealthChecker:
         results = await asyncio.gather(*tasks, return_exceptions=False)
 
         # Birleşik durum belirle
-        unhealthy_count = sum(
-            1 for r in results if r.status == HealthStatus.UNHEALTHY
-        )
+        unhealthy_count = sum(1 for r in results if r.status == HealthStatus.UNHEALTHY)
 
         if unhealthy_count == 0:
             overall_status = HealthStatus.HEALTHY

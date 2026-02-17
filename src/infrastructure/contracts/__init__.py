@@ -8,7 +8,7 @@ from src.infrastructure.contracts.schema_registry import (
 )
 
 __all__: list[str] = [
-    "SchemaRegistry",
     "SchemaNotFoundError",
+    "SchemaRegistry",
     "SchemaValidationError",
 ]

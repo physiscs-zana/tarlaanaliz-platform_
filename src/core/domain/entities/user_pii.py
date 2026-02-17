@@ -7,12 +7,12 @@ UserPII domain entity.
 KVKK uyumu geregi PII alanlari operasyonel veriden ayri tutulur (KR-066).
 Il operatoru ve saha rolleri bu entity'ye ERISMEZ.
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 
 @dataclass
@@ -26,17 +26,17 @@ class UserPII:
     user_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
-    full_name: Optional[str] = None
-    province: Optional[str] = None
-    district: Optional[str] = None
-    iban_encrypted: Optional[str] = None
+    full_name: str | None = None
+    province: str | None = None
+    district: str | None = None
+    iban_encrypted: str | None = None
 
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
     def _touch(self) -> None:
         """Stamp updated_at to current UTC time."""
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     # ------------------------------------------------------------------
     # Domain methods

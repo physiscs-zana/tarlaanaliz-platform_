@@ -8,11 +8,12 @@ Mission bazlı SLA (Service Level Agreement) metriklerini temsil eder.
 Planlama, uçuş, işleme ve teslimat aşamalarının süre ölçümlerini içerir.
 KR-015 ve KR-028 ile tutarlı kalır.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar
 
 
 class SLAMetricsError(Exception):
@@ -40,11 +41,11 @@ class SLAMetrics:
     """
 
     planned_at: datetime
-    flight_started_at: Optional[datetime] = None
-    flight_completed_at: Optional[datetime] = None
-    upload_completed_at: Optional[datetime] = None
-    analysis_completed_at: Optional[datetime] = None
-    delivered_at: Optional[datetime] = None
+    flight_started_at: datetime | None = None
+    flight_completed_at: datetime | None = None
+    upload_completed_at: datetime | None = None
+    analysis_completed_at: datetime | None = None
+    delivered_at: datetime | None = None
 
     # Varsayılan SLA limitleri (saat)
     DEFAULT_FLIGHT_SLA_HOURS: ClassVar[int] = 48
@@ -55,9 +56,7 @@ class SLAMetrics:
         if self.planned_at is None:
             raise SLAMetricsError("planned_at zorunludur.")
         if not isinstance(self.planned_at, datetime):
-            raise SLAMetricsError(
-                f"planned_at datetime olmalıdır, alınan tip: {type(self.planned_at).__name__}"
-            )
+            raise SLAMetricsError(f"planned_at datetime olmalıdır, alınan tip: {type(self.planned_at).__name__}")
         # Kronolojik sıra doğrulaması
         timestamps = [
             ("planned_at", self.planned_at),
@@ -73,8 +72,7 @@ class SLAMetrics:
             if ts is not None:
                 if last_ts is not None and ts < last_ts:
                     raise SLAMetricsError(
-                        f"Kronolojik sıra ihlali: {name} ({ts.isoformat()}) "
-                        f"< {last_name} ({last_ts.isoformat()})"
+                        f"Kronolojik sıra ihlali: {name} ({ts.isoformat()}) < {last_name} ({last_ts.isoformat()})"
                     )
                 last_name = name
                 last_ts = ts
@@ -83,28 +81,28 @@ class SLAMetrics:
     # Domain queries
     # ------------------------------------------------------------------
     @property
-    def flight_duration(self) -> Optional[timedelta]:
+    def flight_duration(self) -> timedelta | None:
         """Uçuş süresi (başlangıç -> tamamlanma)."""
         if self.flight_started_at and self.flight_completed_at:
             return self.flight_completed_at - self.flight_started_at
         return None
 
     @property
-    def processing_duration(self) -> Optional[timedelta]:
+    def processing_duration(self) -> timedelta | None:
         """İşleme süresi (yükleme tamamlanma -> analiz tamamlanma)."""
         if self.upload_completed_at and self.analysis_completed_at:
             return self.analysis_completed_at - self.upload_completed_at
         return None
 
     @property
-    def total_duration(self) -> Optional[timedelta]:
+    def total_duration(self) -> timedelta | None:
         """Toplam süre (planlama -> teslim)."""
         if self.delivered_at:
             return self.delivered_at - self.planned_at
         return None
 
     @property
-    def wait_duration(self) -> Optional[timedelta]:
+    def wait_duration(self) -> timedelta | None:
         """Bekleme süresi (planlama -> uçuş başlangıcı)."""
         if self.flight_started_at:
             return self.flight_started_at - self.planned_at
@@ -116,7 +114,8 @@ class SLAMetrics:
         return self.delivered_at is not None
 
     def is_flight_sla_breached(
-        self, sla_hours: int | None = None,
+        self,
+        sla_hours: int | None = None,
     ) -> bool:
         """Uçuş SLA'sı aşılmış mı?
 
@@ -129,7 +128,8 @@ class SLAMetrics:
         return False
 
     def is_processing_sla_breached(
-        self, sla_hours: int | None = None,
+        self,
+        sla_hours: int | None = None,
     ) -> bool:
         """İşleme SLA'sı aşılmış mı?"""
         limit = sla_hours if sla_hours is not None else self.DEFAULT_PROCESSING_SLA_HOURS
@@ -139,7 +139,8 @@ class SLAMetrics:
         return False
 
     def is_delivery_sla_breached(
-        self, sla_hours: int | None = None,
+        self,
+        sla_hours: int | None = None,
     ) -> bool:
         """Toplam teslimat SLA'sı aşılmış mı?"""
         limit = sla_hours if sla_hours is not None else self.DEFAULT_DELIVERY_SLA_HOURS
@@ -154,7 +155,7 @@ class SLAMetrics:
     def to_dict(self) -> dict[str, Any]:
         """Serileştirme için dict dönüşümü."""
 
-        def _fmt(dt: Optional[datetime]) -> Optional[str]:
+        def _fmt(dt: datetime | None) -> str | None:
             return dt.isoformat() if dt else None
 
         return {
@@ -168,7 +169,4 @@ class SLAMetrics:
         }
 
     def __repr__(self) -> str:
-        return (
-            f"SLAMetrics(planned_at='{self.planned_at.isoformat()}', "
-            f"is_completed={self.is_completed})"
-        )
+        return f"SLAMetrics(planned_at='{self.planned_at.isoformat()}', is_completed={self.is_completed})"

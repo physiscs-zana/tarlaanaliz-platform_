@@ -7,13 +7,13 @@ AnalysisJob domain entity.
 Worker, KR-018 kalibrasyon "hard gate" sarti saglanmadan isi kabul etmez.
 requires_calibrated=true ile acilir (KR-017).
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Optional
 
 
 class AnalysisJobStatus(str, Enum):
@@ -45,7 +45,7 @@ class AnalysisJob:
     created_at: datetime
     updated_at: datetime
     requires_calibrated: bool = True
-    calibration_record_id: Optional[uuid.UUID] = None
+    calibration_record_id: uuid.UUID | None = None
 
     # ------------------------------------------------------------------
     # Invariants
@@ -64,7 +64,7 @@ class AnalysisJob:
     # Internal helpers
     # ------------------------------------------------------------------
     def _touch(self) -> None:
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     # ------------------------------------------------------------------
     # Domain methods
@@ -81,9 +81,7 @@ class AnalysisJob:
         Worker ham DN veya kalibrasyonu belirsiz veriyi kabul ETMEZ.
         """
         if self.status != AnalysisJobStatus.PENDING:
-            raise ValueError(
-                f"Can only start_processing from PENDING, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only start_processing from PENDING, current: {self.status.value}")
         # KR-018 hard gate
         if self.requires_calibrated and self.calibration_record_id is None:
             raise ValueError(
@@ -97,17 +95,13 @@ class AnalysisJob:
     def complete(self) -> None:
         """Analiz basariyla tamamlandi (PROCESSING -> COMPLETED)."""
         if self.status != AnalysisJobStatus.PROCESSING:
-            raise ValueError(
-                f"Can only complete from PROCESSING, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only complete from PROCESSING, current: {self.status.value}")
         self.status = AnalysisJobStatus.COMPLETED
         self._touch()
 
     def fail(self) -> None:
         """Analiz basarisiz oldu (PENDING|PROCESSING -> FAILED)."""
         if self.status not in (AnalysisJobStatus.PENDING, AnalysisJobStatus.PROCESSING):
-            raise ValueError(
-                f"Can only fail from PENDING or PROCESSING, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only fail from PENDING or PROCESSING, current: {self.status.value}")
         self.status = AnalysisJobStatus.FAILED
         self._touch()

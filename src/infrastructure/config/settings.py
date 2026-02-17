@@ -8,12 +8,13 @@ okunur; .env dosyası opsiyonel olarak desteklenir.
 
 SSOT: tarlaanaliz_platform_tree v3.2.2 FINAL.
 """
+
 from __future__ import annotations
 
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -44,7 +45,7 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------
     # API / Uvicorn
     # ------------------------------------------------------------------
-    api_host: str = "0.0.0.0"  # noqa: S104
+    api_host: str = "0.0.0.0"
     api_port: int = 8000
     api_workers: int = 1
     cors_origins: str = "*"
@@ -66,19 +67,13 @@ class Settings(BaseSettings):
     def database_url(self) -> str:
         """Async SQLAlchemy bağlantı URL'i (asyncpg)."""
         password = self.db_password.get_secret_value()
-        return (
-            f"postgresql+asyncpg://{self.db_user}:{password}"
-            f"@{self.db_host}:{self.db_port}/{self.db_name}"
-        )
+        return f"postgresql+asyncpg://{self.db_user}:{password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
     @property
     def database_url_sync(self) -> str:
         """Sync SQLAlchemy bağlantı URL'i (Alembic migration'ları için)."""
         password = self.db_password.get_secret_value()
-        return (
-            f"postgresql://{self.db_user}:{password}"
-            f"@{self.db_host}:{self.db_port}/{self.db_name}"
-        )
+        return f"postgresql://{self.db_user}:{password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
     # ------------------------------------------------------------------
     # Redis
@@ -109,10 +104,7 @@ class Settings(BaseSettings):
     def rabbitmq_url(self) -> str:
         """AMQP bağlantı URL'i."""
         password = self.rabbitmq_password.get_secret_value()
-        return (
-            f"amqp://{self.rabbitmq_user}:{password}"
-            f"@{self.rabbitmq_host}:{self.rabbitmq_port}/{self.rabbitmq_vhost}"
-        )
+        return f"amqp://{self.rabbitmq_user}:{password}@{self.rabbitmq_host}:{self.rabbitmq_port}/{self.rabbitmq_vhost}"
 
     # ------------------------------------------------------------------
     # JWT / Auth

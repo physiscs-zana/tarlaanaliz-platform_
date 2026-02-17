@@ -8,8 +8,8 @@ Revises: 007
 Create Date: 2026-01-03
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -117,7 +117,9 @@ def upgrade() -> None:
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
         # SLA: 4 saat icinde yanitlanmali (SC-EXP-05)
         sa.Column("sla_deadline_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("escalated_to_expert_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("experts.expert_id"), nullable=True),
+        sa.Column(
+            "escalated_to_expert_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("experts.expert_id"), nullable=True
+        ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
     )
     op.create_index("ix_expert_reviews_expert", "expert_reviews", ["expert_id", "status"])

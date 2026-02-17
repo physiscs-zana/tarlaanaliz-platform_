@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, timedelta
 from enum import Enum
 
@@ -114,9 +114,7 @@ class MissionPlanner:
         """
         if earliest_date and planned_date < earliest_date:
             return False
-        if latest_date and planned_date > latest_date:
-            return False
-        return True
+        return not (latest_date and planned_date > latest_date)
 
     def plan_missions(
         self,
@@ -162,9 +160,7 @@ class MissionPlanner:
         planned: list[PlannedMission] = []
         unplanned: list[uuid.UUID] = []
         # Her tarih için kullanım sayacı (tarla bazında)
-        used_dates: dict[uuid.UUID, set[date]] = {
-            fid: set(dates) for fid, dates in existing_dates.items()
-        }
+        used_dates: dict[uuid.UUID, set[date]] = {fid: set(dates) for fid, dates in existing_dates.items()}
 
         sorted_available = sorted(available_dates)
 
@@ -208,8 +204,7 @@ class MissionPlanner:
             else:
                 unplanned.append(request_id)
                 warnings.append(
-                    f"Tarla {request.field_id}: uygun tarih bulunamadı "
-                    f"(öncelik: {request.priority.value})."
+                    f"Tarla {request.field_id}: uygun tarih bulunamadı (öncelik: {request.priority.value})."
                 )
 
         return MissionPlanResult(

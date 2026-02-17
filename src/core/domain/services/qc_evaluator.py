@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 
 
@@ -45,9 +45,7 @@ class QCMetric:
         """Metrik değeri eşik sınırları içinde mi."""
         if self.threshold_min is not None and self.value < self.threshold_min:
             return False
-        if self.threshold_max is not None and self.value > self.threshold_max:
-            return False
-        return True
+        return not (self.threshold_max is not None and self.value > self.threshold_max)
 
 
 @dataclass(frozen=True)
@@ -103,20 +101,10 @@ class QCEvaluator:
         pass_threshold: float | None = None,
         warn_threshold: float | None = None,
     ) -> None:
-        self._pass_threshold = (
-            pass_threshold
-            if pass_threshold is not None
-            else self.DEFAULT_PASS_THRESHOLD
-        )
-        self._warn_threshold = (
-            warn_threshold
-            if warn_threshold is not None
-            else self.DEFAULT_WARN_THRESHOLD
-        )
+        self._pass_threshold = pass_threshold if pass_threshold is not None else self.DEFAULT_PASS_THRESHOLD
+        self._warn_threshold = warn_threshold if warn_threshold is not None else self.DEFAULT_WARN_THRESHOLD
         if self._warn_threshold >= self._pass_threshold:
-            raise QCEvaluationError(
-                "warn_threshold, pass_threshold'dan küçük olmalıdır."
-            )
+            raise QCEvaluationError("warn_threshold, pass_threshold'dan küçük olmalıdır.")
 
     def evaluate(
         self,
@@ -166,8 +154,7 @@ class QCEvaluator:
                             flag_name=metric.metric_name,
                             severity="WARNING",
                             description=(
-                                f"{metric.metric_name}: değer {metric.value:.4f} "
-                                f"eşik dışında (düşük ağırlık)."
+                                f"{metric.metric_name}: değer {metric.value:.4f} eşik dışında (düşük ağırlık)."
                             ),
                         )
                     )
@@ -194,7 +181,7 @@ class QCEvaluator:
             overall_score=overall_score,
             metrics=tuple(metrics),
             flags=tuple(flags),
-            evaluated_at=datetime.now(timezone.utc),
+            evaluated_at=datetime.now(UTC),
         )
 
     def _calculate_overall_score(self, metrics: list[QCMetric]) -> float:

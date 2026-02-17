@@ -30,11 +30,11 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
-from typing import List, Optional
 
 from src.core.domain.entities.user import User, UserRole
 
@@ -68,9 +68,7 @@ class UserRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, user_id: uuid.UUID
-    ) -> Optional[User]:
+    async def find_by_id(self, user_id: uuid.UUID) -> User | None:
         """user_id ile User getir.
 
         Args:
@@ -81,9 +79,7 @@ class UserRepository(ABC):
         """
 
     @abstractmethod
-    async def find_by_phone_number(
-        self, phone_number: str
-    ) -> Optional[User]:
+    async def find_by_phone_number(self, phone_number: str) -> User | None:
         """phone_number ile User getir (KR-050 kimlik doğrulama).
 
         Giriş akışında telefon numarasıyla kullanıcı arama için kullanılır.
@@ -99,9 +95,7 @@ class UserRepository(ABC):
     # Liste sorguları
     # ------------------------------------------------------------------
     @abstractmethod
-    async def list_by_role(
-        self, role: UserRole
-    ) -> List[User]:
+    async def list_by_role(self, role: UserRole) -> list[User]:
         """Belirli roldeki tüm kullanıcıları getir.
 
         Admin paneli ve rol bazlı raporlama için kullanılır.
@@ -114,9 +108,7 @@ class UserRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_province(
-        self, province: str
-    ) -> List[User]:
+    async def list_by_province(self, province: str) -> list[User]:
         """Belirli ildeki tüm kullanıcıları getir.
 
         Args:
@@ -127,9 +119,7 @@ class UserRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_coop_id(
-        self, coop_id: uuid.UUID
-    ) -> List[User]:
+    async def list_by_coop_id(self, coop_id: uuid.UUID) -> list[User]:
         """Bir kooperatife bağlı tüm kullanıcıları getir (KR-014).
 
         Args:

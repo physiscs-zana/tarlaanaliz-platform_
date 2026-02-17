@@ -9,10 +9,11 @@ Yalnızca sorgu (verify/status) işlemlerinde retry uygulanır.
 
 Desteklenen provider'lar: iyzico, param, stripe (provider config ile belirlenir).
 """
+
 from __future__ import annotations
 
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 import structlog
@@ -67,9 +68,9 @@ class PaymentGatewayAdapter(PaymentGateway):
         payment_ref: str,
         amount_kurus: int,
         currency: str,
-        description: Optional[str] = None,
-        callback_url: Optional[str] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        description: str | None = None,
+        callback_url: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> PaymentSessionResponse:
         """Ödeme oturumu başlat. Retry YAPILMAZ (çift tahsilat riski)."""
         if amount_kurus <= 0:

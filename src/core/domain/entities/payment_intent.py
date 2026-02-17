@@ -7,13 +7,14 @@ PaymentIntent domain entity.
 Ciftci / Kooperatif / Uretici Birligi tarafindan acilan tek seferlik Mission
 veya yillik Subscription taleplerinde tahsilati standartlastirir (KR-033).
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class PaymentTargetType(str, Enum):
@@ -60,23 +61,23 @@ class PaymentIntent:
     price_snapshot_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
-    coop_id: Optional[uuid.UUID] = None
-    provider: Optional[str] = None
-    provider_session_id: Optional[str] = None
-    provider_payment_id: Optional[str] = None
-    receipt_blob_id: Optional[str] = None
-    receipt_meta: Optional[Dict[str, Any]] = None
-    approved_by_admin_user_id: Optional[uuid.UUID] = None
-    approved_at: Optional[datetime] = None
-    paid_at: Optional[datetime] = None
-    rejected_at: Optional[datetime] = None
-    rejected_reason: Optional[str] = None
-    cancelled_at: Optional[datetime] = None
-    cancelled_reason: Optional[str] = None
-    refunded_at: Optional[datetime] = None
-    refund_amount_kurus: Optional[int] = None
-    refund_reason: Optional[str] = None
-    expires_at: Optional[datetime] = None
+    coop_id: uuid.UUID | None = None
+    provider: str | None = None
+    provider_session_id: str | None = None
+    provider_payment_id: str | None = None
+    receipt_blob_id: str | None = None
+    receipt_meta: dict[str, Any] | None = None
+    approved_by_admin_user_id: uuid.UUID | None = None
+    approved_at: datetime | None = None
+    paid_at: datetime | None = None
+    rejected_at: datetime | None = None
+    rejected_reason: str | None = None
+    cancelled_at: datetime | None = None
+    cancelled_reason: str | None = None
+    refunded_at: datetime | None = None
+    refund_amount_kurus: int | None = None
+    refund_reason: str | None = None
+    expires_at: datetime | None = None
 
     # ------------------------------------------------------------------
     # Invariants
@@ -93,26 +94,24 @@ class PaymentIntent:
     # Internal helpers
     # ------------------------------------------------------------------
     def _touch(self) -> None:
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     # ------------------------------------------------------------------
     # Domain methods
     # ------------------------------------------------------------------
     def mark_paid(
         self,
-        paid_at: Optional[datetime] = None,
-        approved_by_admin_user_id: Optional[uuid.UUID] = None,
+        paid_at: datetime | None = None,
+        approved_by_admin_user_id: uuid.UUID | None = None,
     ) -> None:
         """Odemeyi onayla (KR-033: provider webhook veya manuel admin onayi).
 
         PAYMENT_PENDING -> PAID.
         """
         if self.status != PaymentStatus.PAYMENT_PENDING:
-            raise ValueError(
-                f"Can only mark_paid from PAYMENT_PENDING, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only mark_paid from PAYMENT_PENDING, current: {self.status.value}")
         self.status = PaymentStatus.PAID
-        self.paid_at = paid_at or datetime.now(timezone.utc)
+        self.paid_at = paid_at or datetime.now(UTC)
         if approved_by_admin_user_id is not None:
             self.approved_by_admin_user_id = approved_by_admin_user_id
             self.approved_at = self.paid_at
@@ -124,28 +123,23 @@ class PaymentIntent:
         PAYMENT_PENDING -> REJECTED.
         """
         if self.status != PaymentStatus.PAYMENT_PENDING:
-            raise ValueError(
-                f"Can only reject from PAYMENT_PENDING, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only reject from PAYMENT_PENDING, current: {self.status.value}")
         if not reason or not reason.strip():
             raise ValueError("rejected_reason is required")
         self.status = PaymentStatus.REJECTED
-        self.rejected_at = datetime.now(timezone.utc)
+        self.rejected_at = datetime.now(UTC)
         self.rejected_reason = reason.strip()
         self._touch()
 
-    def cancel(self, reason: Optional[str] = None) -> None:
+    def cancel(self, reason: str | None = None) -> None:
         """Odeme intent'ini iptal et (KR-033 Kural-3: yalnizca PAYMENT_PENDING iken).
 
         PAYMENT_PENDING -> CANCELLED.
         """
         if self.status != PaymentStatus.PAYMENT_PENDING:
-            raise ValueError(
-                f"Can only cancel from PAYMENT_PENDING, current: {self.status.value} "
-                f"(KR-033 Kural-3)"
-            )
+            raise ValueError(f"Can only cancel from PAYMENT_PENDING, current: {self.status.value} (KR-033 Kural-3)")
         self.status = PaymentStatus.CANCELLED
-        self.cancelled_at = datetime.now(timezone.utc)
+        self.cancelled_at = datetime.now(UTC)
         self.cancelled_reason = reason.strip() if reason else None
         self._touch()
 
@@ -155,9 +149,7 @@ class PaymentIntent:
         PAYMENT_PENDING -> EXPIRED.
         """
         if self.status != PaymentStatus.PAYMENT_PENDING:
-            raise ValueError(
-                f"Can only expire from PAYMENT_PENDING, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only expire from PAYMENT_PENDING, current: {self.status.value}")
         self.status = PaymentStatus.EXPIRED
         self._touch()
 
@@ -167,21 +159,17 @@ class PaymentIntent:
         PAID -> REFUNDED.
         """
         if self.status != PaymentStatus.PAID:
-            raise ValueError(
-                f"Can only refund from PAID, current: {self.status.value} "
-                f"(KR-033 Kural-4)"
-            )
+            raise ValueError(f"Can only refund from PAID, current: {self.status.value} (KR-033 Kural-4)")
         if refund_amount_kurus <= 0:
             raise ValueError("refund_amount_kurus must be positive")
         if refund_amount_kurus > self.amount_kurus:
             raise ValueError(
-                f"refund_amount_kurus ({refund_amount_kurus}) cannot exceed "
-                f"amount_kurus ({self.amount_kurus})"
+                f"refund_amount_kurus ({refund_amount_kurus}) cannot exceed amount_kurus ({self.amount_kurus})"
             )
         if not reason or not reason.strip():
             raise ValueError("refund_reason is required")
         self.status = PaymentStatus.REFUNDED
-        self.refunded_at = datetime.now(timezone.utc)
+        self.refunded_at = datetime.now(UTC)
         self.refund_amount_kurus = refund_amount_kurus
         self.refund_reason = reason.strip()
         self._touch()
@@ -189,7 +177,7 @@ class PaymentIntent:
     def attach_receipt(
         self,
         receipt_blob_id: str,
-        receipt_meta: Optional[Dict[str, Any]] = None,
+        receipt_meta: dict[str, Any] | None = None,
     ) -> None:
         """Dekont referansi ekle (KR-033: object store referansi, PII icermez)."""
         if not receipt_blob_id or not receipt_blob_id.strip():

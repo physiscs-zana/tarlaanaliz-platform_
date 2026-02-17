@@ -27,12 +27,13 @@ Bağımlılıklar: aio-pika (AMQP client), structlog.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import json
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import structlog
 
@@ -170,9 +171,9 @@ class AIFeedbackPublisher(AIWorkerFeedback):
         model_id: str,
         verdict: str,
         training_grade: str,
-        corrected_class: Optional[str] = None,
-        notes: Optional[str] = None,
-        expert_confidence: Optional[float] = None,
+        corrected_class: str | None = None,
+        notes: str | None = None,
+        expert_confidence: float | None = None,
     ) -> FeedbackSubmissionResult:
         """Uzman feedback'ini RabbitMQ kuyruğuna publish et (KR-029)."""
         confirmation_id = f"fb-{feedback_id}"
@@ -240,11 +241,11 @@ class AIFeedbackPublisher(AIWorkerFeedback):
     async def export_training_dataset(
         self,
         *,
-        model_id: Optional[str] = None,
-        min_grade: Optional[str] = None,
-        verdict_filter: Optional[list[str]] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
+        model_id: str | None = None,
+        min_grade: str | None = None,
+        verdict_filter: list[str] | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
         format: str = "jsonl",
     ) -> TrainingDatasetExport:
         """Training dataset export isteğini kuyruğa gönder (KR-029)."""
@@ -313,10 +314,7 @@ class AIFeedbackPublisher(AIWorkerFeedback):
         try:
             import httpx
 
-            management_url = (
-                f"http://{self._settings.rabbitmq_host}:15672"
-                f"/api/queues/%2F/ai.feedback.submit"
-            )
+            management_url = f"http://{self._settings.rabbitmq_host}:15672/api/queues/%2F/ai.feedback.submit"
 
             async with httpx.AsyncClient(
                 auth=(

@@ -8,13 +8,13 @@ Uzman hesabi self-signup DEGILDIR: ADMIN kontrollu acilir (curated onboarding).
 Uzman yalnizca kendisine atanmis incelemeleri gorur (ownership check zorunlu).
 PII GORUNMEZ (KR-019).
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import List
 
 
 class ExpertStatus(str, Enum):
@@ -38,7 +38,7 @@ class Expert:
     created_by_admin_user_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
-    specialization: List[str] = field(default_factory=list)
+    specialization: list[str] = field(default_factory=list)
     status: ExpertStatus = ExpertStatus.ACTIVE
 
     # ------------------------------------------------------------------
@@ -54,7 +54,7 @@ class Expert:
     # Internal helpers
     # ------------------------------------------------------------------
     def _touch(self) -> None:
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     # ------------------------------------------------------------------
     # Domain methods

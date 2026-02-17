@@ -28,13 +28,13 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 
 # ------------------------------------------------------------------
@@ -107,9 +107,9 @@ class AIWorkerFeedback(ABC):
         model_id: str,
         verdict: str,
         training_grade: str,
-        corrected_class: Optional[str] = None,
-        notes: Optional[str] = None,
-        expert_confidence: Optional[float] = None,
+        corrected_class: str | None = None,
+        notes: str | None = None,
+        expert_confidence: float | None = None,
     ) -> FeedbackSubmissionResult:
         """Uzman feedback'ini AI training pipeline'ına gönder (KR-029).
 
@@ -141,11 +141,11 @@ class AIWorkerFeedback(ABC):
     async def export_training_dataset(
         self,
         *,
-        model_id: Optional[str] = None,
-        min_grade: Optional[str] = None,
-        verdict_filter: Optional[list[str]] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
+        model_id: str | None = None,
+        min_grade: str | None = None,
+        verdict_filter: list[str] | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
         format: str = "jsonl",
     ) -> TrainingDatasetExport:
         """Training dataset'ini filtreli olarak export et (KR-029).

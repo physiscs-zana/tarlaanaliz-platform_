@@ -8,6 +8,7 @@ Hava durumu engeli raporunun durumunu temsil eder.
 KR-015-5: Weather block force majeure olarak değerlendirilir;
 reschedule token tüketmez.
 """
+
 from __future__ import annotations
 
 from enum import Enum
@@ -32,25 +33,31 @@ class WeatherBlockStatus(str, Enum):
 
 # Geçerli durum geçişleri
 VALID_WEATHER_BLOCK_TRANSITIONS: dict[WeatherBlockStatus, frozenset[WeatherBlockStatus]] = {
-    WeatherBlockStatus.PENDING: frozenset({
-        WeatherBlockStatus.CONFIRMED,
-        WeatherBlockStatus.REJECTED,
-        WeatherBlockStatus.EXPIRED,
-    }),
-    WeatherBlockStatus.CONFIRMED: frozenset({
-        WeatherBlockStatus.RESOLVED,
-    }),
+    WeatherBlockStatus.PENDING: frozenset(
+        {
+            WeatherBlockStatus.CONFIRMED,
+            WeatherBlockStatus.REJECTED,
+            WeatherBlockStatus.EXPIRED,
+        }
+    ),
+    WeatherBlockStatus.CONFIRMED: frozenset(
+        {
+            WeatherBlockStatus.RESOLVED,
+        }
+    ),
     WeatherBlockStatus.REJECTED: frozenset(),
     WeatherBlockStatus.EXPIRED: frozenset(),
     WeatherBlockStatus.RESOLVED: frozenset(),
 }
 
 # Terminal durumlar: bu durumlardan çıkış yoktur
-TERMINAL_WEATHER_BLOCK_STATUSES: frozenset[WeatherBlockStatus] = frozenset({
-    WeatherBlockStatus.REJECTED,
-    WeatherBlockStatus.EXPIRED,
-    WeatherBlockStatus.RESOLVED,
-})
+TERMINAL_WEATHER_BLOCK_STATUSES: frozenset[WeatherBlockStatus] = frozenset(
+    {
+        WeatherBlockStatus.REJECTED,
+        WeatherBlockStatus.EXPIRED,
+        WeatherBlockStatus.RESOLVED,
+    }
+)
 
 
 def is_valid_weather_block_transition(

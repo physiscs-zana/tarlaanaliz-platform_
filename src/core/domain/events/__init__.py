@@ -1,7 +1,6 @@
 # PATH: src/core/domain/events/__init__.py
 # DESC: Domain events module: __init__.py.
 
-from src.core.domain.events.base import DomainEvent
 from src.core.domain.events.analysis_events import (
     AnalysisCompleted,
     AnalysisFailed,
@@ -10,6 +9,7 @@ from src.core.domain.events.analysis_events import (
     CalibrationValidated,
     LowConfidenceDetected,
 )
+from src.core.domain.events.base import DomainEvent
 from src.core.domain.events.expert_events import (
     ExpertActivated,
     ExpertDeactivated,
@@ -58,52 +58,52 @@ from src.core.domain.events.training_feedback_events import (
 )
 
 __all__: list[str] = [
-    # Base
-    "DomainEvent",
+    "AnalysisCompleted",
+    "AnalysisFailed",
     # Analysis (KR-017, KR-018)
     "AnalysisRequested",
     "AnalysisStarted",
-    "AnalysisCompleted",
-    "AnalysisFailed",
     "CalibrationValidated",
-    "LowConfidenceDetected",
-    # Expert (KR-019)
-    "ExpertRegistered",
+    "DataUploaded",
+    # Base
+    "DomainEvent",
     "ExpertActivated",
     "ExpertDeactivated",
-    "FeedbackProvided",
-    # Expert Review (KR-019)
-    "ExpertReviewRequested",
+    # Expert (KR-019)
+    "ExpertRegistered",
     "ExpertReviewAssigned",
     "ExpertReviewCompleted",
     "ExpertReviewEscalated",
+    # Expert Review (KR-019)
+    "ExpertReviewRequested",
+    "FeedbackProvided",
     # Field
     "FieldCreated",
-    "FieldUpdated",
     "FieldCropUpdated",
     "FieldDeleted",
+    "FieldUpdated",
+    "LowConfidenceDetected",
+    "MissionAnalysisRequested",
     # Mission (KR-015)
     "MissionAssigned",
-    "MissionStarted",
-    "DataUploaded",
-    "MissionAnalysisRequested",
-    "MissionCompleted",
     "MissionCancelled",
+    "MissionCompleted",
     "MissionReplanQueued",
+    "MissionScheduled",
+    "MissionStarted",
+    "PaymentApproved",
     # Payment (KR-033)
     "PaymentIntentCreated",
-    "ReceiptUploaded",
-    "PaymentApproved",
     "PaymentRejected",
+    "ReceiptUploaded",
+    "SubscriptionActivated",
+    "SubscriptionCompleted",
     # Subscription (KR-015-5)
     "SubscriptionCreated",
-    "SubscriptionActivated",
-    "MissionScheduled",
-    "SubscriptionCompleted",
     "SubscriptionRescheduled",
-    # Training Feedback (KR-019)
-    "TrainingFeedbackSubmitted",
+    "TrainingDataExported",
     "TrainingFeedbackAccepted",
     "TrainingFeedbackRejected",
-    "TrainingDataExported",
+    # Training Feedback (KR-019)
+    "TrainingFeedbackSubmitted",
 ]

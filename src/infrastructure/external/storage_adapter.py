@@ -9,10 +9,10 @@ kalibrasyon manifest'leri, analiz raporları ve ödeme dekontları saklanır.
 Idempotency: Aynı key'e yazma üzerine yazar (overwrite semantics).
 Retry: Transient hatalarda exponential backoff.
 """
+
 from __future__ import annotations
 
-import hashlib
-from typing import Any, Optional
+from typing import Any
 
 import boto3
 import structlog
@@ -60,7 +60,7 @@ class S3StorageAdapter(StorageService):
         key: str,
         content: bytes,
         content_type: str = "application/octet-stream",
-        metadata: Optional[dict[str, str]] = None,
+        metadata: dict[str, str] | None = None,
     ) -> BlobMetadata:
         """Blob'u S3'e yükle."""
         put_kwargs: dict[str, Any] = {
@@ -107,7 +107,7 @@ class S3StorageAdapter(StorageService):
         *,
         bucket: str,
         key: str,
-    ) -> Optional[BlobMetadata]:
+    ) -> BlobMetadata | None:
         """Blob metadata bilgisini sorgula (HEAD isteği)."""
         try:
             response = self._client.head_object(Bucket=bucket, Key=key)

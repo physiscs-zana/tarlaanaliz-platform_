@@ -7,13 +7,14 @@ CalibrationRecord domain entity.
 Calibrated Dataset uretilmeden AnalysisJob baslatilamaz (KR-018 hard gate).
 Istasyon akisi: Offline Security PC -> Online Producer Workstation -> Dispatch.
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class CalibrationStatus(str, Enum):
@@ -35,11 +36,11 @@ class CalibrationRecord:
     mission_id: uuid.UUID
     status: CalibrationStatus
     created_at: datetime
-    batch_id: Optional[uuid.UUID] = None
-    calibration_manifest: Optional[Dict[str, Any]] = None  # JSONB
-    processing_report_uri: Optional[str] = None
-    calibration_result_uri: Optional[str] = None
-    qc_report_uri: Optional[str] = None
+    batch_id: uuid.UUID | None = None
+    calibration_manifest: dict[str, Any] | None = None  # JSONB
+    processing_report_uri: str | None = None
+    calibration_result_uri: str | None = None
+    qc_report_uri: str | None = None
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -57,20 +58,14 @@ class CalibrationRecord:
         calibration_result_uri zorunludur (KR-018: kalibrasyon ciktisi).
         """
         if self.status != CalibrationStatus.PENDING:
-            raise ValueError(
-                f"Can only mark_calibrated from PENDING, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only mark_calibrated from PENDING, current: {self.status.value}")
         if not calibration_result_uri or not calibration_result_uri.strip():
-            raise ValueError(
-                "calibration_result_uri is required to mark as calibrated (KR-018)"
-            )
+            raise ValueError("calibration_result_uri is required to mark as calibrated (KR-018)")
         self.status = CalibrationStatus.CALIBRATED
         self.calibration_result_uri = calibration_result_uri
 
     def mark_failed(self) -> None:
         """Kalibrasyon basarisiz (PENDING -> FAILED)."""
         if self.status != CalibrationStatus.PENDING:
-            raise ValueError(
-                f"Can only mark_failed from PENDING, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only mark_failed from PENDING, current: {self.status.value}")
         self.status = CalibrationStatus.FAILED

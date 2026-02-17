@@ -28,11 +28,11 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
-from typing import List, Optional
 
 from src.core.domain.entities.expert_review import ExpertReview, ExpertReviewStatus
 
@@ -65,9 +65,7 @@ class ExpertReviewRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, review_id: uuid.UUID
-    ) -> Optional[ExpertReview]:
+    async def find_by_id(self, review_id: uuid.UUID) -> ExpertReview | None:
         """review_id ile ExpertReview getir.
 
         Args:
@@ -85,8 +83,8 @@ class ExpertReviewRepository(ABC):
         self,
         expert_id: uuid.UUID,
         *,
-        status: Optional[ExpertReviewStatus] = None,
-    ) -> List[ExpertReview]:
+        status: ExpertReviewStatus | None = None,
+    ) -> list[ExpertReview]:
         """Bir uzmana ait incelemeleri getir (durum filtresi opsiyonel).
 
         Ownership check: uzmana yalnızca kendi incelemeleri döner (KR-019).
@@ -100,9 +98,7 @@ class ExpertReviewRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_mission_id(
-        self, mission_id: uuid.UUID
-    ) -> List[ExpertReview]:
+    async def list_by_mission_id(self, mission_id: uuid.UUID) -> list[ExpertReview]:
         """Bir mission'a ait tüm uzman incelemelerini getir.
 
         Args:
@@ -113,9 +109,7 @@ class ExpertReviewRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_analysis_result_id(
-        self, analysis_result_id: uuid.UUID
-    ) -> List[ExpertReview]:
+    async def list_by_analysis_result_id(self, analysis_result_id: uuid.UUID) -> list[ExpertReview]:
         """Bir analiz sonucuna ait tüm uzman incelemelerini getir.
 
         Args:
@@ -126,9 +120,7 @@ class ExpertReviewRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_status(
-        self, status: ExpertReviewStatus
-    ) -> List[ExpertReview]:
+    async def list_by_status(self, status: ExpertReviewStatus) -> list[ExpertReview]:
         """Belirli durumdaki tüm incelemeleri getir.
 
         Kuyruk yönetimi ve iş dağıtımı için kullanılır.

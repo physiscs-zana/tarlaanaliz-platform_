@@ -8,12 +8,12 @@ Hava engeli (Weather Block) / force majeure nedeniyle yapilan ertelemeler
 reschedule token TUKETMEZ; sistem otomatik yeniden planlar ve audit log'a yazar
 (KR-015-5).
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 
 @dataclass
@@ -30,9 +30,9 @@ class WeatherBlockReport:
     reported_at: datetime
     reason: str  # e.g. "wind_speed_exceeded", "rain", "fog"
     created_at: datetime
-    block_start: Optional[datetime] = None
-    block_end: Optional[datetime] = None
-    notes: Optional[str] = None
+    block_start: datetime | None = None
+    block_end: datetime | None = None
+    notes: str | None = None
     resolved: bool = False
 
     # ------------------------------------------------------------------

@@ -28,11 +28,11 @@ Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_i
   v3.2.2'de redundant çiftler kaldırıldı.
   KR-018 hard gate: calibrated/QC kanıtı olmadan AnalysisJob başlatılmamalıdır.
 """
+
 from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
-from typing import List, Optional
 
 from src.core.domain.entities.calibration_record import (
     CalibrationRecord,
@@ -68,9 +68,7 @@ class CalibrationRecordRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, calibration_record_id: uuid.UUID
-    ) -> Optional[CalibrationRecord]:
+    async def find_by_id(self, calibration_record_id: uuid.UUID) -> CalibrationRecord | None:
         """calibration_record_id ile CalibrationRecord getir.
 
         Args:
@@ -84,9 +82,7 @@ class CalibrationRecordRepository(ABC):
     # Liste sorguları
     # ------------------------------------------------------------------
     @abstractmethod
-    async def list_by_mission_id(
-        self, mission_id: uuid.UUID
-    ) -> List[CalibrationRecord]:
+    async def list_by_mission_id(self, mission_id: uuid.UUID) -> list[CalibrationRecord]:
         """Bir mission'a ait tüm kalibrasyon kayıtlarını getir.
 
         Args:
@@ -101,7 +97,7 @@ class CalibrationRecordRepository(ABC):
         self,
         mission_id: uuid.UUID,
         status: CalibrationStatus,
-    ) -> Optional[CalibrationRecord]:
+    ) -> CalibrationRecord | None:
         """Bir mission için belirli durumdaki kalibrasyon kaydını getir.
 
         KR-018 hard gate kontrolü için kullanılır:

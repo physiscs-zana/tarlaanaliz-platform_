@@ -8,10 +8,10 @@ Revises: 001
 Create Date: 2026-01-01
 """
 
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+from alembic import op
 from geoalchemy2 import Geometry
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "002"

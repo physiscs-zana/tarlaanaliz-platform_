@@ -8,8 +8,8 @@ Revises: 008
 Create Date: 2026-01-04
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -64,7 +64,9 @@ def upgrade() -> None:
         sa.Column("verified_at", sa.DateTime(timezone=True), nullable=True),
         # KR-015-5: hava engeli reschedule token tuketmez
         sa.Column("auto_rescheduled", sa.Boolean(), nullable=False, server_default=sa.text("false")),
-        sa.Column("rescheduled_mission_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("missions.mission_id"), nullable=True),
+        sa.Column(
+            "rescheduled_mission_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("missions.mission_id"), nullable=True
+        ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
     )
     op.create_index("ix_weather_blocks_mission", "weather_blocks", ["mission_id"])

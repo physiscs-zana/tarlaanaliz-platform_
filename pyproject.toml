@@ -118,6 +118,11 @@ select = [
 ignore = [
     "S101",   # assert kullanimi (test'lerde gerekli)
     "S104",   # 0.0.0.0 binding (container icinde gerekli)
+    "S105",   # QCStatus.PASS vb. false positive (hardcoded password degil)
+    "RUF001", # Turkce Latin Extended karakterler (İ, Ş, Ç, vb.)
+    "RUF002", # Turkce karakterler docstring icinde (ı, ş, ç, ö, ü)
+    "RUF003", # Turkce karakterler yorum satirlarinda
+    "UP042",  # str+Enum → StrEnum (davranissal fark riski, mevcut serialization korunur)
 ]
 
 [tool.ruff.lint.isort]
@@ -176,3 +181,7 @@ exclude_lines = [
     "if __name__ == .__main__.",
     "@overload",
 ]
+
+# --- Bandit ---
+[tool.bandit]
+skips = ["B104"]  # 0.0.0.0 binding (container icinde gerekli, S104 ile ayni)

@@ -28,11 +28,11 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
-from typing import List, Optional
 
 from src.core.domain.entities.subscription import Subscription, SubscriptionStatus
 
@@ -66,9 +66,7 @@ class SubscriptionRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, subscription_id: uuid.UUID
-    ) -> Optional[Subscription]:
+    async def find_by_id(self, subscription_id: uuid.UUID) -> Subscription | None:
         """subscription_id ile Subscription getir.
 
         Args:
@@ -86,8 +84,8 @@ class SubscriptionRepository(ABC):
         self,
         farmer_user_id: uuid.UUID,
         *,
-        status: Optional[SubscriptionStatus] = None,
-    ) -> List[Subscription]:
+        status: SubscriptionStatus | None = None,
+    ) -> list[Subscription]:
         """Bir çiftçinin aboneliklerini getir (durum filtresi opsiyonel).
 
         Args:
@@ -99,9 +97,7 @@ class SubscriptionRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_field_id(
-        self, field_id: uuid.UUID
-    ) -> List[Subscription]:
+    async def list_by_field_id(self, field_id: uuid.UUID) -> list[Subscription]:
         """Bir tarlaya ait tüm abonelikleri getir.
 
         Args:
@@ -112,9 +108,7 @@ class SubscriptionRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_status(
-        self, status: SubscriptionStatus
-    ) -> List[Subscription]:
+    async def list_by_status(self, status: SubscriptionStatus) -> list[Subscription]:
         """Belirli durumdaki tüm abonelikleri getir.
 
         Admin paneli, raporlama ve toplu işlemler için kullanılır.
@@ -127,7 +121,7 @@ class SubscriptionRepository(ABC):
         """
 
     @abstractmethod
-    async def list_due(self) -> List[Subscription]:
+    async def list_due(self) -> list[Subscription]:
         """Zamanı gelmiş (due) abonelikleri getir (KR-027 scheduler).
 
         status=ACTIVE ve next_due_at <= now olan abonelikleri döner.
