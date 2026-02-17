@@ -1,7 +1,3 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
-# PATH: .github/workflows/ci.yml
-# DESC: KR-041 SDLC kapıları kapsamında temel CI doğrulamalarını çalıştırmak.
-
 name: Backend CI
 
 on:
@@ -34,11 +30,11 @@ jobs:
     name: Lint & Format (Ruff)
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           submodules: recursive
 
       - name: Setup Python
@@ -59,11 +55,11 @@ jobs:
     name: Type Check (mypy)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           submodules: recursive
 
       - name: Setup Python
@@ -82,11 +78,11 @@ jobs:
     name: Unit Tests (pytest)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           submodules: recursive
 
       - name: Setup Python
@@ -94,6 +90,63 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
+
+      - name: Verify submodule checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Submodules (recursive):"
+          git submodule status --recursive
+          test -d "contracts"
+          echo "contracts HEAD:"
+          git -C contracts rev-parse HEAD
+
+      - name: Detect contracts schema changes
+        id: contracts_filter
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${{ github.sha }}"
+          fi
+
+          echo "BASE=$BASE"
+          echo "HEAD=$HEAD"
+
+          changed="$(git diff --name-only "$BASE" "$HEAD" || true)"
+          echo "$changed"
+
+          if ! echo "$changed" | grep -qx "contracts"; then
+            echo "run_contracts_tests=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          OLD="$(git show "$BASE":contracts)"
+          NEW="$(git show "$HEAD":contracts)"
+          echo "contracts old=$OLD new=$NEW"
+
+          git -C contracts fetch --depth=50 origin "$OLD" "$NEW" || git -C contracts fetch origin "$OLD" "$NEW"
+
+          if git -C contracts diff --name-only "$OLD" "$NEW" -- schemas/ | grep -q .; then
+            echo "run_contracts_tests=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_contracts_tests=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run contracts tests (only if schemas changed)
+        if: steps.contracts_filter.outputs.run_contracts_tests == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -U pip
+          python -m pip install pytest jsonschema
+          python -m pip install -e ./contracts || true
+          python -m pytest -q contracts/tests
 
       - name: Install dependencies
         run: pip install -e ".[dev]"
@@ -113,11 +166,11 @@ jobs:
     name: Migration Validation
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           submodules: recursive
 
       - name: Setup Python
@@ -147,7 +200,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, type-check, unit-tests, migration-check]
     if: always()
-
     steps:
       - name: Check all jobs
         run: |
@@ -156,9 +208,9 @@ jobs:
           echo "Unit Tests: ${{ needs.unit-tests.result }}"
           echo "Migration Check: ${{ needs.migration-check.result }}"
 
-          if [ "${{ needs.lint.result }}" == "failure" ] || \
-             [ "${{ needs.unit-tests.result }}" == "failure" ] || \
-             [ "${{ needs.migration-check.result }}" == "failure" ]; then
+          if [ "${{ needs.lint.result }}" = "failure" ] || \
+             [ "${{ needs.unit-tests.result }}" = "failure" ] || \
+             [ "${{ needs.migration-check.result }}" = "failure" ]; then
             echo "Backend CI failed"
             exit 1
           fi
