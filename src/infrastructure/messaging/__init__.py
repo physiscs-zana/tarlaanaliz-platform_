@@ -26,13 +26,13 @@ from src.infrastructure.messaging.websocket.notification_manager import (
 __all__: list[str] = [
     # RabbitMQ adapters
     "AIFeedbackPublisher",
-    "RabbitMQConsumer",
-    "RabbitMQPublisher",
-    "TrainingFeedbackPublisher",
     # Event bus
     "EventPublisher",
-    "RabbitMQEventBus",
     # WebSocket
     "Notification",
+    "RabbitMQConsumer",
+    "RabbitMQEventBus",
+    "RabbitMQPublisher",
+    "TrainingFeedbackPublisher",
     "WebSocketNotificationManager",
 ]

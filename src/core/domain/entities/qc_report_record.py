@@ -7,13 +7,14 @@ QCReportRecord domain entity.
 Kalibrasyon sonrasi kalite kontrol raporu.
 QC Gate: PASS/WARN/FAIL kararini sakla, UI'a tasi, audit trail uret (KR-018).
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class QCStatus(str, Enum):
@@ -41,8 +42,8 @@ class QCReportRecord:
     status: QCStatus
     recommended_action: QCRecommendedAction
     created_at: datetime
-    flags: Optional[Dict[str, Any]] = None  # JSONB: blur, overexposure, missing_bands
-    notes: Optional[str] = None
+    flags: dict[str, Any] | None = None  # JSONB: blur, overexposure, missing_bands
+    notes: str | None = None
 
     # ------------------------------------------------------------------
     # Computed properties

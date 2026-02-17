@@ -21,9 +21,10 @@ Testler: Unit test (metrik kayıt doğrulaması).
 Bağımlılıklar: prometheus_client, structlog.
 Notlar/SSOT: Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 import structlog
 
@@ -78,7 +79,7 @@ class PrometheusMetrics:
     def __init__(
         self,
         *,
-        registry: Optional[Any] = None,
+        registry: Any | None = None,
         enabled: bool = True,
     ) -> None:
         self._enabled = enabled and _PROMETHEUS_AVAILABLE
@@ -237,7 +238,7 @@ class PrometheusMetrics:
 # ------------------------------------------------------------------
 # Singleton instance
 # ------------------------------------------------------------------
-_metrics_instance: Optional[PrometheusMetrics] = None
+_metrics_instance: PrometheusMetrics | None = None
 
 
 def get_metrics(*, enabled: bool = True) -> PrometheusMetrics:

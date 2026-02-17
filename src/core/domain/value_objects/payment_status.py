@@ -9,6 +9,7 @@ KR-033: PaymentIntent olmadan paid state olmaz; dekont + manuel onay + audit.
 Entity'deki PaymentStatus enum'u ile SSOT uyumludur; bu VO
 domain genelinde kullanilabilir referans noktasidir.
 """
+
 from __future__ import annotations
 
 from enum import Enum
@@ -51,12 +52,14 @@ VALID_PAYMENT_TRANSITIONS: dict[PaymentStatus, set[PaymentStatus]] = {
 }
 
 # Terminal durumlar: bu durumlardan cikis yoktur
-TERMINAL_PAYMENT_STATUSES: frozenset[PaymentStatus] = frozenset({
-    PaymentStatus.REJECTED,
-    PaymentStatus.EXPIRED,
-    PaymentStatus.CANCELLED,
-    PaymentStatus.REFUNDED,
-})
+TERMINAL_PAYMENT_STATUSES: frozenset[PaymentStatus] = frozenset(
+    {
+        PaymentStatus.REJECTED,
+        PaymentStatus.EXPIRED,
+        PaymentStatus.CANCELLED,
+        PaymentStatus.REFUNDED,
+    }
+)
 
 
 def is_valid_payment_transition(

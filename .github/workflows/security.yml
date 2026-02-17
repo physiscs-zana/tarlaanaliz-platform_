@@ -60,7 +60,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install bandit
-        run: pip install bandit[toml]
+        run: pip install 'bandit[toml]'
 
       - name: Run bandit
         run: bandit -r src/ -c pyproject.toml --severity-level medium -f json -o bandit-report.json || true

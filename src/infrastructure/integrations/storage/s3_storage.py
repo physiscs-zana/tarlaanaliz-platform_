@@ -29,9 +29,10 @@ Bağımlılıklar: boto3, botocore, structlog.
 Notlar/SSOT: Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
   Aynı kavram başka yerde tekrar edilmez.
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 import boto3
 import structlog
@@ -90,7 +91,7 @@ class S3StorageIntegration(StorageService):
         key: str,
         content: bytes,
         content_type: str = "application/octet-stream",
-        metadata: Optional[dict[str, str]] = None,
+        metadata: dict[str, str] | None = None,
     ) -> BlobMetadata:
         """Blob'u S3'e yükle."""
         resolved_bucket = self._resolve_bucket(bucket)
@@ -155,7 +156,7 @@ class S3StorageIntegration(StorageService):
         *,
         bucket: str,
         key: str,
-    ) -> Optional[BlobMetadata]:
+    ) -> BlobMetadata | None:
         """Blob metadata bilgisini sorgula (HEAD isteği)."""
         resolved_bucket = self._resolve_bucket(bucket)
 

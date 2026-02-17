@@ -8,8 +8,8 @@ Revises: 004
 Create Date: 2026-01-02
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -61,7 +61,9 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("1500"),
         ),
-        sa.Column("reliability_score", sa.Numeric(precision=4, scale=2), nullable=False, server_default=sa.text("1.00")),
+        sa.Column(
+            "reliability_score", sa.Numeric(precision=4, scale=2), nullable=False, server_default=sa.text("1.00")
+        ),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),

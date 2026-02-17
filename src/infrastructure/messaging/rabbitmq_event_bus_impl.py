@@ -29,11 +29,13 @@ Bağımlılıklar: RabbitMQPublisher, RabbitMQConsumer, structlog, domain events
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
-import json
+import contextlib
 import uuid
-from typing import Any, Awaitable, Callable, Optional
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 import structlog
 
@@ -78,7 +80,7 @@ class RabbitMQEventBus(EventBus):
         self._handlers: dict[str, list[tuple[str, EventHandler]]] = {}
 
         # subscription_id -> (event_type, consumer_sub_id)
-        self._subscriptions: dict[str, tuple[str, Optional[str]]] = {}
+        self._subscriptions: dict[str, tuple[str, str | None]] = {}
 
         self._connected = False
 
@@ -125,7 +127,7 @@ class RabbitMQEventBus(EventBus):
         event_type: str,
         handler: EventHandler,
         *,
-        group_id: Optional[str] = None,
+        group_id: str | None = None,
     ) -> str:
         """Belirli bir event tipine handler kaydet.
 
@@ -154,7 +156,7 @@ class RabbitMQEventBus(EventBus):
         self._handlers[event_type].append((subscription_id, handler))
 
         # Consumer'a dispatcher callback kaydet (ilk subscription'da)
-        consumer_sub_id: Optional[str] = None
+        consumer_sub_id: str | None = None
         if self._connected:
             consumer_sub_id = await self._consumer.subscribe(
                 queue_name=DOMAIN_EVENTS_QUEUE,
@@ -192,19 +194,14 @@ class RabbitMQEventBus(EventBus):
 
         # Handler listesinden kaldır
         if event_type in self._handlers:
-            self._handlers[event_type] = [
-                (sid, h) for sid, h in self._handlers[event_type]
-                if sid != subscription_id
-            ]
+            self._handlers[event_type] = [(sid, h) for sid, h in self._handlers[event_type] if sid != subscription_id]
             if not self._handlers[event_type]:
                 del self._handlers[event_type]
 
         # Consumer subscription'ı kaldır
         if consumer_sub_id:
-            try:
+            with contextlib.suppress(KeyError):
                 await self._consumer.unsubscribe(consumer_sub_id)
-            except KeyError:
-                pass
 
         del self._subscriptions[subscription_id]
 

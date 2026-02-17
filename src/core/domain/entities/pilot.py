@@ -8,14 +8,14 @@ Pilot yalnizca DJI Mavic 3M kullanir. Drone seri numarasi dogrulama referansidir
 Gunluk kapasite 2500-3000 donum, varsayilan 2750 (KR-015-1).
 SYSTEM_SEED_QUOTA varsayilan 1500, PULL_QUOTA = capacity - seed (KR-015-2).
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
-from typing import List, Optional
 
 
 class PilotStatus(str, Enum):
@@ -53,10 +53,10 @@ class Pilot:
     drone_serial_number: str
     created_at: datetime
     updated_at: datetime
-    work_days: List[int] = field(default_factory=list)  # 0=Mon .. 6=Sun
+    work_days: list[int] = field(default_factory=list)  # 0=Mon .. 6=Sun
     daily_capacity_donum: int = _DEFAULT_DAILY_CAPACITY_DONUM
     system_seed_quota: int = _DEFAULT_SYSTEM_SEED_QUOTA
-    province_list: List[str] = field(default_factory=list)
+    province_list: list[str] = field(default_factory=list)
     status: PilotStatus = PilotStatus.ACTIVE
     reliability_score: Decimal = Decimal("1.0")
 
@@ -81,14 +81,8 @@ class Pilot:
         if not self.drone_serial_number or not self.drone_serial_number.strip():
             raise ValueError("drone_serial_number is required (KR-015)")
         if len(self.work_days) > _MAX_WORK_DAYS:
-            raise ValueError(
-                f"work_days cannot exceed {_MAX_WORK_DAYS} days (KR-015-1)"
-            )
-        if not (
-            _MIN_DAILY_CAPACITY_DONUM
-            <= self.daily_capacity_donum
-            <= _MAX_DAILY_CAPACITY_DONUM
-        ):
+            raise ValueError(f"work_days cannot exceed {_MAX_WORK_DAYS} days (KR-015-1)")
+        if not (_MIN_DAILY_CAPACITY_DONUM <= self.daily_capacity_donum <= _MAX_DAILY_CAPACITY_DONUM):
             raise ValueError(
                 f"daily_capacity_donum must be {_MIN_DAILY_CAPACITY_DONUM}-"
                 f"{_MAX_DAILY_CAPACITY_DONUM} (KR-015-1), got {self.daily_capacity_donum}"
@@ -100,7 +94,7 @@ class Pilot:
     # Internal helpers
     # ------------------------------------------------------------------
     def _touch(self) -> None:
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     # ------------------------------------------------------------------
     # Domain methods
@@ -119,12 +113,10 @@ class Pilot:
         self.daily_capacity_donum = new_capacity
         self._touch()
 
-    def update_work_days(self, days: List[int]) -> None:
+    def update_work_days(self, days: list[int]) -> None:
         """Haftalik calisma gunlerini guncelle (KR-015-1)."""
         if len(days) > _MAX_WORK_DAYS:
-            raise ValueError(
-                f"work_days cannot exceed {_MAX_WORK_DAYS} days (KR-015-1)"
-            )
+            raise ValueError(f"work_days cannot exceed {_MAX_WORK_DAYS} days (KR-015-1)")
         for d in days:
             if d < 0 or d > 6:
                 raise ValueError(f"Invalid day: {d}. Must be 0 (Mon) to 6 (Sun)")

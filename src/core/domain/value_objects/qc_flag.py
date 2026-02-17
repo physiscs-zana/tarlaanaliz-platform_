@@ -8,11 +8,11 @@ Kalite kontrol surecinde tespit edilen spesifik sorunlari
 (blur, overexposure, missing_bands vb.) temsil eder.
 KR-018 hard gate: calibrated/QC kaniti olmadan AnalysisJob baslatilamaz.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 class QCFlagType(str, Enum):
@@ -54,22 +54,18 @@ class QCFlag:
 
     flag_type: QCFlagType
     severity: QCFlagSeverity
-    message: Optional[str] = None
-    threshold: Optional[float] = None  # Esik degeri (varsa)
-    actual_value: Optional[float] = None  # Olculen deger (varsa)
+    message: str | None = None
+    threshold: float | None = None  # Esik degeri (varsa)
+    actual_value: float | None = None  # Olculen deger (varsa)
 
     # ------------------------------------------------------------------
     # Invariants
     # ------------------------------------------------------------------
     def __post_init__(self) -> None:
         if not isinstance(self.flag_type, QCFlagType):
-            raise TypeError(
-                f"flag_type must be QCFlagType, got {type(self.flag_type).__name__}"
-            )
+            raise TypeError(f"flag_type must be QCFlagType, got {type(self.flag_type).__name__}")
         if not isinstance(self.severity, QCFlagSeverity):
-            raise TypeError(
-                f"severity must be QCFlagSeverity, got {type(self.severity).__name__}"
-            )
+            raise TypeError(f"severity must be QCFlagSeverity, got {type(self.severity).__name__}")
         if self.threshold is not None and self.threshold < 0:
             raise ValueError("threshold cannot be negative")
         if self.actual_value is not None and self.actual_value < 0:

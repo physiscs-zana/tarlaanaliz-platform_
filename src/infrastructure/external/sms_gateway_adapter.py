@@ -10,19 +10,19 @@ PII: Telefon numarası loglanırken maskelenir.
 Retry: Transient hatalarda exponential backoff.
 Rate limit: Provider kotası aşılmamalı.
 """
+
 from __future__ import annotations
 
 import re
-from typing import Optional
 
 import httpx
 import structlog
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from src.core.ports.external.sms_gateway import (
-    SMSGateway,
     SmsBatchResult,
     SmsDeliveryStatus,
+    SMSGateway,
     SmsResult,
 )
 from src.infrastructure.config.settings import Settings
@@ -83,7 +83,7 @@ class SMSGatewayAdapter(SMSGateway):
         *,
         phone_number: str,
         message: str,
-        sender_id: Optional[str] = None,
+        sender_id: str | None = None,
     ) -> SmsResult:
         """Tek bir SMS mesajı gönder."""
         self._validate_phone(phone_number)
@@ -125,7 +125,7 @@ class SMSGatewayAdapter(SMSGateway):
         *,
         recipients: list[str],
         message: str,
-        sender_id: Optional[str] = None,
+        sender_id: str | None = None,
     ) -> SmsBatchResult:
         """Birden fazla alıcıya aynı mesajı gönder."""
         for phone in recipients:

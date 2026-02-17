@@ -29,11 +29,11 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Optional
 
 
 # ------------------------------------------------------------------
@@ -51,8 +51,8 @@ class BlobMetadata:
     key: str
     size_bytes: int
     content_type: str = "application/octet-stream"
-    etag: Optional[str] = None
-    custom_metadata: Optional[dict[str, str]] = None
+    etag: str | None = None
+    custom_metadata: dict[str, str] | None = None
 
 
 @dataclass(frozen=True)
@@ -93,7 +93,7 @@ class StorageService(ABC):
         key: str,
         content: bytes,
         content_type: str = "application/octet-stream",
-        metadata: Optional[dict[str, str]] = None,
+        metadata: dict[str, str] | None = None,
     ) -> BlobMetadata:
         """Blob'u storage'a yükle.
 
@@ -145,7 +145,7 @@ class StorageService(ABC):
         *,
         bucket: str,
         key: str,
-    ) -> Optional[BlobMetadata]:
+    ) -> BlobMetadata | None:
         """Blob metadata bilgisini sorgula (içerik indirmeden).
 
         Args:

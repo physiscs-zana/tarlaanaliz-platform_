@@ -9,6 +9,7 @@ kalite derecesini temsil eder. AI modeli eğitim veri setine
 dahil edilecek verilerin kalitesini derecelendirir.
 KR-019: Uzman incelemesi sonucu training feedback.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -46,9 +47,15 @@ class TrainingGrade:
     REJECTED: ClassVar[str] = "REJECTED"
     PENDING: ClassVar[str] = "PENDING"
 
-    _VALID_VALUES: ClassVar[frozenset[str]] = frozenset({
-        "GOLD", "SILVER", "BRONZE", "REJECTED", "PENDING",
-    })
+    _VALID_VALUES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "GOLD",
+            "SILVER",
+            "BRONZE",
+            "REJECTED",
+            "PENDING",
+        }
+    )
 
     # Derece -> Türkçe görünen ad eşlemesi
     _DISPLAY_NAMES: ClassVar[dict[str, str]] = {
@@ -70,17 +77,12 @@ class TrainingGrade:
 
     def __post_init__(self) -> None:
         if not isinstance(self.value, str):
-            raise TrainingGradeError(
-                f"value str olmalıdır, alınan tip: {type(self.value).__name__}"
-            )
+            raise TrainingGradeError(f"value str olmalıdır, alınan tip: {type(self.value).__name__}")
         normalized = self.value.strip().upper()
         if normalized != self.value:
             object.__setattr__(self, "value", normalized)
         if self.value not in self._VALID_VALUES:
-            raise TrainingGradeError(
-                f"Geçersiz derece: '{self.value}'. "
-                f"Geçerli değerler: {sorted(self._VALID_VALUES)}"
-            )
+            raise TrainingGradeError(f"Geçersiz derece: '{self.value}'. Geçerli değerler: {sorted(self._VALID_VALUES)}")
 
     # ------------------------------------------------------------------
     # Domain queries

@@ -29,13 +29,15 @@ Bağımlılıklar: aio-pika (AMQP client), structlog, rabbitmq_config.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import asyncio
 import json
 import time
 import uuid
-from typing import Any, Awaitable, Callable, Optional
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 import structlog
 
@@ -91,7 +93,7 @@ class RabbitMQConsumer:
         self._topology_declared = False
 
         # subscription_id -> (queue_name, handler, consumer_tag)
-        self._subscriptions: dict[str, tuple[str, MessageHandler, Optional[str]]] = {}
+        self._subscriptions: dict[str, tuple[str, MessageHandler, str | None]] = {}
 
         # Idempotency dedup cache: son N mesaj ID'si
         self._processed_ids: set[str] = set()
@@ -132,9 +134,7 @@ class RabbitMQConsumer:
             )
             self._connection = None
             self._channel = None
-            raise ConnectionError(
-                f"RabbitMQ bağlantısı kurulamadı: {type(exc).__name__}"
-            ) from exc
+            raise ConnectionError(f"RabbitMQ bağlantısı kurulamadı: {type(exc).__name__}") from exc
 
     def _is_duplicate(self, message_id: str) -> bool:
         """Mesaj daha önce işlendi mi kontrol et (idempotency).
@@ -164,7 +164,7 @@ class RabbitMQConsumer:
         queue_name: str,
         handler: MessageHandler,
         *,
-        group_id: Optional[str] = None,
+        group_id: str | None = None,
     ) -> str:
         """Belirtilen kuyruğa handler kaydet.
 
@@ -325,7 +325,7 @@ class RabbitMQConsumer:
                         latency_ms=round(latency_ms, 2),
                     )
                     # Exponential backoff delay
-                    delay = min(2 ** retry_count, 30)
+                    delay = min(2**retry_count, 30)
                     await asyncio.sleep(delay)
                     await message.nack(requeue=True)
                 else:

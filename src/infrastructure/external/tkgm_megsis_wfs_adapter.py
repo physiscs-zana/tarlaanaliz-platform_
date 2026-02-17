@@ -9,11 +9,11 @@ bilgisi sorgular. Cache destekli; parsel geometrisi nadiren değişir.
 Graceful degradation: TKGM erişilemezse None döner.
 Retry: Transient hatalarda exponential backoff.
 """
+
 from __future__ import annotations
 
 import asyncio
 from decimal import Decimal
-from typing import Any, Optional
 
 import httpx
 import structlog
@@ -61,7 +61,7 @@ class TKGMMegsisWFSAdapter(ParcelGeometryProvider):
     def _cache_key(self, parcel_ref: ParcelRef) -> str:
         return parcel_ref.hash_key
 
-    def _get_cached(self, parcel_ref: ParcelRef) -> Optional[ParcelGeometry]:
+    def _get_cached(self, parcel_ref: ParcelRef) -> ParcelGeometry | None:
         """Cache'ten parsel geometrisi döner (TTL kontrolü ile)."""
         key = self._cache_key(parcel_ref)
         entry = self._cache.get(key)
@@ -84,7 +84,7 @@ class TKGMMegsisWFSAdapter(ParcelGeometryProvider):
     async def get_geometry(
         self,
         parcel_ref: ParcelRef,
-    ) -> Optional[ParcelGeometry]:
+    ) -> ParcelGeometry | None:
         """Parsel geometrisini TKGM/MEGSİS'ten sorgula (cache destekli)."""
         cached = self._get_cached(parcel_ref)
         if cached is not None:
@@ -138,7 +138,7 @@ class TKGMMegsisWFSAdapter(ParcelGeometryProvider):
     async def validate_parcel(
         self,
         parcel_ref: ParcelRef,
-        declared_area_m2: Optional[Decimal] = None,
+        declared_area_m2: Decimal | None = None,
     ) -> ParcelValidationResult:
         """Parsel varlığını ve alan tutarlılığını doğrula (KR-013)."""
         geometry = await self.get_geometry(parcel_ref)
@@ -150,7 +150,7 @@ class TKGMMegsisWFSAdapter(ParcelGeometryProvider):
                 message="Parsel TKGM kaydında bulunamadı.",
             )
 
-        area_deviation: Optional[Decimal] = None
+        area_deviation: Decimal | None = None
         if declared_area_m2 is not None and geometry.area_m2 > 0:
             area_deviation = abs(declared_area_m2 - geometry.area_m2) / geometry.area_m2 * Decimal("100")
 

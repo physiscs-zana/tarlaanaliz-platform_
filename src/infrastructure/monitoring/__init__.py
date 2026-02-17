@@ -32,9 +32,9 @@ __all__: list[str] = [
     "HealthStatus",
     # Prometheus metrics
     "PrometheusMetrics",
-    "get_metrics",
     # Security events
     "SecurityCategory",
     "SecurityEventLogger",
     "SecuritySeverity",
+    "get_metrics",
 ]

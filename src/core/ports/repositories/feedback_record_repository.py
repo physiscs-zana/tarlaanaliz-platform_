@@ -27,11 +27,11 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
-from typing import List, Optional
 
 from src.core.domain.entities.feedback_record import FeedbackRecord
 
@@ -64,9 +64,7 @@ class FeedbackRecordRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, feedback_id: uuid.UUID
-    ) -> Optional[FeedbackRecord]:
+    async def find_by_id(self, feedback_id: uuid.UUID) -> FeedbackRecord | None:
         """feedback_id ile FeedbackRecord getir.
 
         Args:
@@ -77,9 +75,7 @@ class FeedbackRecordRepository(ABC):
         """
 
     @abstractmethod
-    async def find_by_review_id(
-        self, review_id: uuid.UUID
-    ) -> Optional[FeedbackRecord]:
+    async def find_by_review_id(self, review_id: uuid.UUID) -> FeedbackRecord | None:
         """review_id ile FeedbackRecord getir.
 
         Bir ExpertReview'ın ürettiği geri bildirimi bulmak için kullanılır.
@@ -95,9 +91,7 @@ class FeedbackRecordRepository(ABC):
     # Liste sorguları
     # ------------------------------------------------------------------
     @abstractmethod
-    async def list_by_mission_id(
-        self, mission_id: uuid.UUID
-    ) -> List[FeedbackRecord]:
+    async def list_by_mission_id(self, mission_id: uuid.UUID) -> list[FeedbackRecord]:
         """Bir mission'a ait tüm geri bildirimleri getir.
 
         Args:
@@ -108,9 +102,7 @@ class FeedbackRecordRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_model_id(
-        self, model_id: str
-    ) -> List[FeedbackRecord]:
+    async def list_by_model_id(self, model_id: str) -> list[FeedbackRecord]:
         """Belirli bir YZ modeline ait tüm geri bildirimleri getir.
 
         YZ eğitim pipeline'ı için model bazlı feedback export'u.
@@ -123,9 +115,7 @@ class FeedbackRecordRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_verdict(
-        self, verdict: str
-    ) -> List[FeedbackRecord]:
+    async def list_by_verdict(self, verdict: str) -> list[FeedbackRecord]:
         """Belirli verdict'e göre geri bildirimleri getir.
 
         Args:
@@ -136,9 +126,7 @@ class FeedbackRecordRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_training_grade(
-        self, training_grade: str
-    ) -> List[FeedbackRecord]:
+    async def list_by_training_grade(self, training_grade: str) -> list[FeedbackRecord]:
         """Belirli eğitim notuna göre geri bildirimleri getir.
 
         Args:

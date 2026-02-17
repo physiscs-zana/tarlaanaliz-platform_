@@ -28,11 +28,11 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
-from typing import List, Optional
 
 from src.core.domain.entities.expert import Expert, ExpertStatus
 
@@ -65,9 +65,7 @@ class ExpertRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, expert_id: uuid.UUID
-    ) -> Optional[Expert]:
+    async def find_by_id(self, expert_id: uuid.UUID) -> Expert | None:
         """expert_id ile Expert getir.
 
         Args:
@@ -78,9 +76,7 @@ class ExpertRepository(ABC):
         """
 
     @abstractmethod
-    async def find_by_user_id(
-        self, user_id: uuid.UUID
-    ) -> Optional[Expert]:
+    async def find_by_user_id(self, user_id: uuid.UUID) -> Expert | None:
         """user_id ile Expert getir.
 
         Bir kullanıcının uzman profilini bulmak için kullanılır.
@@ -96,9 +92,7 @@ class ExpertRepository(ABC):
     # Liste sorguları
     # ------------------------------------------------------------------
     @abstractmethod
-    async def list_by_province(
-        self, province: str
-    ) -> List[Expert]:
+    async def list_by_province(self, province: str) -> list[Expert]:
         """Belirli bir ildeki uzmanları getir.
 
         Args:
@@ -109,9 +103,7 @@ class ExpertRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_status(
-        self, status: ExpertStatus
-    ) -> List[Expert]:
+    async def list_by_status(self, status: ExpertStatus) -> list[Expert]:
         """Belirli durumdaki uzmanları getir.
 
         Args:
@@ -122,9 +114,7 @@ class ExpertRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_specialization(
-        self, specialization: str
-    ) -> List[Expert]:
+    async def list_by_specialization(self, specialization: str) -> list[Expert]:
         """Belirli uzmanlık alanındaki uzmanları getir.
 
         Args:

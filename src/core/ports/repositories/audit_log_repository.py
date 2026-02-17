@@ -28,12 +28,12 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import List, Optional
 
 from src.core.domain.entities.audit_log_entry import AuditLogEntry
 
@@ -66,9 +66,7 @@ class AuditLogRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, audit_log_id: uuid.UUID
-    ) -> Optional[AuditLogEntry]:
+    async def find_by_id(self, audit_log_id: uuid.UUID) -> AuditLogEntry | None:
         """audit_log_id ile AuditLogEntry getir.
 
         Args:
@@ -82,9 +80,7 @@ class AuditLogRepository(ABC):
     # Liste sorguları
     # ------------------------------------------------------------------
     @abstractmethod
-    async def list_by_correlation_id(
-        self, correlation_id: str
-    ) -> List[AuditLogEntry]:
+    async def list_by_correlation_id(self, correlation_id: str) -> list[AuditLogEntry]:
         """Bir correlation_id'ye ait tüm logları getir.
 
         İstek izleme (request tracing) için tüm servislerdeki logları toplar.
@@ -101,7 +97,7 @@ class AuditLogRepository(ABC):
         self,
         resource_type: str,
         resource_id: uuid.UUID,
-    ) -> List[AuditLogEntry]:
+    ) -> list[AuditLogEntry]:
         """Belirli bir kaynağa ait tüm logları getir.
 
         Args:
@@ -117,9 +113,9 @@ class AuditLogRepository(ABC):
         self,
         actor_id_hash: str,
         *,
-        since: Optional[datetime] = None,
-        until: Optional[datetime] = None,
-    ) -> List[AuditLogEntry]:
+        since: datetime | None = None,
+        until: datetime | None = None,
+    ) -> list[AuditLogEntry]:
         """Bir aktöre ait logları getir (zaman aralığı opsiyonel).
 
         Args:
@@ -136,9 +132,9 @@ class AuditLogRepository(ABC):
         self,
         event_type: str,
         *,
-        since: Optional[datetime] = None,
-        until: Optional[datetime] = None,
-    ) -> List[AuditLogEntry]:
+        since: datetime | None = None,
+        until: datetime | None = None,
+    ) -> list[AuditLogEntry]:
         """Belirli event_type'a göre logları getir.
 
         Args:

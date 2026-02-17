@@ -29,11 +29,11 @@ Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_i
   v3.2.2'de redundant çiftler kaldırıldı.
   KR-018 hard gate: calibrated/QC kanıtı olmadan AnalysisJob başlatılmamalıdır.
 """
+
 from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
-from typing import List, Optional
 
 from src.core.domain.entities.qc_report_record import (
     QCReportRecord,
@@ -69,9 +69,7 @@ class QCReportRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, qc_report_id: uuid.UUID
-    ) -> Optional[QCReportRecord]:
+    async def find_by_id(self, qc_report_id: uuid.UUID) -> QCReportRecord | None:
         """qc_report_id ile QCReportRecord getir.
 
         Args:
@@ -82,9 +80,7 @@ class QCReportRepository(ABC):
         """
 
     @abstractmethod
-    async def find_by_calibration_record_id(
-        self, calibration_record_id: uuid.UUID
-    ) -> Optional[QCReportRecord]:
+    async def find_by_calibration_record_id(self, calibration_record_id: uuid.UUID) -> QCReportRecord | None:
         """calibration_record_id ile QCReportRecord getir.
 
         KR-018 hard gate kontrolü için kalibrasyon kaydına ait QC raporunu bulur.
@@ -100,9 +96,7 @@ class QCReportRepository(ABC):
     # Liste sorguları
     # ------------------------------------------------------------------
     @abstractmethod
-    async def list_by_status(
-        self, status: QCStatus
-    ) -> List[QCReportRecord]:
+    async def list_by_status(self, status: QCStatus) -> list[QCReportRecord]:
         """Belirli durumdaki tüm QC raporlarını getir.
 
         Raporlama, admin paneli ve QC istatistikleri için kullanılır.

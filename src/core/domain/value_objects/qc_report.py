@@ -9,15 +9,15 @@ ve onerilen aksiyon icerir. KR-018 hard gate karari bu VO uzerinden verilir.
 Entity katmanindaki QCReportRecord tam kaydi temsil eder; bu VO
 domain genelinde tasinabilir hafif referanstir.
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 from src.core.domain.value_objects.qc_flag import QCFlag, QCFlagSeverity
-from src.core.domain.value_objects.qc_status import QCStatus, QCRecommendedAction
+from src.core.domain.value_objects.qc_status import QCRecommendedAction, QCStatus
 
 
 @dataclass(frozen=True)
@@ -36,29 +36,21 @@ class QCReport:
     recommended_action: QCRecommendedAction
     created_at: datetime
     flags: tuple[QCFlag, ...] = ()
-    notes: Optional[str] = None
+    notes: str | None = None
 
     # ------------------------------------------------------------------
     # Invariants
     # ------------------------------------------------------------------
     def __post_init__(self) -> None:
         if not isinstance(self.status, QCStatus):
-            raise TypeError(
-                f"status must be QCStatus, got {type(self.status).__name__}"
-            )
+            raise TypeError(f"status must be QCStatus, got {type(self.status).__name__}")
         if not isinstance(self.recommended_action, QCRecommendedAction):
             raise TypeError(
-                f"recommended_action must be QCRecommendedAction, "
-                f"got {type(self.recommended_action).__name__}"
+                f"recommended_action must be QCRecommendedAction, got {type(self.recommended_action).__name__}"
             )
         # FAIL durumunda PROCEED onerisi mantiksal celiskidir
-        if (
-            self.status == QCStatus.FAIL
-            and self.recommended_action == QCRecommendedAction.PROCEED
-        ):
-            raise ValueError(
-                "QCStatus.FAIL cannot have recommended_action=PROCEED (KR-018)"
-            )
+        if self.status == QCStatus.FAIL and self.recommended_action == QCRecommendedAction.PROCEED:
+            raise ValueError("QCStatus.FAIL cannot have recommended_action=PROCEED (KR-018)")
 
     # ------------------------------------------------------------------
     # Domain queries
@@ -76,9 +68,7 @@ class QCReport:
     @property
     def critical_flags(self) -> tuple[QCFlag, ...]:
         """Yalnizca CRITICAL severity bayraklar."""
-        return tuple(
-            f for f in self.flags if f.severity == QCFlagSeverity.CRITICAL
-        )
+        return tuple(f for f in self.flags if f.severity == QCFlagSeverity.CRITICAL)
 
     @property
     def has_critical_flags(self) -> bool:

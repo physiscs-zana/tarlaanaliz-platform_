@@ -29,12 +29,13 @@ Bağımlılıklar: aio-pika (AMQP client), structlog, rabbitmq_config.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import json
 import time
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 import structlog
 
@@ -114,9 +115,7 @@ class RabbitMQPublisher:
             )
             self._connection = None
             self._channel = None
-            raise ConnectionError(
-                f"RabbitMQ bağlantısı kurulamadı: {type(exc).__name__}"
-            ) from exc
+            raise ConnectionError(f"RabbitMQ bağlantısı kurulamadı: {type(exc).__name__}") from exc
 
     async def _get_exchange(self, exchange_name: str) -> Any:
         """Exchange referansını cache'den döner veya alır.
@@ -140,9 +139,9 @@ class RabbitMQPublisher:
         body: dict[str, Any],
         message_id: str,
         *,
-        headers: Optional[dict[str, Any]] = None,
+        headers: dict[str, Any] | None = None,
         content_type: str = "application/json",
-        correlation_id: Optional[str] = None,
+        correlation_id: str | None = None,
     ) -> None:
         """Mesajı belirtilen exchange'e publish eder.
 
@@ -172,7 +171,7 @@ class RabbitMQPublisher:
             content_type=content_type,
             message_id=message_id,
             delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             headers=headers or {},
             correlation_id=correlation_id,
         )

@@ -7,13 +7,14 @@ AnalysisResult domain entity.
 YZ analiz sonucu: overall_health_index + findings + summary.
 YZ analizidir; ilaclama karari VERMEZ (KR-001, KR-025).
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Union
+from typing import Any
 
 
 @dataclass
@@ -32,7 +33,7 @@ class AnalysisResult:
     mission_id: uuid.UUID
     field_id: uuid.UUID
     overall_health_index: Decimal  # 0-1
-    findings: Union[Dict[str, Any], List[Any]]  # JSONB
+    findings: dict[str, Any] | list[Any]  # JSONB
     summary: str  # YZ analizidir, ilaclama karari vermez
     created_at: datetime
 
@@ -41,10 +42,7 @@ class AnalysisResult:
     # ------------------------------------------------------------------
     def __post_init__(self) -> None:
         if not (Decimal("0") <= self.overall_health_index <= Decimal("1")):
-            raise ValueError(
-                f"overall_health_index must be between 0 and 1, "
-                f"got {self.overall_health_index}"
-            )
+            raise ValueError(f"overall_health_index must be between 0 and 1, got {self.overall_health_index}")
         if self.findings is None:
             raise ValueError("findings is required (can be empty dict or list)")
         if not self.summary:

@@ -22,11 +22,12 @@ Testler: Unit test (log format doğrulaması).
 Bağımlılıklar: structlog.
 Notlar/SSOT: Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import structlog
 
@@ -92,11 +93,11 @@ class SecurityEventLogger:
         category: SecurityCategory,
         action: str,
         severity: SecuritySeverity,
-        user_id: Optional[str] = None,
-        source_ip: Optional[str] = None,
-        correlation_id: Optional[str] = None,
-        detail: Optional[str] = None,
-        extra: Optional[dict[str, Any]] = None,
+        user_id: str | None = None,
+        source_ip: str | None = None,
+        correlation_id: str | None = None,
+        detail: str | None = None,
+        extra: dict[str, Any] | None = None,
     ) -> None:
         """Güvenlik olayını loglar (internal).
 
@@ -115,7 +116,7 @@ class SecurityEventLogger:
             "event_category": category.value,
             "event_action": action,
             "severity": severity.value,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         if user_id:
@@ -143,10 +144,10 @@ class SecurityEventLogger:
         self,
         action: str,
         *,
-        user_id: Optional[str] = None,
-        source_ip: Optional[str] = None,
-        correlation_id: Optional[str] = None,
-        detail: Optional[str] = None,
+        user_id: str | None = None,
+        source_ip: str | None = None,
+        correlation_id: str | None = None,
+        detail: str | None = None,
     ) -> None:
         """Kimlik doğrulama olayını logla.
 
@@ -175,7 +176,7 @@ class SecurityEventLogger:
         self,
         user_id: str,
         *,
-        source_ip: Optional[str] = None,
+        source_ip: str | None = None,
     ) -> None:
         """Başarılı giriş logla."""
         self.log_authentication(
@@ -187,8 +188,8 @@ class SecurityEventLogger:
     def log_login_failed(
         self,
         *,
-        user_id: Optional[str] = None,
-        source_ip: Optional[str] = None,
+        user_id: str | None = None,
+        source_ip: str | None = None,
         reason: str = "",
     ) -> None:
         """Başarısız giriş logla."""
@@ -208,8 +209,8 @@ class SecurityEventLogger:
         user_id: str,
         resource: str,
         action: str,
-        source_ip: Optional[str] = None,
-        correlation_id: Optional[str] = None,
+        source_ip: str | None = None,
+        correlation_id: str | None = None,
     ) -> None:
         """Yetkilendirme hatası logla.
 
@@ -236,11 +237,11 @@ class SecurityEventLogger:
     def log_rate_limit_exceeded(
         self,
         *,
-        user_id: Optional[str] = None,
-        source_ip: Optional[str] = None,
+        user_id: str | None = None,
+        source_ip: str | None = None,
         endpoint: str,
         limit: int,
-        correlation_id: Optional[str] = None,
+        correlation_id: str | None = None,
     ) -> None:
         """Rate limit aşımı logla.
 
@@ -268,10 +269,10 @@ class SecurityEventLogger:
         self,
         action: str,
         *,
-        user_id: Optional[str] = None,
-        source_ip: Optional[str] = None,
-        detail: Optional[str] = None,
-        correlation_id: Optional[str] = None,
+        user_id: str | None = None,
+        source_ip: str | None = None,
+        detail: str | None = None,
+        correlation_id: str | None = None,
     ) -> None:
         """Şüpheli aktivite logla.
 
@@ -302,7 +303,7 @@ class SecurityEventLogger:
         resource_type: str,
         resource_id: str,
         action: str,
-        correlation_id: Optional[str] = None,
+        correlation_id: str | None = None,
     ) -> None:
         """Veri erişim olayı logla (audit trail).
 
@@ -328,11 +329,11 @@ class SecurityEventLogger:
     def log_input_validation_failure(
         self,
         *,
-        user_id: Optional[str] = None,
-        source_ip: Optional[str] = None,
+        user_id: str | None = None,
+        source_ip: str | None = None,
         endpoint: str,
         violation: str,
-        correlation_id: Optional[str] = None,
+        correlation_id: str | None = None,
     ) -> None:
         """Girdi doğrulama hatası logla (potansiyel injection girişimi).
 

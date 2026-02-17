@@ -28,12 +28,13 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 from src.core.domain.value_objects.parcel_ref import ParcelRef
 
@@ -72,8 +73,8 @@ class ParcelValidationResult:
 
     exists: bool
     parcel_ref: ParcelRef
-    area_m2: Optional[Decimal] = None
-    area_deviation_pct: Optional[Decimal] = None
+    area_m2: Decimal | None = None
+    area_deviation_pct: Decimal | None = None
     message: str = ""
 
 
@@ -103,7 +104,7 @@ class ParcelGeometryProvider(ABC):
     async def get_geometry(
         self,
         parcel_ref: ParcelRef,
-    ) -> Optional[ParcelGeometry]:
+    ) -> ParcelGeometry | None:
         """Parsel geometrisini TKGM/MEGSİS'ten sorgula.
 
         Args:
@@ -125,7 +126,7 @@ class ParcelGeometryProvider(ABC):
     async def validate_parcel(
         self,
         parcel_ref: ParcelRef,
-        declared_area_m2: Optional[Decimal] = None,
+        declared_area_m2: Decimal | None = None,
     ) -> ParcelValidationResult:
         """Parsel varlığını ve alan tutarlılığını doğrula (KR-013).
 
