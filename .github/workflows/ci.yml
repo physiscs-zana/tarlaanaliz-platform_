@@ -12,6 +12,8 @@ on:
       - 'alembic/**'
       - 'pyproject.toml'
       - '.github/workflows/ci.yml'
+      - '.github/pull_request_template.md'
+      - 'scripts/check_ssot_compliance.py'
   pull_request:
     branches: [main, develop]
     paths:
@@ -20,6 +22,8 @@ on:
       - 'alembic/**'
       - 'pyproject.toml'
       - '.github/workflows/ci.yml'
+      - '.github/pull_request_template.md'
+      - 'scripts/check_ssot_compliance.py'
 
 permissions:
   contents: read
@@ -29,6 +33,37 @@ env:
   PYTHON_VERSION: '3.12'
 
 jobs:
+  ssot-compliance:
+    name: SSOT Compliance Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Run SSOT compliance checks
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${{ github.sha }}"
+          fi
+
+          python scripts/check_ssot_compliance.py --base "$BASE" --head "$HEAD"
+
   lint:
     name: Lint & Format (Ruff)
     runs-on: ubuntu-latest
@@ -201,7 +236,7 @@ jobs:
   status-check:
     name: Backend CI Status
     runs-on: ubuntu-latest
-    needs: [lint, type-check, unit-tests, migration-check]
+    needs: [ssot-compliance, lint, type-check, unit-tests, migration-check]
     if: always()
     steps:
       - name: Check all jobs
@@ -210,8 +245,10 @@ jobs:
           echo "Type Check: ${{ needs.type-check.result }}"
           echo "Unit Tests: ${{ needs.unit-tests.result }}"
           echo "Migration Check: ${{ needs.migration-check.result }}"
+          echo "SSOT Compliance: ${{ needs.ssot-compliance.result }}"
 
-          if [ "${{ needs.lint.result }}" = "failure" ] || \
+          if [ "${{ needs.ssot-compliance.result }}" = "failure" ] || \
+             [ "${{ needs.lint.result }}" = "failure" ] || \
              [ "${{ needs.unit-tests.result }}" = "failure" ] || \
              [ "${{ needs.migration-check.result }}" = "failure" ]; then
             echo "Backend CI failed"
