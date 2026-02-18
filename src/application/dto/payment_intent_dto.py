@@ -60,10 +60,6 @@ class PaymentIntentDTO:
             approved_by_user_id=(
                 None if payload.get("approved_by_user_id") is None else str(payload["approved_by_user_id"])
             ),
-            ),
-            approved_by_user_id=(
-                None if payload.get("approved_by_user_id") is None else str(payload["approved_by_user_id"])
-            ),
             created_at=_parse_datetime(payload["created_at"]),
             approved_at=_parse_optional_datetime(payload.get("approved_at")),
         )
