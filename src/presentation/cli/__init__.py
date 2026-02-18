@@ -1,6 +1,6 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
-"""Presentation CLI package."""
+# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+"""CLI package exports."""
 
-from src.presentation.cli.main import main
+from src.presentation.cli.main import build_parser, main
 
-__all__: list[str] = ["main"]
+__all__ = ["build_parser", "main"]

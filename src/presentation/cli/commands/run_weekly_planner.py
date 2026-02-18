@@ -1,83 +1,96 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
-"""Weekly planner CLI command."""
+# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+"""Weekly planner runner command."""
 
 from __future__ import annotations
 
 import argparse
-import importlib
+import datetime as dt
 import re
 import sys
 import uuid
-from collections.abc import Sequence
+from typing import Callable
 
 EXIT_SUCCESS = 0
 EXIT_ERROR = 1
 EXIT_VALIDATION = 2
 
-_WEEK_PATTERN = re.compile(r"^\d{4}-\d{2}$")
+_WEEK_PATTERN = re.compile(r"^\d{4}-(0[1-9]|[1-4][0-9]|5[0-3])$")
 
 
-def register_subparser(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
-    parser = subparsers.add_parser("weekly-planner", help="Run weekly planner")
-    parser.add_argument("--week", required=True, help="ISO week in YYYY-WW format")
-    parser.add_argument("--dry-run", action="store_true", help="Do not persist outputs")
-    parser.add_argument("--corr-id", default=None, help="Correlation id")
+def _load_service() -> object:
+    try:
+        from src.application.services import weekly_planner_service
+    except Exception as exc:
+        raise RuntimeError("TODO: src.application.services.weekly_planner_service is not available") from exc
+    return weekly_planner_service
+
+
+def _default_week() -> str:
+    year, week, _ = dt.date.today().isocalendar()
+    return f"{year}-{week:02d}"
+
+
+def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> argparse.ArgumentParser:
+    parser = subparsers.add_parser("weekly-planner", help="Run weekly planner job")
+    parser.add_argument("--week", default=_default_week(), help="ISO week format YYYY-WW")
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--corr-id")
     parser.add_argument("--max-work-days", type=int, default=6)
     parser.add_argument("--daily-capacity", type=int, default=2500)
-    parser.set_defaults(handler=_run_weekly_planner)
+    parser.set_defaults(handler=handle)
+    return parser
 
 
-def run(args: argparse.Namespace) -> int:
-    handler = getattr(args, "handler", None)
-    if handler is None:
-        sys.stderr.write("error: missing weekly-planner command\n")
-        return EXIT_VALIDATION
-    return int(handler(args))
-
-
-def _validate_args(args: argparse.Namespace) -> str | None:
+def _validate(args: argparse.Namespace) -> str | None:
+    # KR-015
     if not _WEEK_PATTERN.match(args.week):
-        return "error: --week must be YYYY-WW"
-    if not (1 <= int(args.max_work_days) <= 6):
-        return "error: --max-work-days must be between 1 and 6"
-    if not (2500 <= int(args.daily_capacity) <= 3000):
-        return "error: --daily-capacity must be between 2500 and 3000"
+        return "--week must match YYYY-WW"
+    if args.max_work_days < 1 or args.max_work_days > 6:
+        return "--max-work-days must be in range 1..6"
+    if args.daily_capacity < 2500 or args.daily_capacity > 3000:
+        return "--daily-capacity must be in range 2500..3000"
     return None
 
 
-def _run_weekly_planner(args: argparse.Namespace) -> int:
-    error = _validate_args(args)
+def handle(args: argparse.Namespace) -> int:
+    error = _validate(args)
     if error:
-        sys.stderr.write(f"{error}\n")
+        print(f"Validation error: {error}", file=sys.stderr)
         return EXIT_VALIDATION
 
     corr_id = args.corr_id or str(uuid.uuid4())
+
     try:
-        module = importlib.import_module("src.application.services.weekly_planner_service")
+        service = _load_service()
+    except RuntimeError as exc:
+        print(str(exc), file=sys.stderr)
+        return EXIT_ERROR
+
+    runner: Callable[..., object] | None = getattr(service, "run", None)
+    if runner is None:
+        print("Error: weekly_planner_service.run is missing.", file=sys.stderr)
+        return EXIT_ERROR
+
+    try:
+        result = runner(
+            week=args.week,
+            dry_run=args.dry_run,
+            corr_id=corr_id,
+            max_work_days=args.max_work_days,
+            daily_capacity_donum=args.daily_capacity,
+        )
+    except ValueError as exc:
+        print(f"Validation error: {exc}", file=sys.stderr)
+        return EXIT_VALIDATION
     except Exception:
-        sys.stderr.write("TODO: src.application.services.weekly_planner_service missing\n")
-        if args.dry_run:
-            sys.stderr.write(f"graceful error: planner service unavailable for dry-run (corr_id={corr_id})\n")
+        print("Weekly planner execution failed.", file=sys.stderr)
         return EXIT_ERROR
 
-    service = getattr(module, "service", None)
-    if service is None:
-        sys.stderr.write("error: weekly planner service entrypoint not found\n")
-        return EXIT_ERROR
-
-    result = service.run(
-        week=args.week,
-        dry_run=bool(args.dry_run),
-        corr_id=corr_id,
-        max_work_days=int(args.max_work_days),
-        daily_capacity_donum=int(args.daily_capacity),
-    )
-    sys.stdout.write(f"{result}\n")
+    if result is not None:
+        print(result)
+    else:
+        print(f"weekly planner executed (corr_id={corr_id})")
     return EXIT_SUCCESS
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="weekly-planner")
-    register_subparser(parser.add_subparsers(dest="command"))
-    parsed = parser.parse_args(argv)
-    return run(parsed)
+__all__ = ["register", "handle"]

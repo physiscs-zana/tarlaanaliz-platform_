@@ -1,69 +1,79 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
 """Seed data CLI commands."""
 
 from __future__ import annotations
 
 import argparse
-import importlib
 import sys
-from collections.abc import Sequence
+from typing import Callable
 
 EXIT_SUCCESS = 0
 EXIT_ERROR = 1
 EXIT_VALIDATION = 2
 
 
-_CONFIRM_TOKEN = "I_UNDERSTAND"  # noqa: S105
-
-
-def register_subparser(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
-    parser = subparsers.add_parser("seed", help="Seed data commands")
-    seed_sub = parser.add_subparsers(dest="seed_command")
-
-    for name in ("seed-all", "seed-minimal"):
-        cmd = seed_sub.add_parser(name, help=f"Run {name}")
-        cmd.set_defaults(handler=_run_seed, seed_action=name)
-
-    admin_cmd = seed_sub.add_parser("seed-admin", help="Run privileged admin seed")
-    admin_cmd.add_argument("--force", action="store_true")
-    admin_cmd.add_argument("--confirm", default="")
-    admin_cmd.set_defaults(handler=_run_seed, seed_action="seed-admin")
-
-
-def run(args: argparse.Namespace) -> int:
-    handler = getattr(args, "handler", None)
-    if handler is None:
-        sys.stderr.write("error: missing seed subcommand\n")
-        return EXIT_VALIDATION
-    return int(handler(args))
-
-
-def _run_seed(args: argparse.Namespace) -> int:
-    action = str(args.seed_action)
-    force = bool(getattr(args, "force", False))
-    confirm = str(getattr(args, "confirm", ""))
-    if action == "seed-admin" and not (force or confirm == _CONFIRM_TOKEN):
-        sys.stderr.write("error: seed-admin requires --force or --confirm I_UNDERSTAND\n")
-        return EXIT_VALIDATION
-
+def _load_service() -> object:
     try:
-        module = importlib.import_module("src.application.services.seed_service")
+        from src.application.services import seed_service
+    except Exception as exc:
+        raise RuntimeError("TODO: src.application.services.seed_service is not available") from exc
+    return seed_service
+
+
+def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> argparse.ArgumentParser:
+    parser = subparsers.add_parser("seed", help="Seed commands")
+    seed_sub = parser.add_subparsers(dest="seed_command", required=True)
+
+    seed_sub.add_parser("seed-all", help="Seed all baseline data")
+    seed_sub.add_parser("seed-minimal", help="Seed minimal baseline data")
+
+    admin = seed_sub.add_parser("seed-admin", help="Seed admin user/data")
+    admin.add_argument("--confirm", default="")
+    admin.add_argument("--force", action="store_true")
+
+    parser.set_defaults(handler=handle)
+    return parser
+
+
+def _invoke(service: object, name: str, **kwargs: object) -> int:
+    fn: Callable[..., object] | None = getattr(service, name, None)
+    if fn is None:
+        print(f"Error: missing seed service method '{name}'.", file=sys.stderr)
+        return EXIT_ERROR
+    try:
+        result = fn(**kwargs)
+    except ValueError as exc:
+        print(f"Validation error: {exc}", file=sys.stderr)
+        return EXIT_VALIDATION
     except Exception:
-        sys.stderr.write("TODO: src.application.services.seed_service missing\n")
+        print("Seed command failed.", file=sys.stderr)
         return EXIT_ERROR
 
-    service = getattr(module, "service", None)
-    if service is None:
-        sys.stderr.write("error: seed service entrypoint not found\n")
-        return EXIT_ERROR
-
-    result = service.run(action=action)
-    sys.stdout.write(f"{result}\n")
+    print(result if result is not None else "ok")
     return EXIT_SUCCESS
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="seed")
-    register_subparser(parser.add_subparsers(dest="command"))
-    parsed = parser.parse_args(argv)
-    return run(parsed)
+def handle(args: argparse.Namespace) -> int:
+    try:
+        service = _load_service()
+    except RuntimeError as exc:
+        print(str(exc), file=sys.stderr)
+        return EXIT_ERROR
+
+    if args.seed_command == "seed-all":
+        return _invoke(service, "seed_all")
+
+    if args.seed_command == "seed-minimal":
+        return _invoke(service, "seed_minimal")
+
+    if args.seed_command == "seed-admin":
+        if not args.force and args.confirm != "I_UNDERSTAND":
+            print("Validation error: seed-admin requires --confirm I_UNDERSTAND or --force.", file=sys.stderr)
+            return EXIT_VALIDATION
+        return _invoke(service, "seed_admin", force=bool(args.force))
+
+    print("Unknown seed command.", file=sys.stderr)
+    return EXIT_VALIDATION
+
+
+__all__ = ["register", "handle"]

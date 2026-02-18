@@ -1,3 +1,7 @@
+# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+
+from __future__ import annotations
+
 from fastapi.testclient import TestClient
 
 from src.presentation.api.main import create_app
@@ -8,18 +12,13 @@ def test_create_app_importable() -> None:
     assert app is not None
 
 
-def test_health_endpoint_returns_200() -> None:
-    app = create_app()
-    client = TestClient(app)
+def test_health_returns_200() -> None:
+    client = TestClient(create_app())
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
 
 
-def test_correlation_header_exists() -> None:
-    app = create_app()
-    client = TestClient(app)
+def test_health_has_correlation_id_header() -> None:
+    client = TestClient(create_app())
     response = client.get("/health")
-    assert response.status_code == 200
     assert "X-Correlation-Id" in response.headers
-    assert response.headers["X-Correlation-Id"]

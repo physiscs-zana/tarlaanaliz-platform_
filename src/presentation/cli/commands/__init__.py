@@ -1,7 +1,7 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
 """CLI command modules."""
 
-__all__: list[str] = [
+__all__ = [
     "expert_management",
     "migrate",
     "run_weekly_planner",

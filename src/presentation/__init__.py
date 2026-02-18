@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
-"""Presentation layer package."""
+# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+"""Presentation package exports."""
 
-__all__: list[str] = ["api", "cli"]
+__all__ = ["api", "cli"]

@@ -1,8 +1,7 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
-"""Module execution entrypoint for `python -m src.presentation.cli`."""
-
-from __future__ import annotations
+# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+"""CLI module runner for `python -m src.presentation.cli`."""
 
 from src.presentation.cli.main import main
 
-raise SystemExit(main())
+if __name__ == "__main__":
+    raise SystemExit(main())
