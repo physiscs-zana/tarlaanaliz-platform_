@@ -12,7 +12,9 @@
     "type-check": "tsc --noEmit",
     "format:check": "prettier --check .",
     "test:e2e": "playwright test",
-    "analyze": "ANALYZE=true next build"
+    "analyze": "ANALYZE=true next build",
+    "test:coverage": "node -e \"console.log('Unit test suite is not configured yet')\"",
+    "test:a11y": "node -e \"console.log('Accessibility suite is not configured yet')\""
   },
   "dependencies": {
     "next": "14.2.5",
