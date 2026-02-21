@@ -1,7 +1,4 @@
-/*
-PATH: web/src/app/(expert)/profile/page.tsx
-DESC: Uzman profil sayfası; kullanıcı bilgileri + expert-specific info.
-TODO: Implement this file.
-*/
-
-export {};
+/* BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated. */
+export default function PlaceholderPage() {
+  return null;
+}
