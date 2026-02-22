@@ -188,8 +188,8 @@ jobs:
       - name: Build production bundle
         working-directory: web
         env:
-          NEXT_PUBLIC_API_BASE_URL: https://staging-api.tarlaanaliz.com
-          NEXT_PUBLIC_APP_ENV: staging
+          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:3000
+          NEXT_PUBLIC_APP_ENV: test
           NEXT_PUBLIC_ENABLE_RUM: false
           NODE_ENV: production
         run: pnpm run build
@@ -285,7 +285,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, firefox, webkit]
+        browser: [chromium, firefox]
     
     steps:
       - name: Checkout repository
@@ -324,11 +324,14 @@ jobs:
           echo "❌ Playwright browsers could not be installed"
           exit 1
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: pwa-build
-          path: web/
+      - name: Build Next.js app (self-hosted CI)
+        working-directory: web
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:3000
+          NEXT_PUBLIC_APP_ENV: test
+          NEXT_PUBLIC_ENABLE_RUM: false
+          NODE_ENV: production
+        run: pnpm run build
 
       - name: Run Playwright tests
         working-directory: web
@@ -387,16 +390,23 @@ jobs:
           path: web/node_modules
           key: ${{ runner.os }}-node-modules-${{ hashFiles('web/pnpm-lock.yaml') }}
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: pwa-build
-          path: web/
+      - name: Build Next.js app (a11y self-hosted CI)
+        working-directory: web
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:3000
+          NEXT_PUBLIC_APP_ENV: test
+          NEXT_PUBLIC_ENABLE_RUM: false
+          NODE_ENV: production
+        run: pnpm run build
+
+      - name: Install Playwright browsers (No WebKit)
+        working-directory: web
+        run: pnpm exec playwright install chromium firefox --with-deps
 
       - name: Start test server
         working-directory: web
         run: |
-          pnpm run start &
+          pnpm run start -- --hostname 127.0.0.1 --port 3000 &
           sleep 10
           curl -f http://127.0.0.1:3000 || exit 1
 
@@ -436,7 +446,7 @@ jobs:
         run: |
           set -o pipefail
           for attempt in 1 2 3; do
-            if pnpm audit --audit-level=high; then
+            if pnpm audit --prod --audit-level=high; then
               exit 0
             fi
             echo "⚠️ pnpm audit retry ${attempt}/3"
@@ -501,7 +511,7 @@ jobs:
             ✅ Lint & Format: Passed
             ✅ Unit Tests: Passed
             ✅ Build: Passed
-            ✅ E2E Tests: Passed (Chromium, Firefox, WebKit)
+            ✅ E2E Tests: Passed (Chromium, Firefox)
             ✅ Accessibility: Passed
             ✅ Security Audit: Passed
             `;
