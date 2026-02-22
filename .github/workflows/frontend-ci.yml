@@ -307,9 +307,22 @@ jobs:
           path: web/node_modules
           key: ${{ runner.os }}-node-modules-${{ hashFiles('web/pnpm-lock.yaml') }}
 
-      - name: Install Playwright browsers
+      - name: Restore Playwright browser cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('web/pnpm-lock.yaml') }}
+
+      - name: Install Playwright browsers (retry)
         working-directory: web
-        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+        run: |
+          for attempt in 1 2 3; do
+            pnpm exec playwright install --with-deps ${{ matrix.browser }} && exit 0
+            echo "⚠️ Playwright install retry ${attempt}/3"
+            sleep 10
+          done
+          echo "❌ Playwright browsers could not be installed"
+          exit 1
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -321,6 +334,7 @@ jobs:
         working-directory: web
         env:
           PLAYWRIGHT_BROWSER: ${{ matrix.browser }}
+          PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
         run: pnpm run test:e2e --project=${{ matrix.browser }}
 
       - name: Upload test results
@@ -384,6 +398,7 @@ jobs:
         run: |
           pnpm run start &
           sleep 10
+          curl -f http://127.0.0.1:3000 || exit 1
 
       - name: Run axe accessibility tests
         working-directory: web
@@ -416,14 +431,27 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: Run pnpm audit
+      - name: Run pnpm audit (retry)
         working-directory: web
         run: |
-          pnpm audit --audit-level=high || {
-            echo "⚠️ Security vulnerabilities detected"
-            pnpm audit --json > audit-report.json
+          set -o pipefail
+          for attempt in 1 2 3; do
+            if pnpm audit --audit-level=high; then
+              exit 0
+            fi
+            echo "⚠️ pnpm audit retry ${attempt}/3"
+            sleep 10
+          done
+
+          pnpm audit --json > audit-report.json || true
+
+          if [ -f audit-report.json ] && grep -q 'ERR_PNPM_AUDIT_BAD_RESPONSE' audit-report.json; then
+            echo "❌ pnpm audit endpoint failed (infrastructure)."
             exit 1
-          }
+          fi
+
+          echo "❌ Security vulnerabilities detected"
+          exit 1
 
       - name: Upload audit report
         if: failure()
