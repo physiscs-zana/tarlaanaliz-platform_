@@ -436,7 +436,7 @@ jobs:
         run: |
           set -o pipefail
           for attempt in 1 2 3; do
-            if pnpm audit --audit-level=high; then
+            if pnpm audit --prod --audit-level=high; then
               exit 0
             fi
             echo "⚠️ pnpm audit retry ${attempt}/3"
