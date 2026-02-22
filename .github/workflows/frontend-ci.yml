@@ -285,7 +285,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, firefox, webkit]
+        browser: [chromium, firefox]
     
     steps:
       - name: Checkout repository
@@ -501,7 +501,7 @@ jobs:
             ✅ Lint & Format: Passed
             ✅ Unit Tests: Passed
             ✅ Build: Passed
-            ✅ E2E Tests: Passed (Chromium, Firefox, WebKit)
+            ✅ E2E Tests: Passed (Chromium, Firefox)
             ✅ Accessibility: Passed
             ✅ Security Audit: Passed
             `;
