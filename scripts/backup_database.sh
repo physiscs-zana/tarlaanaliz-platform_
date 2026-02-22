@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# KR-040: SDLC güvenlik kapısı; yedekleme işlemleri için denetim kaydı tutulur.
 #!/usr/bin/env bash
 set -euo pipefail
 

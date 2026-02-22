@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# KR-081: Contract-first test fixture configuration; domain entity fixtures used for explicit field assertions.
 """
 Amaç: Pytest global fixtures ve test configuration.
 Sorumluluk: Bağlamına göre beklenen sorumlulukları yerine getirir; SSOT v1.0.0 ile uyumlu kalır.
@@ -15,9 +16,6 @@ from __future__ import annotations
 
 import importlib.util
 from typing import Any
-
-pytest_plugins = ["tests.fixtures.domain_fixtures"]
-
 
 pytest_plugins = ["tests.fixtures.domain_fixtures"]
 
