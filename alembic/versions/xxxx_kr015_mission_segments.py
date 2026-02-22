@@ -6,8 +6,8 @@ Rename file with real timestamp prefix per your convention.
 from alembic import op
 import sqlalchemy as sa
 
-revision = "xxxx_kr015_mission_segments"
-down_revision = None  # TODO
+revision = "kr015a_mission_segments"
+down_revision = "wbr001"
 branch_labels = None
 depends_on = None
 

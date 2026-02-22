@@ -6,17 +6,17 @@ Rename file with real timestamp prefix per your convention.
 from alembic import op
 import sqlalchemy as sa
 
-revision = "xxxx_kr015_seasonal_reschedule_tokens"
-down_revision = None  # TODO
+revision = "kr015b_seasonal_reschedule_tokens"
+down_revision = "kr015a_mission_segments"
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
     # subscriptions token fields
+    # Not: reschedule_tokens_remaining migration 004'te zaten eklendi; burada tekrar eklenmez.
     op.add_column("subscriptions", sa.Column("plan_type", sa.String(length=32), nullable=True))
     op.add_column("subscriptions", sa.Column("reschedule_tokens_per_season", sa.Integer(), nullable=True))
-    op.add_column("subscriptions", sa.Column("reschedule_tokens_remaining", sa.Integer(), nullable=True))
 
     # reschedule request table
     op.create_table(
@@ -37,6 +37,5 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("subscription_reschedule_requests")
-    op.drop_column("subscriptions", "reschedule_tokens_remaining")
     op.drop_column("subscriptions", "reschedule_tokens_per_season")
     op.drop_column("subscriptions", "plan_type")

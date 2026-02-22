@@ -93,7 +93,10 @@ root:
   handlers: [stdout]
 
 # PII maskeleme kuralları
-# Log mesajlarında aşağıdaki alanlar maskelenir
+# UYARI: Bu bölüm Python'un standart logging kütüphanesi tarafından otomatik
+# işlenmez. Maskeleme mantığı uygulama kodunda (özel logging.Filter veya
+# structlog processor olarak) ayrıca implemente edilmelidir.
+# Bu bölüm yalnızca hangi alanların maskeleneceğini belgeleyen dokümantasyondur.
 pii_masking:
   enabled: true
   fields:
