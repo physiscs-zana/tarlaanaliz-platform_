@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# KR-013: Çiftçi üyelik akışı; uzman seed verisi başlangıç yapılandırması için kullanılır.
 """Seed experts via ExpertManagementService with dry-run by default."""
 
 from __future__ import annotations

@@ -178,3 +178,8 @@ exclude_lines = [
     "if __name__ == .__main__.",
     "@overload",
 ]
+
+# --- Bandit ---
+[tool.bandit]
+exclude_dirs = ["tests", "alembic"]
+skips = ["B105", "B106", "B107"]

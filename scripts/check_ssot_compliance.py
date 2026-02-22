@@ -46,6 +46,12 @@ def git_numstat(base_ref: str, head_ref: str) -> tuple[int, int, int]:
         parts = line.split("\t")
         if len(parts) < 3:
             continue
+        # Only count files within ALLOWED_ROOTS for batch sizing.
+        # This prevents large merge commits that touch alembic/, config/,
+        # docker-compose.yml, etc. from spuriously failing the batch check.
+        file_path = Path(parts[2].strip())
+        if not file_path.parts or file_path.parts[0] not in ALLOWED_ROOTS:
+            continue
         files += 1
         added = 0 if parts[0] == "-" else int(parts[0])
         deleted = 0 if parts[1] == "-" else int(parts[1])
