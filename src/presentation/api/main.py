@@ -7,7 +7,6 @@ import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -17,7 +16,13 @@ from src.presentation.api.middleware.cors_middleware import add_cors_middleware
 from src.presentation.api.middleware.jwt_middleware import JwtMiddleware
 from src.presentation.api.middleware.rate_limit_middleware import RateLimitMiddleware
 from src.presentation.api.settings import settings
-from src.presentation.api.v1 import admin_payments_router, calibration_router, payments_router, qc_router, sla_metrics_router
+from src.presentation.api.v1 import (
+    admin_payments_router,
+    calibration_router,
+    payments_router,
+    qc_router,
+    sla_metrics_router,
+)
 from src.presentation.api.v1.endpoints import (
     admin_audit_router,
     admin_pricing_router,
@@ -28,12 +33,6 @@ from src.presentation.api.v1.endpoints import (
     missions_router,
     parcels_router,
     payment_webhooks_router,
-from src.presentation.api.v1 import (
-    admin_payments_router,
-    calibration_router,
-    payments_router,
-    qc_router,
-    sla_metrics_router,
 )
 
 
@@ -65,10 +64,6 @@ def _register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=exc.status_code,
             content={"detail": safe_detail, "corr_id": getattr(request.state, "corr_id", None)},
-        detail = exc.detail if isinstance(exc, HTTPException) else "Request failed"
-        return JSONResponse(
-            status_code=exc.status_code,
-            content={"detail": detail, "corr_id": getattr(request.state, "corr_id", None)},
         )
 
     @app.exception_handler(Exception)
@@ -87,11 +82,6 @@ def create_app() -> FastAPI:
         docs_url=settings.app.docs_url,
         redoc_url=settings.app.redoc_url,
         openapi_url=settings.app.openapi_url,
-        title="TarlaAnaliz Platform API",
-        version="1.0.0",
-        docs_url="/docs",
-        redoc_url="/redoc",
-        openapi_url="/openapi.json",
         lifespan=_lifespan,
     )
 
