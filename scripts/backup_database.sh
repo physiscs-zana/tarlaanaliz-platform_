@@ -63,10 +63,7 @@ if [ -z "$OUT_DIR" ] || [ -z "$FILE_PREFIX" ]; then
   exit $EXIT_VALIDATION
 fi
 
-<<<<<<< codex/generate-documentation-files-for-runbooks-3aj6pc
-=======
 require_cmd pg_dump
->>>>>>> main
 mkdir -p "$OUT_DIR"
 
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -80,7 +77,6 @@ else
   DB_USER="${DB_USER:-}"
   DB_NAME="${DB_NAME:-}"
   if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_NAME" ]; then
-<<<<<<< codex/generate-documentation-files-for-runbooks-3aj6pc
     if [ "$DRY_RUN" = "1" ]; then
       DUMP_CMD=(pg_dump "<DB_URL_OR_HOST_PARAMS>")
     else
@@ -90,12 +86,6 @@ else
   else
     DUMP_CMD=(pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME")
   fi
-=======
-    json_log "ERROR" "missing DB connection values"
-    exit $EXIT_VALIDATION
-  fi
-  DUMP_CMD=(pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME")
->>>>>>> main
 fi
 
 if [ "$DRY_RUN" = "1" ]; then
@@ -103,10 +93,6 @@ if [ "$DRY_RUN" = "1" ]; then
   exit $EXIT_OK
 fi
 
-<<<<<<< codex/generate-documentation-files-for-runbooks-3aj6pc
-require_cmd pg_dump
-=======
->>>>>>> main
 set +x
 "${DUMP_CMD[@]}" | gzip -c > "$OUT_FILE" || {
   json_log "ERROR" "backup failed" "\"out\":\"$OUT_FILE\""

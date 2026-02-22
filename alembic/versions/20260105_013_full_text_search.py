@@ -41,12 +41,12 @@ def upgrade() -> None:
         """
     )
 
-    # Ada/Parsel referansı trigram indeksi
+    # Ada/Parsel referansı trigram indeksi (block_no + parcel_no birleşik)
     op.execute(
         """
         CREATE INDEX idx_fields_parcel_ref_trgm
         ON fields
-        USING GIN (parcel_ref gin_trgm_ops)
+        USING GIN ((block_no || ' ' || parcel_no) gin_trgm_ops)
         """
     )
 
@@ -67,21 +67,15 @@ def upgrade() -> None:
         """
         CREATE INDEX idx_users_phone_trgm
         ON users
-        USING GIN (phone_number gin_trgm_ops)
+        USING GIN (phone gin_trgm_ops)
         """
     )
 
     # -------------------------------------------------------------------------
     # pilots tablosu — pilot araması
     # -------------------------------------------------------------------------
-    # Pilot adı trigram indeksi
-    op.execute(
-        """
-        CREATE INDEX idx_pilots_name_trgm
-        ON pilots
-        USING GIN (full_name gin_trgm_ops)
-        """
-    )
+    # Not: pilots tablosunda full_name sütunu yok; ad bilgisi users tablosunda
+    # tutulur. Pilot araması için konum indeksi yeterlidir.
 
     # Pilot ili + ilçe birleşik trigram indeksi
     op.execute(
@@ -111,7 +105,6 @@ def downgrade() -> None:
 
     # pilots
     op.execute("DROP INDEX IF EXISTS idx_pilots_location_trgm")
-    op.execute("DROP INDEX IF EXISTS idx_pilots_name_trgm")
 
     # users
     op.execute("DROP INDEX IF EXISTS idx_users_phone_trgm")

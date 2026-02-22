@@ -141,7 +141,7 @@ def upgrade() -> None:
     op.create_index(
         "idx_analysis_results_job",
         "analysis_results",
-        ["analysis_job_id"],
+        ["job_id"],
         unique=False,
     )
 
@@ -253,7 +253,7 @@ def upgrade() -> None:
     op.create_index(
         "idx_price_snapshots_crop_type",
         "price_snapshots",
-        ["crop_type", "analysis_type", "effective_date"],
+        ["crop_type", "analysis_type", "effective_from"],
         unique=False,
     )
 
@@ -278,13 +278,7 @@ def upgrade() -> None:
     # -------------------------------------------------------------------------
     # users tablosu indeksleri
     # -------------------------------------------------------------------------
-    # Rol bazlı kullanıcı listesi
-    op.create_index(
-        "idx_users_role",
-        "users",
-        ["role"],
-        unique=False,
-    )
+    # Not: users.role sütunu yok; roller user_roles junction tablosunda tutulur.
     # İl bazlı kullanıcı arama
     op.create_index(
         "idx_users_province",
@@ -299,19 +293,15 @@ def upgrade() -> None:
     op.create_index(
         "idx_pilots_province_status",
         "pilots",
-        ["province", "status"],
+        ["province", "is_active"],
         unique=False,
     )
 
     # -------------------------------------------------------------------------
     # weekly_schedules tablosu indeksleri
     # -------------------------------------------------------------------------
-    op.create_index(
-        "idx_weekly_schedules_pilot_week",
-        "weekly_schedules",
-        ["pilot_id", "week_start_date"],
-        unique=False,
-    )
+    # Not: weekly_schedules tablosunda pilot_id sütunu yok; pilot atamaları
+    # schedule_entries üzerinden takip edilir. Bu nedenle ayrı indeks eklenmez.
 
     # -------------------------------------------------------------------------
     # mission_route_files tablosu indeksleri
@@ -328,15 +318,11 @@ def downgrade() -> None:
     # mission_route_files
     op.drop_index("idx_route_files_parcel", table_name="mission_route_files")
 
-    # weekly_schedules
-    op.drop_index("idx_weekly_schedules_pilot_week", table_name="weekly_schedules")
-
     # pilots
     op.drop_index("idx_pilots_province_status", table_name="pilots")
 
     # users
     op.drop_index("idx_users_province", table_name="users")
-    op.drop_index("idx_users_role", table_name="users")
 
     # fields
     op.drop_index("idx_fields_province_district", table_name="fields")

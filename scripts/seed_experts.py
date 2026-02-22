@@ -115,7 +115,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             log("INFO", corr_id, "expert upserted", expert_id=row["expert_id"])
         except TypeError:
-            svc.create_or_update_expert(**{k: row[k] for k in ["expert_id", "display_name", "specialties", "region", "capacity"]})
+            svc.create_or_update_expert(**{k: row[k] for k in ["expert_id", "display_name", "specialties", "region", "capacity"]}, corr_id=corr_id)
             log("INFO", corr_id, "expert upserted (fallback signature)", expert_id=row["expert_id"])
         except Exception as exc:
             log("ERROR", corr_id, "expert upsert failed", expert_id=row["expert_id"], error=str(exc))

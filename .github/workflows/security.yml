@@ -65,21 +65,25 @@ jobs:
       - name: Run bandit
         run: bandit -r src/ -c pyproject.toml --severity-level medium -f json -o bandit-report.json || true
 
-      - name: Display results
+      - name: Display results and fail on HIGH/CRITICAL
         if: always()
         run: |
           if [ -f bandit-report.json ]; then
             python -c "
-          import json
+          import json, sys
           with open('bandit-report.json') as f:
               data = json.load(f)
           results = data.get('results', [])
+          high_critical = [r for r in results if r['issue_severity'] in ('HIGH', 'CRITICAL')]
           if results:
-              print(f'Found {len(results)} issue(s):')
+              print(f'Found {len(results)} issue(s) ({len(high_critical)} HIGH/CRITICAL):')
               for r in results:
                   print(f\"  [{r['issue_severity']}] {r['issue_text']} - {r['filename']}:{r['line_number']}\")
           else:
               print('No security issues found')
+          if high_critical:
+              print(f'\nERROR: {len(high_critical)} HIGH/CRITICAL finding(s) must be resolved before merge.')
+              sys.exit(1)
           "
           fi
 
