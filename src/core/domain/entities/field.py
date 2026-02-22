@@ -98,9 +98,6 @@ class Field:
             raise ValueError("new_crop_type cannot be empty")
 
         # KR-013: Sadece 1 Ekim - 31 Aralik
-        if not (as_of.month >= 10 or (as_of.month == 12 and as_of.day <= 31)):
-            # More precisely: month must be 10, 11, or 12
-            pass  # handled below
         if as_of.month < 10:
             raise ValueError(
                 f"Bitki turu degisikligi yalnizca 1 Ekim - 31 Aralik arasinda "
