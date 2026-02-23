@@ -8,7 +8,7 @@ Hata Modları (idempotency/retry/rate limit): N/A
 Observability (log fields/metrics/traces): N/A
 Testler: N/A
 Bağımlılıklar: N/A
-Notlar/SSOT: Tek referans: SSOT v1.0.0. Aynı kavram başka yerde tekrar edilmez.
+Notlar/SSOT: Tek referans: SSOT v1.0.0. Aynı kavram başka yerde tekrar edilmez. KR-015.
 """
 
 from __future__ import annotations
