@@ -11,10 +11,12 @@ def test_from_dict_allows_missing_subscription_id() -> None:
         {
             "intent_id": "intent-1",
             "payer_user_id": "user-1",
+            "payment_intent_id": "pi-1",
+            "payer_ref": "ref-1",
+            "currency_code": "TRY",
+            "amount_minor": 1250,
             "status": "pending",
-            "amount": "12.50",
-            "currency": "TRY",
-            "requested_at": "2026-01-01T00:00:00Z",
+            "created_at": "2026-01-01T00:00:00Z",
         }
     )
 
@@ -27,13 +29,13 @@ def test_to_dict_preserves_null_subscription_id() -> None:
             "intent_id": "intent-2",
             "subscription_id": None,
             "payer_user_id": "user-1",
+            "payment_intent_id": "pi-2",
+            "payer_ref": "ref-2",
+            "currency_code": "TRY",
+            "amount_minor": 999,
             "status": "pending",
-            "amount": "9.99",
-            "currency": "TRY",
-            "requested_at": "2026-01-01T00:00:00Z",
+            "created_at": "2026-01-01T00:00:00Z",
         }
     )
 
-    payload = dto.to_dict()
-
-    assert payload["subscription_id"] is None
+    assert dto.subscription_id is None
