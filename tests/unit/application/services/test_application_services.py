@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# KR-018: QC decisioning unit tests.
 
 import sys
 

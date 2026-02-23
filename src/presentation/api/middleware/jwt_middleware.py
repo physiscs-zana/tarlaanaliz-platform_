@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# KR-081: contract-first claim gate for authenticated identity.
 """JWT authentication middleware for phone+PIN verified identities."""
 
 from __future__ import annotations
