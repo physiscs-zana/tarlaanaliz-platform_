@@ -43,7 +43,7 @@ class JwtMiddleware(BaseHTTPMiddleware):
         corr_id, _ = ensure_request_context(request)
 
         if not settings.jwt.enabled or is_bypassed_path(request.url.path, settings.jwt.bypass_routes):
-            response = await call_next(request)
+            response: Response = await call_next(request)
             response.headers["X-Correlation-Id"] = corr_id
             return response
 
@@ -77,7 +77,7 @@ class JwtMiddleware(BaseHTTPMiddleware):
         request.state.permissions = list(claims.get("permissions", []))
         request.state.roles = list(claims.get("roles", []))
 
-        response = await call_next(request)
+        response: Response = await call_next(request)
         response.headers["X-Correlation-Id"] = corr_id
         return response
 
@@ -121,7 +121,8 @@ class JwtMiddleware(BaseHTTPMiddleware):
     def _json_b64url_decode(data: str) -> dict[str, Any]:
         decoded = JwtMiddleware._b64url_decode(data)
         try:
-            return json.loads(decoded.decode("utf-8"))
+            result: dict[str, Any] = json.loads(decoded.decode("utf-8"))
+            return result
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise JwtValidationError("Invalid payload") from exc
 

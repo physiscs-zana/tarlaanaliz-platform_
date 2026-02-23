@@ -49,23 +49,3 @@ class CalibrationGateService:
         if evidence.qc_status not in {"pass", "warn"}:
             raise CalibrationGateError(f"KR-018: QC status not acceptable ({evidence.qc_status})")
         return evidence
-from typing import Any, Protocol
-
-
-
-class CalibrationEvidencePort(Protocol):
-    def is_calibration_verified(self, *, mission_id: str) -> bool: ...
-
-
-class CalibrationGateError(PermissionError):
-    pass
-
-
-@dataclass(slots=True)
-class CalibrationGateService:
-    evidence_port: CalibrationEvidencePort
-
-    def assert_ready(self, *, mission_id: str) -> None:
-        # KR-018: kalibrasyon kanıtı yoksa akış hard-fail olmalıdır.
-        if not self.evidence_port.is_calibration_verified(mission_id=mission_id):
-            raise CalibrationGateError("calibration_hard_gate_failed")

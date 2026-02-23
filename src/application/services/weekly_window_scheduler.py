@@ -39,28 +39,3 @@ class WeeklyWindowScheduler:
             for slot_index in range(self._slot_per_day):
                 slots.append(day_start + (slot_index * (day_ms // self._slot_per_day)))
         return WeeklyWindow(week_start_ts_ms=int(week_start_ts_ms), week_end_ts_ms=week_end, slots_ts_ms=tuple(slots))
-from typing import Any, Protocol
-
-
-class DomainServicePort(Protocol):
-    def execute(self, *, command: dict[str, Any], correlation_id: str) -> dict[str, Any]: ...
-
-
-class AuditLogPort(Protocol):
-    def append(self, *, event_type: str, correlation_id: str, payload: dict[str, Any]) -> None: ...
-
-
-@dataclass(slots=True)
-class WeeklyWindowScheduler:
-    domain_service: DomainServicePort
-    audit_log: AuditLogPort
-
-    def orchestrate(self, *, command: dict[str, Any], correlation_id: str) -> dict[str, Any]:
-        # KR-081: contract doğrulaması üst akışta tamamlanmış payload üzerinden çalışılır.
-        result = self.domain_service.execute(command=command, correlation_id=correlation_id)
-        self.audit_log.append(
-            event_type="WeeklyWindowScheduler.orchestrate",
-            correlation_id=correlation_id,
-            payload={"status": result.get("status", "ok")},
-        )
-        return result
