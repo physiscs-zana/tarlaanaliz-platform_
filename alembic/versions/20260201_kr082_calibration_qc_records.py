@@ -101,11 +101,9 @@ def upgrade() -> None:
     # -------------------------------------------------------------------------
     # analysis_jobs tablosuna kalibrasyon referansı ekle
     # KR-018: requires_calibrated=true ise calibration_record_id zorunlu
+    # NOT: requires_calibrated kolonu migration 007'de CREATE TABLE sırasında
+    # zaten tanımlandı; buraya yeniden eklenmez.
     # -------------------------------------------------------------------------
-    op.add_column(
-        "analysis_jobs",
-        sa.Column("requires_calibrated", sa.Boolean, server_default=sa.text("true"), nullable=False),
-    )
     op.add_column(
         "analysis_jobs",
         sa.Column(
@@ -118,9 +116,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # analysis_jobs FK sütunlarını kaldır
+    # analysis_jobs FK sütununu kaldır
+    # NOT: requires_calibrated migration 007'e ait; buradan kaldırılmaz.
     op.drop_column("analysis_jobs", "calibration_record_id")
-    op.drop_column("analysis_jobs", "requires_calibrated")
 
     # Tabloları kaldır (ters sırada)
     op.drop_table("qc_reports")

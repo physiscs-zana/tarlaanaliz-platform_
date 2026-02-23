@@ -18,7 +18,12 @@ from datetime import datetime, timezone
 
 import pytest
 
-from src.core.domain.entities.mission import Mission, MissionStatus
+from src.core.domain.entities.mission import (
+    AssignmentReason,
+    AssignmentSource,
+    Mission,
+    MissionStatus,
+)
 
 
 def _mission() -> Mission:
@@ -52,3 +57,20 @@ def test_mission_invalid_transition_raises() -> None:
 
     with pytest.raises(ValueError, match="Invalid status transition"):
         mission.start_analysis()
+
+
+def test_mission_schedule_window_fields_optional() -> None:
+    """schedule_window_start/end None ile oluşturulabilmeli (KR-015-5)."""
+    mission = _mission()
+    assert mission.schedule_window_start is None
+    assert mission.schedule_window_end is None
+
+
+def test_mission_assignment_source_and_reason() -> None:
+    """SYSTEM_SEED + AUTO_DISPATCH değerleri atanabilmeli (KR-015-2/3)."""
+    mission = _mission()
+    mission.assignment_source = AssignmentSource.SYSTEM_SEED
+    mission.assignment_reason = AssignmentReason.AUTO_DISPATCH
+
+    assert mission.assignment_source == AssignmentSource.SYSTEM_SEED
+    assert mission.assignment_reason == AssignmentReason.AUTO_DISPATCH
