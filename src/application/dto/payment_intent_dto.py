@@ -70,6 +70,10 @@ class PaymentIntentDTO:
         )
 
 
+def _to_optional_str(value: Any) -> str | None:
+    return None if value is None else str(value)
+
+
 def _to_utc_iso(value: datetime) -> str:
     aware = value if value.tzinfo else value.replace(tzinfo=timezone.utc)
     return aware.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
