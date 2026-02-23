@@ -91,6 +91,6 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             response.headers["X-Correlation-Id"] = corr_id
             return response
 
-        response: Response = await call_next(request)
+        response = await call_next(request)
         response.headers["X-Correlation-Id"] = corr_id
         return response
