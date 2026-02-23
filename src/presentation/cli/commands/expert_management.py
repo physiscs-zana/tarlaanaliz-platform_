@@ -1,5 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
-"""Expert management CLI commands."""
+"""Expert management CLI commands. KR-081: expert portal onboarding ve atama."""
 
 from __future__ import annotations
 

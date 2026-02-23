@@ -1,7 +1,7 @@
 # BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
 """
 Amaç: Test modülü; davranış doğrulama ve regresyon engeli.
-Sorumluluk: Bağlamına göre beklenen sorumlulukları yerine getirir; SSOT v1.0.0 ile uyumlu kalır.
+Sorumluluk: Mission entity; KR-028 (yasam dongusu), KR-033 (odeme hard gate), KR-015-2/3 (atama).
 Girdi/Çıktı (Contract/DTO/Event): N/A
 Güvenlik (RBAC/PII/Audit): N/A
 Hata Modları (idempotency/retry/rate limit): N/A
