@@ -64,7 +64,7 @@ class AnomalyDetectionMiddleware(BaseHTTPMiddleware):
         history = self._request_history[ip_key]
         repeat_count = self._record_and_count(history, now, settings.anomaly.rapid_repeat_window_seconds)
 
-        response: Response = await call_next(request)
+        response = await call_next(request)
 
         latency_ms = (time.monotonic() - start_time) * 1000
         METRICS_HOOK.observe_ms("http_latency_ms", latency_ms)

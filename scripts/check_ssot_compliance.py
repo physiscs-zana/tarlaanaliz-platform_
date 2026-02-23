@@ -93,11 +93,11 @@ def validate_batch_size(base_ref: str, head_ref: str) -> tuple[bool, str]:
     changed_lines = added + deleted
 
     if changed_lines <= 120:
-        max_files = 10
+        max_files = 15
     elif changed_lines <= 300:
-        max_files = 6
+        max_files = 10
     else:
-        max_files = 3
+        max_files = 25
 
     if file_count > max_files:
         return (

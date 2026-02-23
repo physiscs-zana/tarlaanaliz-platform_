@@ -77,7 +77,7 @@ class JwtMiddleware(BaseHTTPMiddleware):
         request.state.permissions = list(claims.get("permissions", []))
         request.state.roles = list(claims.get("roles", []))
 
-        response: Response = await call_next(request)
+        response = await call_next(request)
         response.headers["X-Correlation-Id"] = corr_id
         return response
 
