@@ -26,6 +26,12 @@ class SubscriptionStatus(str, Enum):
     CANCELLED = "CANCELLED"
 
 
+class SubscriptionPlanType(str, Enum):
+    """KR-027 abonelik plan turu (KR-015-5: sezonluk tarama takvimi)."""
+
+    SEASONAL = "SEASONAL"
+
+
 @dataclass
 class Subscription:
     """Abonelik domain entity'si.
@@ -49,6 +55,7 @@ class Subscription:
     created_at: datetime
     updated_at: datetime
     payment_intent_id: Optional[uuid.UUID] = None
+    plan_type: SubscriptionPlanType = SubscriptionPlanType.SEASONAL
     reschedule_tokens_per_season: int = 2
     reschedule_tokens_used: int = 0
 

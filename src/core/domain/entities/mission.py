@@ -31,6 +31,21 @@ class MissionStatus(str, Enum):
     CANCELLED = "CANCELLED"
 
 
+class AssignmentSource(str, Enum):
+    """KR-015-2: Mission atama kaynagi (sistem tohumlamasi vs. cekme kotasi)."""
+
+    SYSTEM_SEED = "SYSTEM_SEED"
+    PULL = "PULL"
+
+
+class AssignmentReason(str, Enum):
+    """KR-015-3/KR-015-4: Mission atama nedeni (otomatik sevk, admin override, yeniden atama)."""
+
+    AUTO_DISPATCH = "AUTO_DISPATCH"
+    ADMIN_OVERRIDE = "ADMIN_OVERRIDE"
+    REASSIGNMENT = "REASSIGNMENT"
+
+
 # KR-028: Gecerli durum gecisleri
 _VALID_TRANSITIONS: dict[MissionStatus, set[MissionStatus]] = {
     MissionStatus.PLANNED: {MissionStatus.ASSIGNED, MissionStatus.FAILED, MissionStatus.CANCELLED},
@@ -69,6 +84,11 @@ class Mission:
     flown_at: Optional[datetime] = None
     uploaded_at: Optional[datetime] = None
     analyzed_at: Optional[datetime] = None
+    # KR-015: Sezonluk zamanlama penceresi ve atama meta verisi
+    schedule_window_start: Optional[datetime] = None
+    schedule_window_end: Optional[datetime] = None
+    assignment_source: Optional[AssignmentSource] = None
+    assignment_reason: Optional[AssignmentReason] = None
 
     # ------------------------------------------------------------------
     # Invariants
