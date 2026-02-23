@@ -21,6 +21,10 @@ class PaymentIntentDTO:
     intent_id: str
     subscription_id: str | None
     payer_user_id: str
+    payment_intent_id: str
+    payer_ref: str
+    currency_code: str
+    amount_minor: int
     status: str
     proof_refs: tuple[PaymentProofRefDTO, ...]
     approved_by_user_id: str | None
@@ -68,6 +72,10 @@ class PaymentIntentDTO:
             created_at=_parse_datetime(payload["created_at"]),
             approved_at=_parse_optional_datetime(payload.get("approved_at")),
         )
+
+
+def _to_optional_str(value: Any) -> str | None:
+    return None if value is None else str(value)
 
 
 def _to_utc_iso(value: datetime) -> str:
