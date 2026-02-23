@@ -15,26 +15,29 @@ profiles:
   # Yoğun dönem (Ekim-Aralık) — limitler artırılır
   peak_season:
     active_months: [10, 11, 12]
-    multiplier: 2.0
-    description: "Hasat dönemi — artan talep için limitler 2x artırılır"
+    multiplier: 2.0  # Role-based override default; kritik endpoint'ler aşağıda 3x override alır
+    description: "Hasat dönemi — limitler artırılır (rol bazında 2x, kritik endpoint'lerde 3x)"
 
     # Endpoint bazlı özel ayarlamalar (multiplier'ı override eder)
     endpoint_overrides:
       missions:
         create:
-          requests_per_minute: 30   # 10 -> 30 (3x)
-          requests_per_hour: 300    # 100 -> 300
+          requests_per_minute: 30   # 10 -> 30 (3x intentional: hasat döneminde
+                                    # mission açma en kritik işlem; global 2x yeterli değil)
+          requests_per_hour: 300    # 100 -> 300 (3x, yukarıyla tutarlı)
         list:
-          requests_per_minute: 120  # 60 -> 120
+          requests_per_minute: 120  # 60 -> 120 (2x: global multiplier ile uyumlu)
           requests_per_hour: 3000   # 1000 -> 3000
 
       analysis_results:
-        requests_per_minute: 90     # 30 -> 90 (3x)
-        requests_per_hour: 1500     # 500 -> 1500
+        requests_per_minute: 90     # 30 -> 90 (3x intentional: analiz sonuçları
+                                    # yoğun dönemde daha sık çekiliyor)
+        requests_per_hour: 1500     # 500 -> 1500 (3x, yukarıyla tutarlı)
 
       uploads:
-        requests_per_minute: 15     # 5 -> 15
-        requests_per_hour: 150      # 50 -> 150
+        requests_per_minute: 15     # 5 -> 15 (3x intentional: hasat döneminde
+                                    # toplu veri yükleme bant genişliği ihtiyacı)
+        requests_per_hour: 150      # 50 -> 150 (3x, yukarıyla tutarlı)
 
     # Rol bazlı özel ayarlamalar
     role_overrides:
