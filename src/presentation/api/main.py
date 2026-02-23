@@ -4,9 +4,12 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any, Callable
 
 from fastapi import FastAPI, Request
+from starlette.responses import Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -37,15 +40,15 @@ from src.presentation.api.v1.endpoints import (
 
 
 @asynccontextmanager
-async def _lifespan(_app: FastAPI):
+async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Lifecycle hooks for startup/shutdown tasks."""
     yield
 
 
-async def _corr_id_middleware(request: Request, call_next):
+async def _corr_id_middleware(request: Request, call_next: Callable[..., Any]) -> Response:
     corr_id = request.headers.get("X-Correlation-Id") or str(uuid.uuid4())
     request.state.corr_id = corr_id
-    response = await call_next(request)
+    response: Response = await call_next(request)
     response.headers["X-Correlation-Id"] = corr_id
     return response
 

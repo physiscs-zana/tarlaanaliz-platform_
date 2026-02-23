@@ -8,7 +8,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Protocol
+from typing import Any, Callable, Protocol
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request, status
@@ -337,7 +337,7 @@ def get_current_user(request: Request) -> CurrentUser:
     return user
 
 
-def require_roles(required_roles: list[str]):
+def require_roles(required_roles: list[str]) -> Callable[..., CurrentUser]:
     """Role-based guard dependency."""
 
     def dependency(user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
@@ -348,7 +348,7 @@ def require_roles(required_roles: list[str]):
     return dependency
 
 
-def require_permissions(required_permissions: list[str]):
+def require_permissions(required_permissions: list[str]) -> Callable[..., CurrentUser]:
     """Permission-based guard dependency."""
 
     def dependency(user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
@@ -360,35 +360,35 @@ def require_permissions(required_permissions: list[str]):
 
 
 def get_payment_service(request: Request) -> PaymentService:
-    service = getattr(request.app.state, "payment_service", None)
+    service: PaymentService | None = getattr(request.app.state, "payment_service", None)
     if service is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Payment service unavailable")
     return service
 
 
 def get_calibration_service(request: Request) -> CalibrationService:
-    service = getattr(request.app.state, "calibration_service", None)
+    service: CalibrationService | None = getattr(request.app.state, "calibration_service", None)
     if service is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Calibration service unavailable")
     return service
 
 
 def get_qc_service(request: Request) -> QCService:
-    service = getattr(request.app.state, "qc_service", None)
+    service: QCService | None = getattr(request.app.state, "qc_service", None)
     if service is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="QC service unavailable")
     return service
 
 
 def get_sla_metrics_service(request: Request) -> SLAMetricsService:
-    service = getattr(request.app.state, "sla_metrics_service", None)
+    service: SLAMetricsService | None = getattr(request.app.state, "sla_metrics_service", None)
     if service is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="SLA metrics service unavailable")
     return service
 
 
 def get_audit_publisher(request: Request) -> AuditPublisher:
-    publisher = getattr(request.app.state, "audit_publisher", None)
+    publisher: AuditPublisher | None = getattr(request.app.state, "audit_publisher", None)
     if publisher is None:
         sink: list[AuditEvent] = getattr(request.app.state, "audit_events", [])
         request.app.state.audit_events = sink
@@ -397,7 +397,7 @@ def get_audit_publisher(request: Request) -> AuditPublisher:
 
 
 def get_metrics_collector(request: Request) -> MetricsCollector:
-    collector = getattr(request.app.state, "metrics_collector", None)
+    collector: MetricsCollector | None = getattr(request.app.state, "metrics_collector", None)
     if collector is None:
         return NoOpMetricsCollector()
     return collector

@@ -69,7 +69,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Any) -> Response:
         corr_id, _ = ensure_request_context(request)
         if not settings.rate_limit.enabled or is_bypassed_path(request.url.path, settings.rate_limit.bypass_routes):
-            response = await call_next(request)
+            response: Response = await call_next(request)
             response.headers["X-Correlation-Id"] = corr_id
             return response
 
@@ -91,6 +91,6 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             response.headers["X-Correlation-Id"] = corr_id
             return response
 
-        response = await call_next(request)
+        response: Response = await call_next(request)
         response.headers["X-Correlation-Id"] = corr_id
         return response

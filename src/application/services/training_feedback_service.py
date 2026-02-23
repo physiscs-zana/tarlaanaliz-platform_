@@ -51,25 +51,3 @@ class TrainingFeedbackService:
             },
             correlation_id=correlation_id,
         )
-class DomainServicePort(Protocol):
-    def execute(self, *, command: dict[str, Any], correlation_id: str) -> dict[str, Any]: ...
-
-
-class AuditLogPort(Protocol):
-    def append(self, *, event_type: str, correlation_id: str, payload: dict[str, Any]) -> None: ...
-
-
-@dataclass(slots=True)
-class TrainingFeedbackService:
-    domain_service: DomainServicePort
-    audit_log: AuditLogPort
-
-    def orchestrate(self, *, command: dict[str, Any], correlation_id: str) -> dict[str, Any]:
-        # KR-081: contract doğrulaması üst akışta tamamlanmış payload üzerinden çalışılır.
-        result = self.domain_service.execute(command=command, correlation_id=correlation_id)
-        self.audit_log.append(
-            event_type="TrainingFeedbackService.orchestrate",
-            correlation_id=correlation_id,
-            payload={"status": result.get("status", "ok")},
-        )
-        return result

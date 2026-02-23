@@ -14,7 +14,7 @@ EXIT_VALIDATION = 2
 
 def _load_service() -> object:
     try:
-        from src.application.services import seed_service
+        from src.application.services import seed_service  # type: ignore[attr-defined]
     except (ImportError, ModuleNotFoundError, SyntaxError) as exc:
         raise RuntimeError("TODO: src.application.services.seed_service is not available") from exc
     return seed_service

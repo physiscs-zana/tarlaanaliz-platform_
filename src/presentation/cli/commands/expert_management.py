@@ -16,7 +16,7 @@ EXIT_FORBIDDEN = 4
 
 def _load_service() -> object:
     try:
-        from src.application.services import expert_management_service
+        from src.application.services import expert_management_service  # type: ignore[attr-defined]
     except (ImportError, ModuleNotFoundError, SyntaxError) as exc:
         raise RuntimeError("TODO: src.application.services.expert_management_service is not available") from exc
     except Exception as exc:
@@ -45,10 +45,10 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     return parser
 
 
-def _invoke(service: object, name: str, **kwargs: object) -> int:
-    fn: Callable[..., object] | None = getattr(service, name, None)
+def _invoke(service: object, method_name: str, **kwargs: object) -> int:
+    fn: Callable[..., object] | None = getattr(service, method_name, None)
     if fn is None:
-        print(f"Error: missing service method '{name}'.", file=sys.stderr)
+        print(f"Error: missing service method '{method_name}'.", file=sys.stderr)
         return EXIT_ERROR
     try:
         result = fn(**kwargs)

@@ -19,7 +19,7 @@ _WEEK_PATTERN = re.compile(r"^\d{4}-(0[1-9]|[1-4][0-9]|5[0-3])$")
 
 def _load_service() -> object:
     try:
-        from src.application.services import weekly_planner_service
+        from src.application.services import weekly_planner_service  # type: ignore[attr-defined]
     except (ImportError, ModuleNotFoundError, SyntaxError) as exc:
         raise RuntimeError("TODO: src.application.services.weekly_planner_service is not available") from exc
     return weekly_planner_service

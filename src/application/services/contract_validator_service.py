@@ -45,29 +45,17 @@ class ContractValidatorService:
         _ = correlation_id
         schema = self._registry.get_schema(schema_id)
         try:
-            import jsonschema  # type: ignore
+            import jsonschema
         except Exception as exc:  # pragma: no cover
             raise RuntimeError("jsonschema dependency is required for KR-081 validation") from exc
 
         try:
             jsonschema.validate(instance=payload, schema=schema)
             return ValidationResult(ok=True, schema_id=schema_id)
-        except jsonschema.ValidationError as exc:  # type: ignore[attr-defined]
+        except jsonschema.ValidationError as exc:
             error = ContractValidationError(
                 "Contract validation failed",
                 schema_id=schema_id,
                 details={"message": str(exc), "path": list(exc.path), "schema_path": list(exc.schema_path)},
             )
             return ValidationResult(ok=False, schema_id=schema_id, error=error)
-
-class JsonSchemaPort(Protocol):
-    def validate(self, *, schema_name: str, payload: dict[str, Any]) -> None: ...
-
-
-@dataclass(slots=True)
-class ContractValidatorService:
-    schema_port: JsonSchemaPort
-
-    def validate_payload(self, *, schema_name: str, payload: dict[str, Any]) -> None:
-        # KR-081: contract-first doğrulama, orkestrasyon başlamadan önce uygulanır.
-        self.schema_port.validate(schema_name=schema_name, payload=payload)

@@ -73,6 +73,6 @@ def handle(
     return CalculatePayrollResult(
         actor_type=command.actor_type,
         gross_total=Decimal(str(calculated.get("gross_total", "0"))),
-        item_count=int(calculated.get("item_count", 0)),
+        item_count=int(str(calculated.get("item_count", 0))),
         correlation_id=ctx.correlation_id,
     )
