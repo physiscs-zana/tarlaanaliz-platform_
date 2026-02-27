@@ -1,23 +1,33 @@
-# TarlaAnaliz Platform — Dizin Yapısı (Tree)
+# TarlaAnaliz Platform — Dizin Yapisi (Tree)
 
 ```
 tarlaanaliz-platform/
+├── .dockerignore
+├── .env.example
+├── .gitattributes
+├── .github/
+│   ├── pull_request_template.md
+│   └── workflows/
+│       ├── ci.yml
+│       ├── contract_validation.yml
+│       ├── deploy-staging.yml
+│       ├── frontend-ci.yml
+│       └── security.yml
+├── .gitignore
+├── .gitmodules
+├── .pre-commit-config.yaml
 ├── AGENTS.md
 ├── CHANGELOG.md
 ├── CONTRACTS_SHA256.txt
 ├── CONTRACTS_VERSION.md
+├── DIRECTORY_TREE.md
 ├── Dockerfile
 ├── MANIFEST_CANONICAL.md
 ├── PRODUCTION_READINESS_REPORT.md
 ├── README.md
-├── README_PATCH.md
-├── UPDATED_FILES_TODO.md
 ├── alembic.ini
-├── base_limits.yaml
-├── codex.patch
 ├── docker-compose.yml
 ├── pyproject.toml
-├── seasonal_config.yaml
 │
 ├── alembic/
 │   ├── env.py
@@ -40,16 +50,20 @@ tarlaanaliz-platform/
 │       ├── 20260201_kr082_calibration_qc_records.py
 │       ├── 20260204_add_weather_block_reports.py
 │       ├── 20260223_kr015c_mission_schedule_fields.py
-│       ├── xxxx_kr015_mission_segments.py
-│       └── xxxx_kr015_seasonal_reschedule_tokens.py
+│       ├── 20260225_014_kr015_mission_segments.py
+│       └── 20260225_015_kr015_seasonal_reschedule_tokens.py
 │
 ├── config/
+│   ├── drone_registry.yaml
 │   ├── logging.yaml
 │   └── rate_limits/
 │       ├── base_limits.yaml
 │       └── seasonal_config.yaml
 │
-├── contracts/
+├── deploy/
+│   └── k8s/
+│       ├── deployment.yaml
+│       └── network-policy.yaml
 │
 ├── docs/
 │   ├── IS_PLANI_AKIS_DOKUMANI_v1_0_0.docx
@@ -223,6 +237,7 @@ tarlaanaliz-platform/
 │   │   │   ├── services/
 │   │   │   │   ├── __init__.py
 │   │   │   │   ├── auto_dispatcher.py
+│   │   │   │   ├── band_compliance_checker.py
 │   │   │   │   ├── calibration_validator.py
 │   │   │   │   ├── capacity_manager.py
 │   │   │   │   ├── confidence_evaluator.py
@@ -245,6 +260,7 @@ tarlaanaliz-platform/
 │   │   │       ├── confidence_score.py
 │   │   │       ├── crop_ops_profile.py
 │   │   │       ├── crop_type.py
+│   │   │       ├── drone_model.py
 │   │   │       ├── expert_specialization.py
 │   │   │       ├── geometry.py
 │   │   │       ├── mission_status.py
@@ -307,6 +323,8 @@ tarlaanaliz-platform/
 │   │   │   └── schema_registry.py
 │   │   ├── external/
 │   │   │   ├── __init__.py
+│   │   │   ├── av_scanner_client.py
+│   │   │   ├── drone_registry_loader.py
 │   │   │   ├── payment_gateway_adapter.py
 │   │   │   ├── sms_gateway_adapter.py
 │   │   │   ├── storage_adapter.py
@@ -362,7 +380,6 @@ tarlaanaliz-platform/
 │   │   │   │   └── rate_limiter.py
 │   │   │   ├── repositories/
 │   │   │   │   ├── mission_segment_repository.py
-│   │   │   │   ├── payment_intent_repo.py
 │   │   │   │   └── reschedule_repository.py
 │   │   │   └── sqlalchemy/
 │   │   │       ├── __init__.py
@@ -396,21 +413,15 @@ tarlaanaliz-platform/
 │   │   │           ├── audit_log_repository_impl.py
 │   │   │           ├── calibration_record_repository_impl.py
 │   │   │           ├── crop_ops_profile_repository_impl.py
-│   │   │           ├── expert_repository.py
 │   │   │           ├── expert_repository_impl.py
-│   │   │           ├── expert_review_repository.py
 │   │   │           ├── expert_review_repository_impl.py
-│   │   │           ├── feedback_record_repository.py
 │   │   │           ├── feedback_record_repository_impl.py
-│   │   │           ├── field_repository.py
 │   │   │           ├── field_repository_impl.py
-│   │   │           ├── mission_repository.py
 │   │   │           ├── mission_repository_impl.py
 │   │   │           ├── payment_intent_repository_impl.py
 │   │   │           ├── pilot_repository_impl.py
 │   │   │           ├── price_snapshot_repository_impl.py
 │   │   │           ├── qc_report_repository_impl.py
-│   │   │           ├── subscription_repository.py
 │   │   │           ├── subscription_repository_impl.py
 │   │   │           ├── user_repository_impl.py
 │   │   │           ├── weather_block_report_repository_impl.py
@@ -432,30 +443,32 @@ tarlaanaliz-platform/
 │       │   │   ├── _shared.py
 │       │   │   ├── anomaly_detection_middleware.py
 │       │   │   ├── cors_middleware.py
+│       │   │   ├── grid_anonymizer.py
 │       │   │   ├── jwt_middleware.py
+│       │   │   ├── mtls_verifier.py
+│       │   │   ├── pii_filter.py
 │       │   │   └── rate_limit_middleware.py
 │       │   └── v1/
 │       │       ├── __init__.py
-│       │       ├── admin_payments.py
-│       │       ├── calibration.py
-│       │       ├── dependencies.py
-│       │       ├── payments.py
-│       │       ├── qc.py
-│       │       ├── sla_metrics.py
 │       │       ├── endpoints/
 │       │       │   ├── __init__.py
 │       │       │   ├── admin_audit.py
+│       │       │   ├── admin_payments.py
 │       │       │   ├── admin_pricing.py
 │       │       │   ├── auth.py
+│       │       │   ├── calibration.py
 │       │       │   ├── expert_portal.py
 │       │       │   ├── experts.py
 │       │       │   ├── fields.py
 │       │       │   ├── missions.py
 │       │       │   ├── parcels.py
 │       │       │   ├── payment_webhooks.py
+│       │       │   ├── payments.py
 │       │       │   ├── pilots.py
 │       │       │   ├── pricing.py
+│       │       │   ├── qc.py
 │       │       │   ├── results.py
+│       │       │   ├── sla_metrics.py
 │       │       │   ├── subscriptions.py
 │       │       │   ├── training_feedback.py
 │       │       │   ├── weather_block_reports.py
@@ -519,6 +532,15 @@ tarlaanaliz-platform/
 │   │   │       └── test_rate_limit_middleware.py
 │   │   └── cli/
 │   │       └── test_cli_main.py
+│   ├── security/
+│   │   ├── __init__.py
+│   │   ├── test_brute_force_lockout.py
+│   │   ├── test_grid_anonymization.py
+│   │   ├── test_mtls_verification.py
+│   │   ├── test_pii_filter.py
+│   │   ├── test_rate_limit_enforcement.py
+│   │   ├── test_rbac_pilot_results_403.py
+│   │   └── test_webhook_replay_protection.py
 │   └── unit/
 │       ├── __init__.py
 │       ├── test_analysis_completed_handler.py
@@ -551,10 +573,13 @@ tarlaanaliz-platform/
 │               └── test_security_stabilization.py
 │
 └── web/
+    ├── .env.example
+    ├── .storybook/
+    │   ├── main.ts
+    │   └── preview.ts
     ├── README.md
     ├── eslint.config.mjs
     ├── jest.config.js
-    ├── next.config.js
     ├── next.config.mjs
     ├── package.json
     ├── playwright.config.ts
@@ -562,14 +587,9 @@ tarlaanaliz-platform/
     ├── postcss.config.mjs
     ├── sentry.client.config.ts
     ├── sentry.server.config.ts
-    ├── tailwind.config.js
     ├── tailwind.config.ts
     ├── tsconfig.json
     ├── e2e/
-    │   ├── admin-journey.spec.ts
-    │   ├── expert-journey.spec.ts
-    │   ├── farmer-journey.spec.ts
-    │   ├── pilot-journey.spec.ts
     │   ├── playwright.config.ts
     │   └── tests/
     │       ├── auth.spec.ts
@@ -610,6 +630,7 @@ tarlaanaliz-platform/
         │   │   ├── api-keys/
         │   │   │   └── page.tsx
         │   │   ├── audit/
+        │   │   │   └── page.tsx
         │   │   ├── audit-viewer/
         │   │   │   └── page.tsx
         │   │   ├── calibration/
@@ -726,7 +747,6 @@ tarlaanaliz-platform/
         │       └── weather-block/
         │           └── page.tsx
         ├── components/
-        │   ├── AccessibilityProvider.tsx
         │   ├── common/
         │   │   ├── AccessibilityProvider.tsx
         │   │   ├── ConfirmDialog.tsx
@@ -848,10 +868,8 @@ tarlaanaliz-platform/
         ├── i18n/
         │   ├── ar.json
         │   ├── ku.json
-        │   ├── tr.json
         │   └── tr.ts
         ├── lib/
-        │   ├── api-client.ts
         │   ├── apiClient.ts
         │   ├── authStorage.ts
         │   ├── constants.ts
