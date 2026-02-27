@@ -1,0 +1,243 @@
+# =============================================================================
+# deploy/k8s/deployment.yaml
+# Amac: KR-070 Platform API ve Worker deployment manifesti.
+# Sorumluluk: Container guvenlik baglamlari, kaynak limitleri, servis hesaplari.
+#
+# KR-070: Worker izolasyonu; inbound kapali, egress allowlist.
+# KR-071: Ingress mTLS termination.
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tarlaanaliz-api
+  namespace: tarlaanaliz
+  labels:
+    app.kubernetes.io/name: tarlaanaliz-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: tarlaanaliz
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tarlaanaliz-api
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tarlaanaliz-api
+        app.kubernetes.io/component: api
+        app.kubernetes.io/part-of: tarlaanaliz
+    spec:
+      serviceAccountName: tarlaanaliz-api
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: api
+          image: tarlaanaliz/api:latest
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+          env:
+            - name: TARLA_DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: tarlaanaliz-db
+                  key: host
+            - name: TARLA_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tarlaanaliz-db
+                  key: password
+            - name: TARLA_REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: tarlaanaliz-config
+                  key: redis-url
+            - name: TARLA_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: tarlaanaliz-jwt
+                  key: secret
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 100Mi
+
+---
+# Worker Deployment (YZ Analiz Isleme — Izole)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tarlaanaliz-worker
+  namespace: tarlaanaliz
+  labels:
+    app.kubernetes.io/name: tarlaanaliz-worker
+    app.kubernetes.io/component: worker
+    app.kubernetes.io/part-of: tarlaanaliz
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tarlaanaliz-worker
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tarlaanaliz-worker
+        app.kubernetes.io/component: worker
+        app.kubernetes.io/part-of: tarlaanaliz
+    spec:
+      serviceAccountName: tarlaanaliz-worker
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      containers:
+        - name: worker
+          image: tarlaanaliz/worker:latest
+          env:
+            - name: TARLA_RABBITMQ_URL
+              valueFrom:
+                secretKeyRef:
+                  name: tarlaanaliz-mq
+                  key: url
+            - name: TARLA_S3_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: tarlaanaliz-config
+                  key: s3-endpoint
+            - name: TARLA_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tarlaanaliz-s3
+                  key: access-key
+            - name: TARLA_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tarlaanaliz-s3
+                  key: secret-key
+            - name: TARLA_PLATFORM_RESULTS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: tarlaanaliz-config
+                  key: platform-results-url
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "4"
+              memory: 8Gi
+              # GPU kaynaklari varsa:
+              # nvidia.com/gpu: 1
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: scratch
+              mountPath: /scratch
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 500Mi
+        - name: scratch
+          emptyDir:
+            sizeLimit: 10Gi
+
+---
+# Service: Platform API
+apiVersion: v1
+kind: Service
+metadata:
+  name: tarlaanaliz-api
+  namespace: tarlaanaliz
+  labels:
+    app.kubernetes.io/name: tarlaanaliz-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: tarlaanaliz
+spec:
+  selector:
+    app.kubernetes.io/name: tarlaanaliz-api
+    app.kubernetes.io/component: api
+  ports:
+    - port: 8000
+      targetPort: http
+      protocol: TCP
+      name: http
+  type: ClusterIP
+
+---
+# Ingress: mTLS termination (KR-071)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tarlaanaliz-ingress
+  namespace: tarlaanaliz
+  labels:
+    app.kubernetes.io/part-of: tarlaanaliz
+  annotations:
+    # mTLS: Client sertifika dogrulamasi (KR-071)
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: "optional"
+    nginx.ingress.kubernetes.io/auth-tls-secret: "tarlaanaliz/edge-kiosk-ca"
+    nginx.ingress.kubernetes.io/auth-tls-verify-depth: "2"
+    nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+    # Guvenlik header'lari
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains";
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.tarlaanaliz.com
+      secretName: tarlaanaliz-tls
+  rules:
+    - host: api.tarlaanaliz.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tarlaanaliz-api
+                port:
+                  number: 8000
