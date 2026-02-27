@@ -103,3 +103,7 @@ web/playwright-report/
 # --- Jupyter ---
 .ipynb_checkpoints/
 mypy.out
+
+# --- AI Agent Artifacts ---
+AGENTS.md
+codex.patch

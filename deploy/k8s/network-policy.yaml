@@ -1,0 +1,148 @@
+# =============================================================================
+# deploy/k8s/network-policy.yaml
+# Amac: KR-070 Worker izolasyonu ve agag politikasi.
+# Sorumluluk: Worker altyapisinin web/platform tarafindan dogrudan
+#             erisilebilir olmamasi; deny-by-default egress politikasi.
+#
+# Kanonik Ag Politikasi Matrisi (KR-070):
+#   Platform  → Worker:           DENY (TCP/HTTP yok)
+#   Web/PWA   → Worker:           DENY
+#   Worker    → Object Storage:   ALLOW (outbound only, read-only)
+#   Worker    → Queue:            ALLOW (outbound only, consume-only)
+#   Worker    → Platform Results: ALLOW (outbound only, mTLS)
+#   Worker    → Internet:         DENY (default)
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: worker-deny-all-ingress
+  namespace: tarlaanaliz
+  labels:
+    app.kubernetes.io/part-of: tarlaanaliz
+    security.tarlaanaliz.io/kr: "070"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: worker
+  policyTypes:
+    - Ingress
+  # Bos ingress kurali = tum inbound trafik reddedilir
+  ingress: []
+
+---
+# Worker egress: yalnizca izinli hedeflere outbound
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: worker-restricted-egress
+  namespace: tarlaanaliz
+  labels:
+    app.kubernetes.io/part-of: tarlaanaliz
+    security.tarlaanaliz.io/kr: "070"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: worker
+  policyTypes:
+    - Egress
+  egress:
+    # 1. Object Storage (MinIO/S3-uyumlu) — read-only
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: object-storage
+      ports:
+        - protocol: TCP
+          port: 9000
+        - protocol: TCP
+          port: 443
+
+    # 2. Message Queue (RabbitMQ) — consume-only
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: message-queue
+      ports:
+        - protocol: TCP
+          port: 5672
+        - protocol: TCP
+          port: 5671  # AMQPS
+
+    # 3. Platform Results API — mTLS uzerinden sonuc yazma
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: api
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 443
+
+    # 4. DNS (CoreDNS — Kubernetes dahili)
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+    # 5. Observability (log/metric/tracing) — append-only
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: observability
+      ports:
+        - protocol: TCP
+          port: 4317  # OTLP gRPC
+        - protocol: TCP
+          port: 4318  # OTLP HTTP
+
+---
+# Platform API: Worker subnet'inden gelen istekleri kabul etme
+# (Worker → Platform yalnizca sonuc yazma icin izinli; yukaridaki egress ile kontrol edilir)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: platform-deny-worker-direct
+  namespace: tarlaanaliz
+  labels:
+    app.kubernetes.io/part-of: tarlaanaliz
+    security.tarlaanaliz.io/kr: "070"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: api
+  policyTypes:
+    - Ingress
+  ingress:
+    # Ingress/Load Balancer'dan gelen trafik
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+
+    # Worker'dan gelen sonuc yazma istekleri (mTLS)
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: worker
+      ports:
+        - protocol: TCP
+          port: 8000
+
+    # Prometheus/monitoring scrape
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: observability
+      ports:
+        - protocol: TCP
+          port: 9090

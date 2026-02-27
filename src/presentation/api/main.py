@@ -16,26 +16,27 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from src.presentation.api.middleware.anomaly_detection_middleware import AnomalyDetectionMiddleware
 from src.presentation.api.middleware.cors_middleware import add_cors_middleware
+from src.presentation.api.middleware.grid_anonymizer import GridAnonymizerMiddleware
 from src.presentation.api.middleware.jwt_middleware import JwtMiddleware
+from src.presentation.api.middleware.mtls_verifier import MTLSVerifierMiddleware
+from src.presentation.api.middleware.pii_filter import PIIFilterMiddleware
 from src.presentation.api.middleware.rate_limit_middleware import RateLimitMiddleware
 from src.presentation.api.settings import settings
-from src.presentation.api.v1 import (
-    admin_payments_router,
-    calibration_router,
-    payments_router,
-    qc_router,
-    sla_metrics_router,
-)
 from src.presentation.api.v1.endpoints import (
     admin_audit_router,
+    admin_payments_router,
     admin_pricing_router,
     auth_router,
+    calibration_router,
     expert_portal_router,
     experts_router,
     fields_router,
     missions_router,
     parcels_router,
     payment_webhooks_router,
+    payments_router,
+    qc_router,
+    sla_metrics_router,
 )
 
 
@@ -88,11 +89,23 @@ def create_app() -> FastAPI:
         lifespan=_lifespan,
     )
 
+    # Middleware stack (LIFO order — last added executes first):
+    # 1. Correlation ID (http middleware — outermost)
+    # 2. CORS
+    # 3. mTLS Verifier (KR-071 — before auth for ingest endpoints)
+    # 4. JWT Authentication
+    # 5. Rate Limiting
+    # 6. Anomaly Detection
+    # 7. PII Filter (KR-066 — after auth, before response)
+    # 8. Grid Anonymizer (KR-083 — after auth, before response)
     app.middleware("http")(_corr_id_middleware)
     add_cors_middleware(app)
+    app.add_middleware(MTLSVerifierMiddleware)
     app.add_middleware(JwtMiddleware)
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(AnomalyDetectionMiddleware)
+    app.add_middleware(PIIFilterMiddleware)
+    app.add_middleware(GridAnonymizerMiddleware)
 
     @app.get("/health", tags=["health"])
     async def health() -> dict[str, str]:

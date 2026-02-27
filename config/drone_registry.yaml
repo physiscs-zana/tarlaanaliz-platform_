@@ -1,0 +1,137 @@
+# =============================================================================
+# config/drone_registry.yaml
+# Amac: KR-030 Drone standardlari ve sensor band uyumluluk kaydi.
+# Sorumluluk: Desteklenen drone modelleri, sensor bandlari ve kalibrasyon
+#             gereksinimleri. Tüm modeller bu dosyada kayitli olmalidir.
+# SSOT Referans: KR-001, KR-030, KR-034
+# =============================================================================
+
+version: "1.0.0"
+
+# ---------------------------------------------------------------------------
+# Desteklenen Drone/Sensor Kombinasyonlari
+# KR-001: Drone-agnostik mimari; tüm modeller drone_registry.yaml'a kayitli
+#         olmalidir.
+# KR-034: DJI risk plani; alternatif markalar Senaryo A/B icin hazir.
+# ---------------------------------------------------------------------------
+models:
+  # ---- Birincil / Onerilen (Faz 1) ----
+  - id: dji_mavic_3m
+    manufacturer: DJI
+    model: "Mavic 3 Multispectral"
+    sensor: integrated_multispectral
+    bands:
+      - green
+      - red
+      - red_edge
+      - nir
+    min_gsd_cm: 5.0
+    radiometry_type: relative
+    calibration_notes: >
+      Pix4Dfields goreli (relative) kalibrasyon saglar; mutlak reflectance
+      yerine reflectance'a orantili relatif degerler uretir.
+      Zaman serisi ve training-serving parity icin dikkat (KR-018 notu).
+    pix4d_template: dji_mavic_3m_standard
+    phase: 1
+    status: active
+
+  # ---- Faz 2+ Alternatif Modeller (KR-034 Senaryo A/B) ----
+  - id: dji_m350_rtk_sentera_6x
+    manufacturer: DJI
+    model: "Matrice 350 RTK"
+    sensor: "Sentera 6X"
+    bands:
+      - blue
+      - green
+      - red
+      - red_edge
+      - nir
+      - nir2
+    min_gsd_cm: 3.0
+    radiometry_type: absolute
+    calibration_notes: >
+      Sentera 6X tam radyometrik kalibrasyon destekler.
+      6 bant ile detayli vejetasyon analizi mumkun.
+    pix4d_template: dji_m350_sentera_6x
+    phase: 2
+    status: planned
+
+  - id: wingtraone_gen2_micasense_rededge_p
+    manufacturer: WingtraOne
+    model: "Gen II"
+    sensor: "MicaSense RedEdge-P"
+    bands:
+      - blue
+      - green
+      - red
+      - red_edge
+      - nir
+    min_gsd_cm: 2.9
+    radiometry_type: absolute
+    calibration_notes: >
+      MicaSense raw -> radiance -> reflectance modeli;
+      mutlak radyometrik tutarlilik icin en guclu zemin.
+    pix4d_template: wingtra_micasense_rededge_p
+    phase: 2
+    status: planned
+
+  - id: parrot_anafi_usa_sequoia_plus
+    manufacturer: Parrot
+    model: "Anafi USA"
+    sensor: "Sequoia+"
+    bands:
+      - green
+      - red
+      - red_edge
+      - nir
+    min_gsd_cm: 10.0
+    radiometry_type: absolute
+    calibration_notes: >
+      Sequoia+ tam radyometrik kalibrasyon saglar.
+      Hizli gecis senaryosu icin uygun (KR-034 Senaryo A).
+    pix4d_template: parrot_anafi_sequoia_plus
+    phase: 2
+    status: planned
+
+  - id: ageagle_ebee_x_altum_pt
+    manufacturer: AgEagle
+    model: "eBee X"
+    sensor: "MicaSense Altum-PT"
+    bands:
+      - blue
+      - green
+      - red
+      - red_edge
+      - nir
+      - thermal
+    min_gsd_cm: 2.4
+    radiometry_type: absolute
+    calibration_notes: >
+      Altum-PT multispektral + termal; genis alan verimi yuksek.
+      Fixed-wing, 100k+ donum/gun icin ideal (KR-034 Senaryo B).
+    pix4d_template: ageagle_ebee_altum_pt
+    phase: 2
+    status: planned
+
+# ---------------------------------------------------------------------------
+# Band Gereksinimleri (KR-018)
+# ---------------------------------------------------------------------------
+band_requirements:
+  # Analiz icin minimum gerekli bandlar
+  minimum_bands:
+    - green
+    - red
+    - red_edge
+    - nir
+  thermal_optional: true
+
+# ---------------------------------------------------------------------------
+# Kalibrasyon Yazilimi
+# ---------------------------------------------------------------------------
+calibration_software:
+  name: Pix4Dfields
+  supported_models: all  # Tum kayitli markalar desteklenir
+  output_format: GeoTIFF
+  notes: >
+    Pix4Dfields drone-agnostik calisir. Her drone/sensor kombinasyonu icin
+    proje sablonu (template) bu registery ile senkronize tutulur.
