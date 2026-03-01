@@ -1,7 +1,7 @@
 # TarlaAnaliz – Tek Kaynak Gerçek (SSOT)
 ## Single Source of Truth v1.0.0
 
-**Sürüm:** 1.0.0 | **Tarih:** 2026-02-14 | **Format:** AI-Ready Unified Document (Sadeleştirilmiş)
+**Sürüm:** 1.0.0 | **Tarih:** 2026-03-01 | **Format:** AI-Ready Unified Document (Sadeleştirilmiş)
 
 **🧱 v1.0.0 Baz Sürüm Notları (Uygulama Başlangıcı):**
 
@@ -39,6 +39,10 @@
 
 ### D) Payments & Governance
 - KR-033 — Ödeme + Manuel Onay + Audit
+
+### E) Risk & Business Continuity
+- KR-034 — Drone Tedarik Bağımsızlığı (DJI Risk Planı)
+- KR-083 — İl Operatörü Rol Tanımı + KPI Erişimi
 ** Amaç → Kapsam → Zorunluluklar (MUST) → Kanıt/Audit → Hata Modları → Test/Kabul → Cross‑refs
 
 - [KR-017] Şemsiye kural: “AnalysisJob semantiği + PII yok + Edge’de model yok + Worker inbound yok + sonuçlar tek yönlü”
@@ -68,8 +72,8 @@
 **Amaç:** Çiftçilerin ürün kaybını erken uyarı ile azaltmak ve dönüm bazlı analiz hizmeti satmak. Başlangıç bölgesi GAP, ardından Türkiye geneline ölçekleme.
 
 **Sabit Çerçeve (Değişmez):**
-- Drone: DJI Mavic 3M
-- Veri: RGB + multispektral (NDVI/NDRE)
+- Drone: **Drone-agnostik mimari** — desteklenen modeller `config/drone_registry.yaml` ile tanımlanır. Faz 1 birincil: DJI Mavic 3M; Faz 2+ alternatifleri: DJI M350 RTK + Sentera 6X, WingtraOne Gen II + MicaSense RedEdge-P, Parrot Anafi USA + Sequoia+, AgEagle eBee X + Altum-PT (bkz. **[KR-034]**)
+- Veri: RGB + multispektral (NDVI/NDRE). **Radyometri notu:** DJI Mavic 3M göreli (relative) kalibrasyon sağlar; Faz 2+ modelleri mutlak (absolute) radyometrik kalibrasyon destekler. Zaman serisi ve training-serving parity için radyometri tipi farkı dikkate alınmalıdır (bkz. **[KR-018/KR-082]**)
 - YZ sadece analiz yapar; ilaçlama/gübreleme kararı **VERMEZ**
 - Sonuçlar web (PWA) uygulamasında harita üzerinde renk + desen/ikon ile gösterilir
 
@@ -144,7 +148,7 @@
 
 ---
 
-## [KR-015] Drone Pilotları (DJI Mavic 3M ile Uçuş)
+## [KR-015] Drone Pilotları (Uçuş Operasyonları)
 
 **Üyelik/Kayıt:** İl, ilçe, ad soyad, telefon; drone modeli ve seri numarası; hizmet verdiği mahalle/köy listesi (başlangıçta opsiyonel). Drone seri numarası doğrulama referansıdır.
 
@@ -230,6 +234,35 @@ reason
 eski/yeni pilot
 
 etkilenen mission(lar)
+
+[KR-015-3A] Hava Engeli (Weather Block) Akışı
+
+Amaç: Meteorolojik koşullar nedeniyle uçuşun güvenli veya verimli yapılamayacağı günlerde sistematik erteleme ve yeniden planlama.
+
+[ZORUNLU] Pilot veya admin, bir Mission için "Weather Block" bildirimi yapabilir.
+
+[ZORUNLU] Weather Block bildirimi zorunlu alanları:
+- mission_id
+- reporter_id (pilot veya admin)
+- block_reason (yağmur, rüzgâr, sis, vb.)
+- block_date
+- evidence (opsiyonel: meteoroloji raporu referansı)
+
+[ZORUNLU] Weather Block onaylandığında:
+- Mission "WEATHER_BLOCKED" durumuna alınır
+- Sistem otomatik yeniden planlama başlatır (bkz. [KR-015-5] reschedule akışı)
+- Yeniden planlanan tarih, mevcut pencere + SLA kısıtlarına göre hesaplanır
+
+[ZORUNLU] Weather Block nedeniyle yapılan ertelemeler çiftçinin reschedule_token hakkını **tüketmez** (bkz. [KR-015-5]).
+
+[ZORUNLU] Tüm Weather Block bildirimleri ve yeniden planlamalar audit log'a yazılır:
+- reporter (pilot/admin)
+- timestamp
+- block_reason + evidence
+- etkilenen mission(lar)
+- yeni planlanan tarih
+
+[ZORUNLU] Weather Block raporları `WeatherBlockReport` entity'si ile saklanır ve doğrulama (verify) akışından geçer.
 
 [KR-015-4] Admin Atama Değişikliği ve Otomatik Yeniden Dengeleme
 
@@ -583,7 +616,7 @@ Bu KR, YZ analiz hattının **şemsiye** tanımıdır. Aşağıdaki KR’ler KR�
 
 ## [KR-030] Notlar, Sınırlar ve Uyum
 
-- **Drone standardı:** Başlangıçta DJI Mavic 3M dışında veri kabul edilmez (sonraki fazda değerlendirilir)
+- **Drone standardı:** Drone-agnostik mimari; desteklenen modeller `config/drone_registry.yaml` ile yönetilir. Faz 1 birincil model DJI Mavic 3M; Faz 2+ alternatifleri hazırdır (bkz. **[KR-034]**)
 - Görüntüler yerel istasyon üzerinden sisteme alınır; log kayıtları denetim izi oluşturur
 - **KVKK:** PII ile operasyon/raporlama verisi ayrıdır; il operatörü PII görmez
 - Model çıktısı karar değildir; nihai aksiyon çiftçi ve/veya ziraat mühendisinin sorumluluğundadır
@@ -705,6 +738,36 @@ Bu KR, YZ analiz hattının **şemsiye** tanımıdır. Aşağıdaki KR’ler KR�
 - `PAYMENT.REFUNDED`
 
 > Bu olaylar BÖLÜM 3 log standardına uygun şekilde JSONL olarak üretilir; `correlation_id` zorunludur; PII yoktur.
+
+---
+
+## [KR-034] Drone Tedarik Bağımsızlığı (DJI Risk Planı)
+
+**Amaç:** DJI ürünlerine yönelik olası tedarik kısıtlamaları (ihracat yasağı, fiyat artışı, model sonlandırma) karşısında platform operasyonlarının sürekliliğini garanti altına almak.
+
+**Drone-Agnostik Mimari Prensibi:**
+- Platform, belirli bir drone markasına bağımlı değildir. Tüm desteklenen modeller `config/drone_registry.yaml` dosyasında kayıtlıdır.
+- Yeni drone/sensör eklenmesi, registry'ye kayıt + Pix4Dfields şablon tanımı + kalibrasyon doğrulaması ile yapılır.
+- Minimum bant gereksinimi: green, red, red_edge, nir (bkz. `band_requirements` in drone_registry.yaml).
+
+**Risk Senaryoları:**
+
+**Senaryo A — Hızlı Geçiş (6-12 ay):**
+- DJI erişimi kısıtlanırsa, mevcut envanterdeki Faz 2 alternatifleri devreye girer.
+- Öncelik: Parrot Anafi USA + Sequoia+ (hızlı tedarik, mutlak radyometri).
+
+**Senaryo B — Ölçek Geçişi (12-24 ay):**
+- Büyük alan operasyonları için sabit kanatlı (fixed-wing) modele geçiş.
+- Öncelik: AgEagle eBee X + Altum-PT (100k+ dönüm/gün kapasitesi, termal bant).
+- WingtraOne Gen II + MicaSense RedEdge-P: en güçlü mutlak radyometrik tutarlılık.
+
+**Geçiş Kriterleri:**
+- [ZORUNLU] Her alternatif model, üretime geçmeden önce `drone_registry.yaml`'a kayıtlı olmalıdır.
+- [ZORUNLU] Pix4Dfields şablon uyumluluğu doğrulanmalıdır (kalibrasyon yazılımı drone-agnostik çalışır).
+- [ZORUNLU] Radyometri tipi farkı (relative vs absolute) model eğitim pipeline'ında dikkate alınmalıdır ([KR-018/KR-082]).
+- [ZORUNLU] Geçiş kararı ve zaman çizelgesi audit log'a yazılır.
+
+**İlgili maddeler:** [KR-001], [KR-018/KR-082], [KR-030], [KR-016]
 
 ---
 
@@ -1029,7 +1092,7 @@ Bu bölüm; ana iş akışlarının iş planı anlatısında zaten bulunan kıs�
 - Tarla tekil; sahiplik/erişim ayrı yaklaşımı önerilir (çakışma/yanlış ekleme riskine karşı)
 
 **Pilot:**
-- Pilot sadece DJI Mavic 3M kullanır; drone seri numarası doğrulama referansıdır
+- Pilot, `config/drone_registry.yaml` ile kayıtlı drone modellerini kullanır (Faz 1: DJI Mavic 3M); drone seri numarası doğrulama referansıdır
 - Günlük teslim: uçuş çıktısı her gün hafıza kartı ile yerel istasyona aktarılır
 - Her uçuşta farklı hafıza kartı kullanılır. DJI tarafındaki kart kilidi/PIN gibi özellikler varsa opsiyonel ek katmandır; güvenlik garantisi değildir (bkz. [KR-015])
 - Eşleştirme zorunlu: Yüklenen çekimler kayıtlı tarla ile eşleşmezse işlenmez
@@ -1262,6 +1325,8 @@ Bu bölüm, güvenlik kurallarını **tekrar etmek** için değil; SSOT içinde 
 - **YZ izolasyonu / one-way akış + kanıt zinciri:** [KR-017] + [KR-070] + [KR-071] + [KR-072] + [KR-073]
 - **Radyometrik kalibrasyon hard gate:** [KR-018] (alias: [KR-082])
 - **SDLC güvenlik kapıları + kabul kriterleri:** [KR-040]–[KR-043]
+- **Drone tedarik bağımsızlığı (risk planı):** [KR-034]
+- **İl Operatörü rol tanımı + KPI:** [KR-083]
 - **Audit/WORM olay şeması + correlation_id:** BÖLÜM 3
 - **Threat model:** BÖLÜM 4
 - **Saha güvenlik checklist:** EK-SOP-SEC
