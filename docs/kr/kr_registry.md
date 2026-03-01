@@ -779,9 +779,18 @@
 - Allowlist yalnızca **Ingress kapısında** ikincil katmandır. Ana kontrol **mTLS**’tir.
 
 **SDLC Test (minimum):**
-- allowlist dışı IP → deny + audit  
-- sertifikasız istek → deny + audit  
+- allowlist dışı IP → deny + audit
+- sertifikasız istek → deny + audit
 - worker’a direct HTTP → deny (policy)
+
+**Platform Uygulama Notu — Depolama stratejisi (pre-signed URL):**
+Platform büyük veri dosyalarını relay etmez.
+EdgeKiosk manifest JSON gönderir, Platform pre-signed upload URL üretir, EdgeKiosk
+doğrudan S3 quarantine-bucket’a yazar. Tek yönlü veri akışı ilkesi Platform→Worker
+için de geçerlidir: Sunucu 2 (Data Pipeline) hiçbir zaman Sunucu 1’e (Platform Core)
+HTTP isteği atmaz. İletişim yalnızca PostgreSQL write + RabbitMQ event üzerinden yapılır.
+Sunucu 1’in IP/port bilgisi Sunucu 2’de tanımlı değildir.
+(Detay: bkz. `docs/architecture/data_lifecycle_transfer.md`)
 
 ---
 
@@ -863,31 +872,85 @@ Hata/şüphe: `REJECTED_QUARANTINE`
 
 **Normatif kurallar (Hard):**
 - Ham dosyalar (TIFF/JPEG/RAW vb.) **untrusted input** kabul edilir. Parse/convert işlemleri sandbox’ta yapılır.
-- **AV1 EdgeKiosk** + **AV2 Merkez Security Gateway** zorunludur.
-- AV/verification olmadan dataset bir sonraki duruma geçemez (**[KR-072]**).
+- **AV1 (EdgeKiosk)** ön filtredir; yerel istasyonu korur ve bariz zararlıyı erken yakalar.
+- **AV2 (Merkez Security Gateway)** platform tarafında karar veren taramadır; çalışma modu `scan_policy` parametresine bağlıdır (aşağıya bkz.).
+- Hash doğrulama + dosya tipi whitelist kontrolü **her modda zorunludur** ve asla atlanamaz.
 - Güvenli türev (tiles/COG/thumbnail) üretimi merkezde sandbox işçisinde yapılır; platform public ham servis etmez.
+
+**Platform Tarama Politikası (`scan_policy`) — İki Modlu AV2 Tarama:**
+EdgeKiosk’taki AV1 taraması ön filtredir; platform tarafındaki AV2 karar veren taramadır.
+Admin `scan_policy` parametresi ile aşağıdaki modlar arasında geçiş yapabilir:
+
+**MOD 1 — SMART (varsayılan):**
+Normal operasyonda aktif olan moddur. Dosyalar quarantine-bucket’a ulaştığında
+sistem önce hafif doğrulama yapar (SHA-256 hash + dosya tipi whitelist kontrolü).
+Tam AV taraması SADECE şu tetikleyici koşullardan biri varsa çalışır:
+  - Dosya boyutu manifest’teki beklenen değerden ±%20 sapıyorsa
+  - Dosya uzantısı izin verilen whitelist dışındaysa
+  - SHA-256 hash manifest ile uyuşmuyorsa
+  - `drone_id` sistem tarafından ilk kez görülüyorsa
+  - EdgeKiosk yazılım sürümü güncel değilse (minimum versiyon kontrolü)
+
+Bu koşulların hiçbiri yoksa dosya sadece hash doğrulama + dosya tipi kontrolünden
+geçer (AV taraması atlanır). Düzenli çalışan bilinen drone’lardan gelen standart
+görüntü dosyalarının büyük çoğunluğu hafif yoldan geçer. Bu mod operasyonel
+maliyeti dramatik şekilde düşürür.
+
+**MOD 2 — BYPASS (admin + zorunlu audit log):**
+AV taraması tamamen devre dışıdır. Sadece SHA-256 hash doğrulama ve dosya tipi
+kontrolü yapılır. Bu mod yalnızca acil operasyonel baskı altında (yoğun hasat
+dönemi, sistem kaynak yetersizliği vb.) geçici olarak kullanılır.
+
+BYPASS kuralları:
+  - Etkinleştirildiğinde audit log’a zorunlu kayıt: kim, ne zaman, neden
+  - Maksimum süre sınırı: 72 saat — süre dolduğunda sistem otomatik olarak SMART moduna döner
+  - BYPASS aktifken admin dashboard’da kırmızı uyarı banner’ı görünür
+  - BYPASS süresi admin tarafından uzatılabilir ama her uzatma ayrı audit kaydı oluşturur
+
+**İl Bazlı Zorunlu AV Tarama (Admin Override):**
+Admin, belirli bir ilin (`province_code`) verileri için `scan_policy` değerini
+**MANDATORY** olarak ayarlayabilir. Bu durumda ilgili ilden gelen tüm datasetlere
+mevcut global mod ne olursa olsun (SMART veya BYPASS) tam AV2 taraması uygulanır.
+  - İl bazlı MANDATORY ayarı global modu **override** eder
+  - Birden fazla il aynı anda MANDATORY olarak işaretlenebilir
+  - İl bazlı ayar değişiklikleri audit log’a kaydedilir
+
+**Her iki modda da geçerli sabit kurallar:**
+- Hash doğrulama **ASLA** atlanamaz (her modda zorunlu)
+- Dosya tipi whitelist kontrolü **ASLA** atlanamaz (her modda zorunlu)
+- `verified-bucket`’a geçiş ancak ilgili modun tüm kontrolleri başarılıysa olur
 
 **Quarantine:**
 - AV fail / hash mismatch / QC fail → `REJECTED_QUARANTINE` + audit.
 
 **SDLC Test (minimum):**
-- (Lab) EICAR tetiklemesi  
-- AV1 PASS ama AV2 FAIL → quarantine  
+- (Lab) EICAR tetiklemesi
+- AV1 PASS ama AV2 FAIL → quarantine
 - Sandbox crash olmadan kontrollü hata
+- scan_policy=SMART + anomali yok → AV atlanır, hash + whitelist geçer
+- scan_policy=SMART + boyut sapması → tam AV tetiklenir
+- scan_policy=BYPASS + 72 saat aşımı → otomatik SMART’a dönüş
+- BYPASS etkinleştirme → audit log kaydı zorunlu
+- İl bazlı MANDATORY + global BYPASS → ilgili il verilerine tam AV uygulanır
 
 ---
 
 **4) Kanıt / Artefact**
 - Üretilen raporlar/manifestler/sertifikalar ve referanslar (KR-072/KR-073 ile).
+- `scan_policy_change` audit kaydı (mod değişikliklerinde)
 
 **5) Audit / Log**
 - SECURITY.DENY / JOB.REJECT / HASH.MISMATCH vb. olaylar; correlation_id zorunlu.
+- SCAN_POLICY.CHANGE / SCAN_POLICY.BYPASS_ENABLE / SCAN_POLICY.BYPASS_EXPIRE / SCAN_POLICY.PROVINCE_MANDATORY olayları.
 
 **6) Hata Modları / Quarantine**
 - Şüpheli/tamper/malware → REJECTED_QUARANTINE; işlem durur ve kanıt üretilir.
+- BYPASS süresi dolduğunda otomatik SMART’a dönüş; açık kalan dosyalar SMART kurallarıyla yeniden değerlendirilir.
 
 **7) Test / Kabul Kriterleri**
 - Negatif testler: inbound denemeleri reddedilir; eksik kanıtla job reddedilir; hash mismatch yakalanır.
+- BYPASS → 72h aşımı → otomatik SMART geçişi doğrulanır.
+- İl bazlı MANDATORY override doğrulanır.
 
 **8) Cross-refs**
 - KR-017 (şemsiye), KR-018 (kalibrasyon), KR-070..KR-073 (akış/kanıt).
