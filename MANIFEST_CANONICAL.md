@@ -9,7 +9,7 @@
 Baslangic bolgesi GAP, ardindan Turkiye geneline olcekleme. **[KR-001]**
 
 **Sabit Cerceve:**
-- Drone: DJI Mavic 3M
+- Drone: Drone-agnostik mimari (desteklenen modeller: `config/drone_registry.yaml`)
 - Veri: RGB + multispektral (NDVI/NDRE)
 - YZ sadece analiz yapar; ilaclama/gubreleme karari **VERMEZ**
 - Sonuclar PWA uygulamasinda harita uzerinde renk + desen/ikon ile gosterilir
@@ -51,11 +51,13 @@ Infrastructure (SQLAlchemy + Redis + RabbitMQ + S3 + External Adapters)
 | KR-022 | Fiyat Yonetimi | PriceBook snapshot, immutable |
 | KR-027 | Subscription Scheduler | Sezonluk otomatik mission uretimi |
 | KR-033 | Odeme Akisi | Manuel onay + audit log |
+| KR-034 | Drone Tedarik Bagimsizligi | DJI Risk Plani; Senaryo A/B |
 | KR-040/041 | SDLC Kapilari | PR/CI/Release/Ops guvenligi |
 | KR-050 | Kimlik | Telefon + 6 haneli PIN |
 | KR-063 | RBAC | 12 rol yetki matrisi |
 | KR-066 | KVKK/PII | PII ayriligi |
 | KR-081 | Contract-First | JSON Schema machine-verifiable |
+| KR-083 | Il Operatoru | PII gormeden KPI + kapasite metrikleri |
 
 ## Repo Yapisi (Ust Duzey)
 
