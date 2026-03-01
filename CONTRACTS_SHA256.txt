@@ -26,5 +26,9 @@
 # <sha256>  shared/contracts/events/payment_events.v1.schema.json
 # <sha256>  shared/contracts/events/subscription_events.v1.schema.json
 
+# --- Dataset Ingest Schemas (KR-081 / KR-072) ---
+03e5e92786b0ec342495bf2a5d4dbc3b051e19460df9ab5f53a77163c5ef3374  contracts/schemas/edge/dataset_ingest_request.v1.schema.json
+b3c0169cfcdef05a6a7b6e0a0051f2ebe2ee0ca24263a53653c7a5ce671884b1  contracts/schemas/edge/dataset_ingest_response.v1.schema.json
+
 # --- Dogrulama Komutu ---
 # sha256sum -c CONTRACTS_SHA256.txt

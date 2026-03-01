@@ -22,6 +22,8 @@
 | AI Feedback | `ai.feedback.v1` | 1.0.0 | Aktif |
 | Training Export (CLS) | `training.feedback.cls.v1` | 1.0.0 | Aktif |
 | Training Export (GEO) | `training.feedback.geo.v1` | 1.0.0 | Aktif |
+| DatasetIngestRequest | `dataset_ingest_request.v1` | 1.0.0 | Aktif |
+| DatasetIngestResponse | `dataset_ingest_response.v1` | 1.0.0 | Aktif |
 
 ## Surumleme Kurali (SemVer)
 
@@ -36,4 +38,4 @@
 | Backend (Platform) | 1.0.0 | Uretici + tuketici |
 | AI Worker | 1.0.0 | Tuketici (AnalysisJob) + uretici (AnalysisResult) |
 | Frontend (PWA) | 1.0.0 | Tuketici (AnalysisResult) |
-| Edge Kiosk | 1.0.0 | Uretici (ingest manifest) |
+| Edge Kiosk | 1.0.0 | Uretici (ingest manifest, dataset_ingest_request) / Tuketici (dataset_ingest_response) |
