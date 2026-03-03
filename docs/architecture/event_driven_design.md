@@ -1,4 +1,4 @@
-BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
 Event-Driven Design Notes
@@ -11,11 +11,13 @@ Domain/integration/audit event ayrımı, idempotency ve correlation id propagasy
 - Integration Lead
 
 ## Last updated
-2026-02-18
+2026-03-03
 
 ## SSOT references
-- KR-033
-- KR-081
+- KR-033 (Ödeme + Manuel Onay)
+- KR-081 (Contract-First / Schema Gates)
+- KR-072 (Dataset Lifecycle — event-driven state machine)
+- KR-070 (Worker Isolation — job dispatch events)
 
 ## Event types
 - Domain events: iç süreç geçişleri (örn. payment state update).
@@ -59,6 +61,7 @@ ts=2026-02-18T11:10:00Z event=payment.approval.pending correlation_id=corr_7f1..
 - Şema veya consumer guard kuralları güncellendi.
 
 ## Related docs
-- `docs/KR-033_payment_flow.md`
+- `docs/TARLAANALIZ_SSOT_v1_2_0.txt` (KR-033 ödeme akışı kanonik kaynağı)
 - `docs/api/openapi.yaml`
 - `docs/runbooks/incident_response_payment_timeout.md`
+- `docs/architecture/data_lifecycle_transfer.md`

@@ -1,4 +1,4 @@
-BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
 Adaptive Rate Limiting Strategy
@@ -12,11 +12,12 @@ API katmanında sabit + adaptif oran sınırlama yaklaşımı, yük dökme ve iz
 - Security Engineer
 
 ## Last updated
-2026-02-18
+2026-03-03
 
 ## SSOT references
-- KR-033
-- KR-081
+- KR-033 (Ödeme + Manuel Onay)
+- KR-081 (Contract-First / Schema Gates)
+- KR-050 (Kimlik Doğrulama — brute-force koruması)
 
 ## Why
 - Trafik patlamalarında servis sürekliliği sağlamak.

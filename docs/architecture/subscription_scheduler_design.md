@@ -1,4 +1,4 @@
-BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
 Subscription Scheduler Design
@@ -11,11 +11,12 @@ Abonelik yenileme/iptal akışı ile weekly planner entegrasyonunu tanımlar.
 - Backend Architect
 
 ## Last updated
-2026-02-18
+2026-03-03
 
 ## SSOT references
-- KR-015
-- KR-033
+- KR-015 (Pilot Kapasite/Planlama)
+- KR-033 (Ödeme + Manuel Onay)
+- KR-027 (Sezonluk Paket Planlayıcı)
 
 ## Design overview
 - Subscription lifecycle: active -> renewal_due -> renewed | canceled.
@@ -58,4 +59,4 @@ Abonelik yenileme/iptal akışı ile weekly planner entegrasyonunu tanımlar.
 ## Related docs
 - `docs/views/VIEW_CAPABILITIES.md`
 - `docs/runbooks/weather_block_verification_procedure.md`
-- `docs/KR-033_payment_flow.md`
+- `docs/TARLAANALIZ_SSOT_v1_2_0.txt` (KR-033 ödeme akışı kanonik kaynağı)

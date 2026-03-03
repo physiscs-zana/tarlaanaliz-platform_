@@ -1,4 +1,4 @@
-BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
 Training Feedback Architecture
@@ -12,12 +12,14 @@ Expert review çıktılarının dataset kürasyonuna, model değerlendirmesine v
 - Security Engineer
 
 ## Last updated
-2026-02-18
+2026-03-03
 
 ## SSOT references
-- KR-071
-- KR-018
-- KR-081
+- KR-070 (Worker Isolation — AI izolasyonu)
+- KR-071 (One-way Data Flow)
+- KR-018 / KR-082 (Radiometric Calibration + Spektral Kapasite)
+- KR-081 (Contract-First / Schema Gates)
+- KR-072 (Dataset Lifecycle — training data provenance)
 
 ## Feedback loop
 1. Expert review sonucu etiketlenir.
@@ -26,8 +28,10 @@ Expert review çıktılarının dataset kürasyonuna, model değerlendirmesine v
 4. Release gate kararı verilir (offline -> online).
 
 ## Boundary controls
-- AI worker izole çalışır (KR-071).
-- Ham veri işleminde calibration hard gate korunur (KR-018).
+- AI worker izole çalışır; inbound kapalı, job yalnızca queue ile alınır (KR-070).
+- Veri akışı tek yönlüdür; sonuçlar platforma türev olarak döner (KR-071).
+- Ham veri işleminde calibration hard gate korunur (KR-018/KR-082).
+- Dataset kanıt zinciri (manifest/hash/signature) training data provenance için korunur (KR-072).
 - Platforma dönüş yalnızca tanımlı şema ile yapılır (KR-081).
 
 ## Operate

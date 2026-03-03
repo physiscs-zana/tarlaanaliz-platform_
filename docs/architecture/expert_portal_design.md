@@ -1,4 +1,4 @@
-BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
 Expert Portal Design (High Level)
@@ -12,11 +12,14 @@ Uzman onboarding, görev atama, review ve feedback loop akışının üst-seviye
 - Security Lead
 
 ## Last updated
-2026-02-18
+2026-03-03
 
 ## SSOT references
-- KR-081
-- KR-071
+- KR-081 (Contract-First / Schema Gates)
+- KR-070 (Worker Isolation — AI izolasyonu)
+- KR-071 (One-way Data Flow)
+- KR-063 (Roller ve Yetkiler — RBAC)
+- KR-066 (Güvenlik ve KVKK — PII minimizasyonu)
 
 ## Module boundaries
 - Onboarding: uzman profil doğrulama ve yetki atama.

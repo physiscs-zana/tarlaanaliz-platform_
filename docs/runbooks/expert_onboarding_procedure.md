@@ -1,4 +1,4 @@
-BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
 Runbook: Expert Onboarding Procedure
@@ -11,11 +11,12 @@ Uzman hesabı aktivasyonu, rol ataması ve ilk görev hazırlığını işletim 
 - Security Operations
 
 ## Last updated
-2026-02-18
+2026-03-03
 
 ## SSOT references
-- KR-081
-- KR-071
+- KR-081 (Contract-First / Schema Gates)
+- KR-063 (Roller ve Yetkiler — RBAC)
+- KR-066 (Güvenlik ve KVKK — PII minimizasyonu)
 
 ## Procedure
 1. Onboarding talebini ticket sistemi üzerinden doğrula.

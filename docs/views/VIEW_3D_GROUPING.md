@@ -1,4 +1,4 @@
-BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
 VIEW: 3D Grouping (Domain × SDLC × Deployment)
@@ -11,19 +11,24 @@ Sistemi üç eksende özetleyen kavramsal görünümü sunar.
 - Technical Writer
 
 ## Last updated
-2026-02-18
+2026-03-03
 
 ## SSOT references
-- KR-018
-- KR-033
-- KR-081
+- KR-018 / KR-082 (Radiometric Calibration + Spektral Kapasite)
+- KR-033 (Ödeme + Manuel Onay)
+- KR-081 (Contract-First / Schema Gates)
+- KR-070 (Worker Isolation)
+- KR-072 (Dataset Lifecycle)
+- KR-084 (Termal Veri İşleme)
 
 ## Dimension 1: Domain
 - Payment lifecycle
-- Calibration & QC
+- Calibration & QC + Spektral kapasite algılama
 - Planning & scheduling
 - Expert review & feedback
 - SLA observability
+- Dataset lifecycle & chain of custody
+- Termal veri işleme (sulama stresi)
 
 ## Dimension 2: SDLC stage
 - Plan
@@ -33,9 +38,9 @@ Sistemi üç eksende özetleyen kavramsal görünümü sunar.
 - Operate
 
 ## Dimension 3: Deployment node
-- API node (`src/presentation/api`)
-- Worker node (queue consumers)
-- AI isolated node (KR-071)
+- Sunucu 1: Platform Core (API, SSR, Auth, RBAC, Ödeme)
+- Sunucu 2: Data Pipeline (Ingest Gateway, AV2 Sandbox, AI Worker)
+- EdgeKiosk: M1 (air-gapped Pix4D) + M2 (koordinatör + mTLS upload)
 - Observability node
 
 ## Mapping notes
