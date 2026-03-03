@@ -1,6 +1,6 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
 # KR-018: Calibration and QC evidence is a hard gate before analysis start.
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 """
 Amaç: KR-018 'Tam Radyometrik Kalibrasyon' hard gate'i.
 Sorumluluk: Use-case orkestrasyonu; domain service + ports birleşimi; policy enforcement.
