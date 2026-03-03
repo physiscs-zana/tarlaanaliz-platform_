@@ -68,11 +68,6 @@ tarlaanaliz-platform/
 │
 ├── contracts/
 │
-├── deploy/
-│   └── k8s/
-│       ├── deployment.yaml
-│       └── network-policy.yaml
-│
 ├── docs/
 │   ├── IS_PLANI_AKIS_DOKUMANI_v1_0_0.docx
 │   ├── KR-033_payment_flow.md
