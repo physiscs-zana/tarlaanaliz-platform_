@@ -1,6 +1,6 @@
 # TarlaAnaliz Platform — Canonical Manifest
 
-> **SSOT Uyumlu:** `docs/TARLAANALIZ_SSOT_v1_0_0.txt` v1.0.0
+> **SSOT Uyumlu:** `docs/TARLAANALIZ_SSOT_v1_2_0.txt` v1.2.0
 > **Platform Tree:** v3.2.2 FINAL (2026-02-08)
 
 ## Proje Ozeti
@@ -18,11 +18,12 @@ Baslangic bolgesi GAP, ardindan Turkiye geneline olcekleme. **[KR-001]**
 
 | Dokuman | Yol | Tip |
 |---------|-----|-----|
-| Kanonik SSOT | `docs/TARLAANALIZ_SSOT_v1_0_0.txt` | Normatif (BAGLAYICI) |
-| LLM Brief | `docs/TARLAANALIZ_LLM_BRIEF_v1_0_0.md` | Gelistirici rehberi |
-| Playbook | `docs/TARLAANALIZ_PLAYBOOK_v1_0_0.md` | Operasyonel (bilgilendirici) |
-| Platform Tree | `docs/tarlaanaliz_platform_tree_v3.2.2_FINAL_2026-02-08.txt` | Yapisal referans |
-| Is Plani | `docs/IS_PLANI_AKIS_DOKUMANI_v1_0_0.docx` | Is akisi |
+| Kanonik SSOT | `docs/TARLAANALIZ_SSOT_v1_2_0.txt` | Normatif (BAGLAYICI) |
+| Dokumantasyon Rehberi | `docs/README.md` | Navigasyon indeksi |
+| Governance Pack | `docs/governance/GOVERNANCE_PACK_v1_0_0.md` | SDLC & degisiklik kontrolu |
+| KR Registry | `docs/kr/kr_registry.md` | KR indeks ve navigasyonu |
+| Platform Tree | `DIRECTORY_TREE.md` | Yapisal referans |
+| Is Plani | `docs/IS_PLANI_AKIS_DOKUMANI_v1_0_0.docx` | Is akisi (arsiv) |
 
 ## Mimari Ozet
 

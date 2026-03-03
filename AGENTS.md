@@ -1,7 +1,7 @@
 # TARLAANALIZ PLATFORM – AGENTS.md
 
 ## 1. Canonical Authority (BAĞLAYICI)
-- `docs/TARLAANALIZ_SSOT_v1_0_0.txt` bu projede **tek kanonik kaynaktır**.
+- `docs/TARLAANALIZ_SSOT_v1_2_0.txt` bu projede **tek kanonik kaynaktır**.
 - Bu doküman bağlayıcıdır.
 - Kurallar, kararlar ve limitler **tekrar yazılmaz**, yalnızca **KR referansı** ile kullanılır.
 - SSOT ile çelişen hiçbir çıktı kabul edilemez.
@@ -16,7 +16,7 @@
 - Serbest yorum, örtük iş kuralı veya “tahmini” davranış eklenmez.
 - Her üretilen dosyanın en üstünde şu header bulunur:
 
-  `BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.`
+  `BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.`
 
 - Kod içinde iş kuralı geçen her yerde ilgili **KR kodu yorum satırıyla belirtilir**.
 
@@ -42,10 +42,10 @@ Aşağıdaki kurallar **yalnızca referans içindir**; detayları SSOT’tadır:
 - Aynı işi yapan mükerrer dosyalar oluşturulmaz.
 
 ## 7. Documents Available for Reference (OKUNUR, KOPYALANMAZ)
-- `docs/TARLAANALIZ_SSOT_v1_0_0.txt`
-- `docs/TARLAANALIZ_PLAYBOOK_v1_0_1_OPTIMIZED.md`
-- `docs/TARLAANALIZ_LLM_BRIEF_v1_0_0.md`
-- `docs/IS_PLANI_AKIS_DOKUMANI_v1_0_0.docx`
+- `docs/TARLAANALIZ_SSOT_v1_2_0.txt`
+- `docs/README.md` (dokümantasyon navigasyonu)
+- `docs/governance/GOVERNANCE_PACK_v1_0_0.md` (SDLC & değişiklik kontrolü)
+- `docs/kr/kr_registry.md` (KR indeks ve navigasyonu)
 - Dosya açıklamaları ve envanter dokümanları
 
 Bu dokümanlar **arka plan bilgisidir**.  

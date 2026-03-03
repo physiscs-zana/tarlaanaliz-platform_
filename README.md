@@ -3,7 +3,7 @@
 Tarimsal drone goruntu analizi platformu. Ciftcilerin urun kaybini erken uyari ile azaltmak
 ve donum bazli analiz hizmeti sunmak icin gelistirilen backend + frontend monorepo'su.
 
-> **SSOT:** `docs/TARLAANALIZ_SSOT_v1_0_0.txt` — Tek kanonik kaynak. Tum kurallar bu dokumana referansla uygulanir.
+> **SSOT:** `docs/TARLAANALIZ_SSOT_v1_2_0.txt` — Tek kanonik kaynak. Tum kurallar bu dokumana referansla uygulanir.
 
 ## Ozellikler
 
@@ -114,9 +114,9 @@ pytest --cov=src --cov-report=html
 
 | Dokuman | Aciklama |
 |---------|----------|
-| `docs/TARLAANALIZ_SSOT_v1_0_0.txt` | Tek kanonik kaynak (BAGLAYICI) |
-| `docs/TARLAANALIZ_LLM_BRIEF_v1_0_0.md` | Gelistirici rehberi |
-| `docs/TARLAANALIZ_PLAYBOOK_v1_0_0.md` | Operasyonel playbook |
+| `docs/TARLAANALIZ_SSOT_v1_2_0.txt` | Tek kanonik kaynak (BAGLAYICI) |
+| `docs/README.md` | Dokumantasyon navigasyonu ve rehberi |
+| `docs/governance/GOVERNANCE_PACK_v1_0_0.md` | SDLC ve degisiklik kontrolu |
 | `AGENTS.md` | AI agent kodlama kurallari |
 | `CONTRACTS_VERSION.md` | Contract surum sabitleme |
 | `CHANGELOG.md` | Surum notlari |

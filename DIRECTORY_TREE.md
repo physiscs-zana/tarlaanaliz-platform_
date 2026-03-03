@@ -70,9 +70,8 @@ tarlaanaliz-platform/
 │
 ├── docs/
 │   ├── IS_PLANI_AKIS_DOKUMANI_v1_0_0.docx
-│   ├── KR-033_payment_flow.md
 │   ├── README.md
-│   ├── TARLAANALIZ_SSOT_v1_0_0.txt
+│   ├── TARLAANALIZ_SSOT_v1_2_0.txt
 │   ├── is_plani_amendments.md
 │   ├── v3_2_2_tree_audit_report.md
 │   ├── adr/
