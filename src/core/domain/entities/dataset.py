@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/entities/dataset.py
 # DESC: Dataset entity; KR-072 tam durum makinesi (9+1 durum).
 # SSOT: TARLAANALIZ_SSOT_v1_1_0.txt — KR-072, KR-073, KR-070

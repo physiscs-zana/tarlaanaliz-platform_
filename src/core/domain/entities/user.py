@@ -1,6 +1,8 @@
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/entities/user.py
 # DESC: User; telefon + PIN kimlik dogrulama (email/TCKN/OTP yok).
-# SSOT: KR-050 (kimlik), KR-063 (RBAC roller), KR-011 (rol ozet)
+# SSOT: TARLAANALIZ_SSOT_v1_1_0.txt — KR-050 (kimlik), KR-063 (11 rol, v1.1.0)
+# DEĞİŞİKLİK v1.1.0: UserRole FARMER_MEMBER + BILLING_ADMIN kaldırıldı → 11 rol
 """
 User domain entity.
 
@@ -17,17 +19,18 @@ from typing import Optional
 
 
 class UserRole(str, Enum):
-    """KR-063 kanonik rol kodlari."""
+    """KR-063 kanonik rol kodlari (v1.1.0 — 11 rol).
+
+    v1.0.0 → v1.1.0 kaldırılanlar: FARMER_MEMBER, BILLING_ADMIN
+    """
 
     FARMER_SINGLE = "FARMER_SINGLE"
-    FARMER_MEMBER = "FARMER_MEMBER"
     COOP_OWNER = "COOP_OWNER"
     COOP_ADMIN = "COOP_ADMIN"
     COOP_AGRONOMIST = "COOP_AGRONOMIST"
     COOP_VIEWER = "COOP_VIEWER"
     PILOT = "PILOT"
     STATION_OPERATOR = "STATION_OPERATOR"
-    BILLING_ADMIN = "BILLING_ADMIN"
     IL_OPERATOR = "IL_OPERATOR"
     CENTRAL_ADMIN = "CENTRAL_ADMIN"
     AI_SERVICE = "AI_SERVICE"
