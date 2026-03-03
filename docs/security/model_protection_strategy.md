@@ -1,4 +1,4 @@
-BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
 Security Strategy: Model Protection
@@ -11,12 +11,13 @@ Model varlıklarının korunması, erişim kontrolleri ve güvenli release pipel
 - Platform Security Engineer
 
 ## Last updated
-2026-02-18
+2026-03-03
 
 ## SSOT references
-- KR-071
-- KR-018
-- KR-081
+- KR-070 (Worker Isolation — AI izolasyonu)
+- KR-071 (One-way Data Flow)
+- KR-018 / KR-082 (Radiometric Calibration + Spektral Kapasite)
+- KR-081 (Contract-First / Schema Gates)
 
 ## Protection principles
 - Model edge cihazlarda dağıtılmaz.
@@ -58,4 +59,4 @@ Model varlıklarının korunması, erişim kontrolleri ve güvenli release pipel
 ## Related docs
 - `docs/architecture/training_feedback_architecture.md`
 - `docs/architecture/expert_portal_design.md`
-- `docs/TARLAANALIZ_SSOT_v1_0_0.txt`
+- `docs/TARLAANALIZ_SSOT_v1_2_0.txt`

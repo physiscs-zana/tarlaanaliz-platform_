@@ -1,4 +1,4 @@
-BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
 Incident Response: Payment Timeout
@@ -12,11 +12,12 @@ Payment intent/receipt/onay hattında timeout olayının tespiti, triage ve düz
 - Backend On-Call
 
 ## Last updated
-2026-02-18
+2026-03-03
 
 ## SSOT references
-- KR-033
-- KR-081
+- KR-033 (Ödeme + Manuel Onay)
+- KR-081 (Contract-First / Schema Gates)
+- KR-083 (İl Operatörü — BILLING_ADMIN ödeme SLA)
 
 ## Detection
 - Alarm: payment işlem gecikmesi eşiği aşıldı.
@@ -53,6 +54,6 @@ Payment intent/receipt/onay hattında timeout olayının tespiti, triage ve düz
 - Kalıcı düzeltme backlog’a işlendi.
 
 ## Related docs
-- `docs/KR-033_payment_flow.md`
+- `docs/TARLAANALIZ_SSOT_v1_2_0.txt` (KR-033 ödeme akışı kanonik kaynağı)
 - `docs/api/openapi.yaml`
 - `docs/runbooks/payment_approval_procedure.md`

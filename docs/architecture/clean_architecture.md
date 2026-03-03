@@ -1,4 +1,4 @@
-BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
 Clean Architecture (Platform Baseline)
@@ -11,12 +11,14 @@ Katman sınırları, bağımlılık yönleri ve API yüzeyi kuralını tanımlar
 - Domain Lead
 
 ## Last updated
-2026-02-18
+2026-03-03
 
 ## SSOT references
-- KR-081
-- KR-018
-- KR-033
+- KR-081 (Contract-First / Schema Gates)
+- KR-018 / KR-082 (Radiometric Calibration + Spektral Kapasite)
+- KR-033 (Ödeme + Manuel Onay)
+- KR-070 (Worker Isolation — katman izolasyonu)
+- KR-071 (One-way Data Flow)
 
 ## Layer model
 - `core`: entity/value object/domain policy.

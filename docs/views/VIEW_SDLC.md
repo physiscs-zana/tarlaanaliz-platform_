@@ -1,4 +1,4 @@
-BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
 VIEW: SDLC (Plan → Build → Test → Deploy → Operate)
@@ -11,12 +11,14 @@ SDLC aşamalarını kontrol kapıları, observability ve runbook bağlantıları
 - SRE Lead
 
 ## Last updated
-2026-02-18
+2026-03-03
 
 ## SSOT references
-- KR-018
-- KR-033
-- KR-081
+- KR-018 / KR-082 (Radiometric Calibration + Spektral Kapasite)
+- KR-033 (Ödeme + Manuel Onay)
+- KR-081 (Contract-First / Schema Gates)
+- KR-040–KR-043 (Güvenlik Kabul Kriterleri / SDLC Gates)
+- KR-070–KR-073 (Security & Isolation)
 
 ## Stage view
 - Plan: KR referansları ve etki analizi.
@@ -26,9 +28,11 @@ SDLC aşamalarını kontrol kapıları, observability ve runbook bağlantıları
 - Operate: SLO/SLA metrikleri + runbook icrası.
 
 ## Critical gates
-- Gate A (KR-018): calibration + QC olmadan analysis yok.
+- Gate A (KR-018/KR-082): calibration + QC olmadan analysis yok; spektral kapasite algılaması.
 - Gate B (KR-033): intent + receipt + manual approval + audit.
 - Gate C (KR-081): contract uyumu olmadan release yok.
+- Gate D (KR-040–043): güvenlik kabul kriterleri PR/CI/Release aşamalarında zorunlu.
+- Gate E (KR-070–073): worker izolasyonu, one-way flow, AV tarama zinciri doğrulanmadan deploy yok.
 
 ## Observability hooks
 - Correlation ID zorunlu.

@@ -1,4 +1,4 @@
-BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
 Authentication & Authorization (Phone + PIN, JWT)
@@ -12,16 +12,21 @@ Authentication & Authorization (Phone + PIN, JWT)
 - API Product Owner
 
 ## Last updated
-2026-02-18
+2026-03-03
 
 ## SSOT references
-- KR-033
-- KR-081
+- KR-050 (Kimlik Doğrulama — Phone + PIN sade model)
+- KR-063 (Roller ve Yetkiler — RBAC)
+- KR-066 (Güvenlik ve KVKK — PII ayrımı)
+- KR-033 (Ödeme + Manuel Onay)
+- KR-081 (Contract-First / Schema Gates)
 
 ## Identity flow (high level)
-- Kimlik doğrulama yöntemi: phone + PIN.
+- Kimlik doğrulama yöntemi: phone + 6 haneli PIN (KR-050). E-posta ve TCKN toplanmaz.
 - JWT içinde doğrulanmış subject kimliği taşınır (`sub`).
-- PII minimizasyonu gereği phone/PIN/token loglanmaz.
+- PII minimizasyonu gereği phone/PIN/token loglanmaz (KR-066).
+- PIN unutma durumunda Merkez/Kooperatif/İl Operatörü panelinden sıfırlanır (KR-050).
+- Giriş deneme sınırı (rate limit) ve kısa süreli kilitleme (lockout) uygulanır (KR-050).
 
 ## Token model
 - Access token: kısa ömürlü, API erişimi için.
@@ -32,15 +37,23 @@ Authentication & Authorization (Phone + PIN, JWT)
 - `GET /health`
 - Kimlik üretim/yenileme endpointleri (bu dokümanda örneklenir, OpenAPI kapsamı servis sınırına göre tutulur).
 
-## RBAC & permissions
-- Farmer:
+## RBAC & permissions (KR-063)
+- FARMER_SINGLE / FARMER_MEMBER:
   - payment intent oluşturma
   - kendi payment durumunu görüntüleme
   - receipt yükleme
-- Admin:
+- COOP_OWNER / COOP_ADMIN:
+  - üye adına analiz talebi ve ödeme
+- CENTRAL_ADMIN:
   - pending payment listeleme
   - approve/reject aksiyonları
-- Expert:
+- BILLING_ADMIN:
+  - IBAN dekont onayı (KR-033, KR-083)
+- IL_OPERATOR:
+  - PII görmeden KPI metrikleri (KR-066)
+- STATION_OPERATOR:
+  - PII görmez, analiz sonuçlarına erişim yok (KR-063)
+- EXPERT:
   - review/feedback akışlarında yetkili işlemler (ayrı modül).
 
 ## PII redaction rules
@@ -89,3 +102,4 @@ ts=2026-02-18T10:02:11Z level=INFO event=auth.accepted subject=usr_123 phone=+90
 - `docs/api/openapi.yaml`
 - `docs/security/ddos_mitigation_plan.md`
 - `docs/runbooks/incident_response_sla_breach.md`
+- `docs/TARLAANALIZ_SSOT_v1_2_0.txt`

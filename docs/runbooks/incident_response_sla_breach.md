@@ -1,4 +1,4 @@
-BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
 Incident Response: SLA Breach
@@ -12,11 +12,12 @@ SLA ihlalinin sınıflandırılması, mitigasyon ve kalıcı düzeltme adımlar�
 - Service Owner
 
 ## Last updated
-2026-02-18
+2026-03-03
 
 ## SSOT references
-- KR-015
-- KR-033
+- KR-015 (Pilot Kapasite/Planlama)
+- KR-033 (Ödeme + Manuel Onay)
+- KR-028 (Mission Yaşam Döngüsü + SLA)
 
 ## Measurement & classification
 - Sev-1: kritik ödeme/planlama akışları etkilenir.

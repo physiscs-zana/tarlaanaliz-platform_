@@ -170,11 +170,17 @@ Saldırı yüzeyi hattı: **Edge → Ingress → Storage → Worker → Platform
 
 ## 9) Cross-refs (Kanonik KR’ler)
 - **KR-017:** şemsiye analiz hattı
-- **KR-018:** kalibrasyon hard gate
+- **KR-018 / KR-082:** kalibrasyon hard gate + spektral kapasite algılama
+- **KR-034:** drone tedarik bağımsızlığı
+- **KR-050:** kimlik doğrulama (phone + PIN)
+- **KR-063:** roller ve yetkiler (RBAC)
+- **KR-066:** güvenlik ve KVKK (PII ayrımı)
 - **KR-070:** worker isolation
 - **KR-071:** one-way data flow + allowlist yerleşimi
 - **KR-072:** dataset lifecycle + chain-of-custody (contract-first)
 - **KR-073:** untrusted input + AV1/AV2 + sandbox
+- **KR-081:** contract-first / schema gates
+- **KR-084:** termal veri işleme ve sulama stresi
 
 ---
 

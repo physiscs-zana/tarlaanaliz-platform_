@@ -1,4 +1,4 @@
-BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
 Security Plan: DDoS Mitigation
@@ -11,11 +11,13 @@ Katmanlı DDoS azaltım stratejisini (edge, app, runtime) ve operasyon adımlar�
 - SRE Lead
 
 ## Last updated
-2026-02-18
+2026-03-03
 
 ## SSOT references
-- KR-081
-- KR-033
+- KR-081 (Contract-First / Schema Gates)
+- KR-033 (Ödeme + Manuel Onay)
+- KR-050 (Kimlik Doğrulama — rate limit + lockout)
+- KR-070 (Worker Isolation — ağ izolasyonu)
 
 ## Layered controls
 - Edge: WAF/CDN tabanlı temel filtreleme (vendor-agnostic).
