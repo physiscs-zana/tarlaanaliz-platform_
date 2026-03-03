@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/ports/external/av_scanner_port.py
 # DESC: AVScannerPort; KR-073 iki aşamalı malware tarama port'u.
 # SSOT: TARLAANALIZ_SSOT_v1_1_0.txt — KR-073 (Malware tarama), KR-070 (Worker izolasyon)

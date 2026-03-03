@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/value_objects/role.py
 # DESC: Role VO; RBAC rolleri ve yetki kapsamları.
 # SSOT: TARLAANALIZ_SSOT_v1_1_0.txt — KR-063 (11 rol, v1.1.0 güncellemesi)

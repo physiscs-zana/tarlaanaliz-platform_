@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 # KR-063: RBAC yetki matrisi; KR-017: Pilot sonuc raporunu GORMEZ.
 """RBAC negative boundary tests.
 
@@ -48,7 +48,7 @@ def _rbac_app() -> FastAPI:
     @app.get("/api/v1/results/{mission_id}")
     def get_results(
         mission_id: str,
-        _user: FakeUser = Depends(_require_roles("FARMER_SINGLE", "FARMER_MEMBER", "CENTRAL_ADMIN")),
+        _user: FakeUser = Depends(_require_roles("FARMER_SINGLE", "CENTRAL_ADMIN")),
     ) -> dict[str, Any]:
         return {
             "mission_id": mission_id,
