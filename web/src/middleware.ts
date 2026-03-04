@@ -1,4 +1,4 @@
-/* BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated. */
+/* BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated. */
 /* KR-071: auth + role yönlendirmesi güvenli varsayılanla uygulanır. */
 
 import { NextRequest, NextResponse } from "next/server";

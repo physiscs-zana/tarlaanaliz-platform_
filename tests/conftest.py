@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # KR-081: Contract-first test fixture configuration; domain entity fixtures used for explicit field assertions.
 """
 Amaç: Pytest global fixtures ve test configuration.

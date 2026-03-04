@@ -1,4 +1,4 @@
-/* BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated. */
+/* BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated. */
 /* KR-033: Auth artefact lifecycle (TTL + temizleme) kontrollü tutulur. */
 
 const TOKEN_KEY = "ta_auth_token";

@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: .github/workflows/ci.yml
 # DESC: KR-041 SDLC kapıları kapsamında temel CI doğrulamalarını çalıştırmak.
 

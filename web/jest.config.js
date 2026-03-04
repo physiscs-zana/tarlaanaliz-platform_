@@ -1,4 +1,4 @@
-// BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+// BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 // Jest configuration for Next.js 14 + TypeScript.
 // Requires packages: jest jest-environment-jsdom @testing-library/react @testing-library/jest-dom
 // Install with: pnpm add -D jest jest-environment-jsdom @testing-library/react @testing-library/jest-dom @types/jest
