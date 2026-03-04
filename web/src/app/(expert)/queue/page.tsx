@@ -18,6 +18,8 @@ const queueItems: readonly ExpertQueueItem[] = [
     priority: "high",
     status: "queued",
     createdAtIso: "2026-02-20T09:00:00.000Z",
+    bandClass: "BASIC_4BAND",
+    reportTier: "TEMEL",
   },
 ];
 

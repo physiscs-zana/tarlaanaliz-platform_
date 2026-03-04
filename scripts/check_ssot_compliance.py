@@ -8,10 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-BOUND_HEADERS = [
-    "BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.",
-    "BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.",
-]
+BOUND_HEADER = "BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated."
 CHECKABLE_SUFFIXES = {
     ".py",
     ".md",

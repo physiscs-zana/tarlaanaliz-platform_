@@ -1,7 +1,11 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
-"""BandComplianceChecker v1.2.0 testleri: Graceful Degradation + katmanli rapor."""
+"""KR-018/KR-082: BandComplianceChecker v1.2.0 testleri: Graceful Degradation + katmanli rapor."""
 
 from __future__ import annotations
+
+import pytest
+
+pytestmark = pytest.mark.unit
 
 from src.core.domain.services.band_compliance_checker import BandComplianceChecker
 from src.core.domain.value_objects.drone_model import DroneModel

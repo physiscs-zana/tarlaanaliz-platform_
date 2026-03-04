@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/events/analysis_events.py
 # DESC: Analysis domain event'leri (KR-017, KR-018).
 

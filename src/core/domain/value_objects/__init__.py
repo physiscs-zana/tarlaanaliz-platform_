@@ -1,4 +1,6 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/value_objects/__init__.py
+# KR-018/KR-082: Spectral tier + domain VO exports.
 # DESC: Domain value object module: __init__.py.
 """Domain Value Objects public API."""
 

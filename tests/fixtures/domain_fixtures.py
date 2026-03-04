@@ -174,6 +174,7 @@ def analysis_job_entity(field_entity: Field, mission_entity: Mission, fixed_now:
         status=AnalysisJobStatus.PENDING,
         created_at=fixed_now,
         updated_at=fixed_now,
+        available_bands=("green", "red", "red_edge", "nir"),
     )
 
 
