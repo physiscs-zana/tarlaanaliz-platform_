@@ -5,6 +5,7 @@ Port interface'leri core'da tanımlıdır; burada yalnızca implementasyonlar bu
 """
 
 from src.infrastructure.external.av_scanner_client import AVScannerClient
+from src.infrastructure.external.drone_registry_loader import DroneRegistryLoader
 from src.infrastructure.external.payment_gateway_adapter import PaymentGatewayAdapter
 from src.infrastructure.external.sms_gateway_adapter import SMSGatewayAdapter
 from src.infrastructure.external.storage_adapter import S3StorageAdapter
@@ -13,6 +14,7 @@ from src.infrastructure.external.weather_api_adapter import WeatherAPIAdapter, W
 
 __all__: list[str] = [
     "AVScannerClient",
+    "DroneRegistryLoader",
     "PaymentGatewayAdapter",
     "SMSGatewayAdapter",
     "S3StorageAdapter",

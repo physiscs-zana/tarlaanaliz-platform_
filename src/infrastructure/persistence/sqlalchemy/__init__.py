@@ -1,5 +1,9 @@
 # PATH: src/infrastructure/persistence/sqlalchemy/__init__.py
-# DESC: Infrastructure adapter/implementation: __init__.py.
-# TODO: Implement this file.
+"""SQLAlchemy persistence sub-package."""
 
-__all__: list[str] = []
+from src.infrastructure.persistence.sqlalchemy import models, repositories
+
+__all__: list[str] = [
+    "models",
+    "repositories",
+]
