@@ -21,6 +21,7 @@ from src.core.domain.value_objects.drone_model import DroneModel, DroneModelErro
 logger = structlog.get_logger(__name__)
 
 DEFAULT_REGISTRY_PATH = Path("config/drone_registry.yaml")
+DEFAULT_CAPABILITY_MATRIX_PATH = Path("config/drone_capability_matrix.yaml")
 
 
 class DroneRegistryLoadError(Exception):
@@ -113,6 +114,48 @@ class DroneRegistryLoader:
         """Model ID'nin kayitli olup olmadigini kontrol eder."""
         models = self._ensure_loaded()
         return model_id in models
+
+    def load_capability_matrix(
+        self,
+        path: Path | None = None,
+    ) -> dict[str, Any]:
+        """drone_capability_matrix.yaml dosyasini yukler.
+
+        KR-018/KR-082: Spectral capability detection — drone bazli band sinifi,
+        indeksler, termal sensor bilgisi ve graceful degradation yonlendirme tablosu.
+
+        Returns:
+            Parsed YAML icerigini dict olarak dondurur:
+            - "capabilities": drone bazli kapasite listesi
+            - "graceful_degradation": yonlendirme kurallari
+
+        Raises:
+            DroneRegistryLoadError: Dosya bulunamaz veya parse edilemezse.
+        """
+        matrix_path = path or DEFAULT_CAPABILITY_MATRIX_PATH
+        if not matrix_path.exists():
+            raise DroneRegistryLoadError(
+                f"Capability matrix dosyasi bulunamadi: {matrix_path}"
+            )
+        try:
+            raw = yaml.safe_load(matrix_path.read_text(encoding="utf-8"))
+        except yaml.YAMLError as exc:
+            raise DroneRegistryLoadError(
+                f"YAML parse hatasi: {matrix_path}: {exc}"
+            ) from exc
+
+        if not isinstance(raw, dict) or "capabilities" not in raw:
+            raise DroneRegistryLoadError(
+                f"Gecersiz capability matrix formati: 'capabilities' alani gerekli: {matrix_path}"
+            )
+
+        logger.info(
+            "drone_capability_matrix.loaded",
+            version=raw.get("version", "unknown"),
+            total_entries=len(raw["capabilities"]),
+            path=str(matrix_path),
+        )
+        return raw
 
     @staticmethod
     def _parse_entry(entry: dict[str, Any]) -> DroneModel:
