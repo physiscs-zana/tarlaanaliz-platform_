@@ -4,16 +4,25 @@ Tum onemli degisiklikler bu dosyada belgelenir.
 Format [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) standardina,
 surumleme [SemVer](https://semver.org/) politikasina uyar.
 
-SSOT Referansi: `docs/TARLAANALIZ_SSOT_v1_0_0.txt` — KR-000 surumleme politikasi.
+SSOT Referansi: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` — KR-000 surumleme politikasi.
 
 ## [Unreleased]
+
+### Changed
+
+- SSOT v1.0.0 → v1.2.0'a yukseltildi (`docs/TARLAANALIZ_SSOT_v1_2_0.txt`)
+- docs/ altindaki 25 dosya SSOT v1.2.0 ile senkronize edildi
+- Proje kok dosyalari (README, AGENTS, MANIFEST, DIRECTORY_TREE) SSOT v1.2.0 referanslari ile guncellendi
+- Arsivlenen dosyalar `docs/archive/2026-02/` altina tasinmisti (LLM Brief, Playbook, eski SSOT)
 
 ### Added
 
 - Proje iskelet yapisi (scaffold) olusturuldu (v3.2.2 agac yapisi)
-- SSOT v1.0.0 dokumani eklendi (`docs/TARLAANALIZ_SSOT_v1_0_0.txt`)
-- LLM Brief v1.0.0 eklendi (`docs/TARLAANALIZ_LLM_BRIEF_v1_0_0.md`)
-- Playbook v1.0.0 eklendi (`docs/TARLAANALIZ_PLAYBOOK_v1_0_0.md`)
+- SSOT v1.2.0 dokumani (`docs/TARLAANALIZ_SSOT_v1_2_0.txt`) — 6 BOLUM + EK-SOP-SEC
+- Governance Pack v1.0.0 (`docs/governance/GOVERNANCE_PACK_v1_0_0.md`)
+- KR Registry navigasyon indeksi (`docs/kr/kr_registry.md`)
+- ADR-001 Nine State Machine karari (`docs/adr/ADR-001-nine-state-machine.md`)
+- Migration guides dizini (`docs/migration_guides/`)
 - Clean Architecture katman yapisi: `src/core/`, `src/application/`, `src/infrastructure/`, `src/presentation/`
 - CQRS pattern: commands + queries ayriligi
 - Domain entities: User, Field, Mission, Pilot, Expert, Subscription, PaymentIntent, AnalysisJob
