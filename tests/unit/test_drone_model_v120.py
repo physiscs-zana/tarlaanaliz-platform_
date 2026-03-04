@@ -1,7 +1,11 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
-"""DroneModel VO v1.2.0 testleri: DJI M350, band_class, red_edge_wavelength."""
+"""KR-030/KR-034: DroneModel VO v1.2.0 testleri: DJI M350, band_class, red_edge_wavelength."""
 
 from __future__ import annotations
+
+import pytest
+
+pytestmark = pytest.mark.unit
 
 from src.core.domain.value_objects.drone_model import DroneModel
 

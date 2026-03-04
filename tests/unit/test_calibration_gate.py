@@ -11,6 +11,8 @@ from datetime import datetime
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.core.domain.entities.analysis_job import AnalysisJob, AnalysisJobStatus
 
 
@@ -44,6 +46,7 @@ def test_kr018_start_succeeds_with_calibration() -> None:
 
 
 # ---- v1.2.0: available_bands kontrolu ----
+
 
 def test_kr018_v120_start_fails_without_available_bands() -> None:
     """KR-018 v1.2.0: available_bands bos ise start_processing basarisiz olmali."""

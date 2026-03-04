@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/entities/analysis_job.py
 # DESC: AnalysisJob; kalibrasyon gate (KR-018), QC gate, worker dispatch.
 # SSOT: KR-017 (YZ analiz izolasyonu), KR-018/KR-082 (kalibrasyon hard gate)

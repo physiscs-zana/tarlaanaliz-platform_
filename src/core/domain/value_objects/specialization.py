@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/value_objects/specialization.py
 # DESC: Specialization VO; uzman uzmanlık alanları enum (KR-019).
 # SSOT: KR-019 (expert portal / uzman inceleme)

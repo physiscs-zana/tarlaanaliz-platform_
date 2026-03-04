@@ -1,7 +1,11 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
-"""AnalysisResult entity v1.2.0 testleri: report_tier, thermal_summary, available_layers."""
+"""KR-025/KR-081: AnalysisResult entity v1.2.0 testleri: report_tier, thermal_summary, available_layers."""
 
 from __future__ import annotations
+
+import pytest
+
+pytestmark = pytest.mark.unit
 
 import uuid
 from datetime import datetime

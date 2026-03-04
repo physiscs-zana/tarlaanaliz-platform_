@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # KR-041: SDLC gate automation for compliance verification.
 
 from __future__ import annotations
@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-BOUND_HEADER = "BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated."
+BOUND_HEADER = "BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated."
 CHECKABLE_SUFFIXES = {
     ".py",
     ".md",

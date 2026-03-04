@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/value_objects/calibration_manifest.py
 # DESC: CalibrationManifest VO; radyometrik kalibrasyon kanıt paketi (KR-018).
 

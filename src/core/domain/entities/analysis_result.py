@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/entities/analysis_result.py
 # DESC: AnalysisResult; metadata + layer referanslari.
 # SSOT: KR-081 (contract-first JSON Schema), KR-025 (analiz icerigi)

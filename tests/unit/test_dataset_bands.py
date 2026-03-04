@@ -1,11 +1,13 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
-"""Dataset entity v1.2.0 testleri: available_bands kontrolu."""
+"""KR-018/KR-072: Dataset entity v1.2.0 testleri: available_bands kontrolu."""
 
 from __future__ import annotations
 
 import uuid
 
 import pytest
+
+pytestmark = pytest.mark.unit
 
 from src.core.domain.entities.dataset import Dataset, DatasetTransitionError
 from src.core.domain.value_objects.dataset_status import DatasetStatus

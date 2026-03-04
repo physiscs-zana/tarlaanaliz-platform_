@@ -20,7 +20,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Optional
 
 from src.core.domain.value_objects.dataset_status import (
     DatasetStatus,
@@ -67,7 +67,7 @@ class Dataset:
 
     # Hash ve manifest
     sha256_hash: Optional[str] = None          # RAW_HASH_SEALED'dan itibaren zorunlu
-    manifest: Optional[dict] = None            # JSONB, her geçişte güncellenir
+    manifest: Optional[dict[str, Any]] = None   # JSONB, her geçişte güncellenir
 
     # AV tarama raporları (KR-073)
     av1_report_uri: Optional[str] = None       # Edge AV1 raporu URI
@@ -104,7 +104,7 @@ class Dataset:
         av1_report_uri: Optional[str] = None,
         av2_report_uri: Optional[str] = None,
         sha256_hash: Optional[str] = None,
-        manifest_update: Optional[dict] = None,
+        manifest_update: Optional[dict[str, Any]] = None,
         quarantine_reason: Optional[str] = None,
         worker_job_id: Optional[uuid.UUID] = None,
         result_uri: Optional[str] = None,

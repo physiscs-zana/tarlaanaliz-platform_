@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.core.domain.value_objects.spectral_tier import (
     CORE_INDICES,
     EXTENDED_INDICES,

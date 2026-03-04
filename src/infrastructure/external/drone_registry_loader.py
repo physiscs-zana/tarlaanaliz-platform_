@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/infrastructure/external/drone_registry_loader.py
 # DESC: Drone registry YAML yukleyici adapter (KR-030).
 """
