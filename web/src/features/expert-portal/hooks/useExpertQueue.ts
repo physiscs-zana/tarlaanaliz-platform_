@@ -1,4 +1,4 @@
-/* BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated. */
+/* BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated. */
 /* KR-081: Queue contract tipleri ile fetch edilir. */
 /* KR-071: corr_id/request_id izleri request metadata olarak taşınır. */
 

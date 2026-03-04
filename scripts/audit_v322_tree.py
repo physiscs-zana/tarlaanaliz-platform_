@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """Audit files declared in v3.2.2 platform tree snapshot."""
 
 from __future__ import annotations
@@ -90,7 +90,7 @@ def main() -> int:
             parse_errors.append((rel_path, err))
 
     lines = [
-        "BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.",
+        "BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.",
         "",
         "# v3.2.2 Tree Audit Report",
         "",

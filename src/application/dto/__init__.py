@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """Application DTOs for contract-first payload mapping."""
 
 from src.application.dto.analysis_result_dto import AnalysisLayerDTO, AnalysisResultDTO

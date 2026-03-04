@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """
 Amaç: Test modülü; davranış doğrulama ve regresyon engeli.
 Sorumluluk: Subscription domain entity; KR-027/KR-015-5/KR-033 uyumu.

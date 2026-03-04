@@ -1,5 +1,5 @@
 {
-  "BOUND": "TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.",
+  "BOUND": "TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.",
   "name": "tarlaanaliz-web",
   "version": "3.2.2",
   "private": true,

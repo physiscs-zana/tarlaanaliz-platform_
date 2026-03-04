@@ -9,7 +9,7 @@
 |------|-------|
 | **Contract Set Version** | `1.0.0` |
 | **Schema Draft** | JSON Schema draft 2020-12 |
-| **SSOT Referansi** | `docs/TARLAANALIZ_SSOT_v1_0_0.txt` — KR-081 |
+| **SSOT Referansi** | `docs/TARLAANALIZ_SSOT_v1_2_0.txt` — KR-081 |
 | **Checksum Dosyasi** | `CONTRACTS_SHA256.txt` |
 | **Son Guncelleme** | 2026-02-08 |
 

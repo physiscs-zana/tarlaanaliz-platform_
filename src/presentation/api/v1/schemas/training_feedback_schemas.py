@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
 # PATH: src/presentation/api/v1/schemas/training_feedback_schemas.py
 # DESC: Training feedback request/response schema.
 # TODO: Implement this file.

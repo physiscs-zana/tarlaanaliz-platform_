@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # KR-081: Contract-first test fixture factories.
 
 from __future__ import annotations
@@ -32,9 +32,9 @@ FIXED_NOW = datetime(2026, 1, 1, 9, 0, 0, tzinfo=timezone.utc)
 @pytest.fixture(scope="session")
 def ssot_v1_path() -> Path:
     """Locate canonical SSOT v1.0.0 document in repo."""
-    candidate = Path("docs/TARLAANALIZ_SSOT_v1_0_0.txt")
+    candidate = Path("docs/TARLAANALIZ_SSOT_v1_2_0.txt")
     if not candidate.exists():
-        pytest.skip("SSOT v1.0.0 bulunamadı: docs/TARLAANALIZ_SSOT_v1_0_0.txt")
+        pytest.skip("SSOT v1.0.0 bulunamadı: docs/TARLAANALIZ_SSOT_v1_2_0.txt")
     return candidate
 
 
