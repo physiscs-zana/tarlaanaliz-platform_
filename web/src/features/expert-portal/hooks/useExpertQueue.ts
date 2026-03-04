@@ -1,17 +1,14 @@
 /* BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated. */
 /* KR-081: Queue contract tipleri ile fetch edilir. */
 /* KR-071: corr_id/request_id izleri request metadata olarak taşınır. */
+'use client';
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { apiRequest } from "../../../lib/apiClient";
-import type { CorrelationMeta, ExpertQueueItem, ExpertQueueStats } from "../types";
+import { listPendingReviews } from "../services/expertReviewService";
+import type { ExpertQueueItem, ExpertQueueStats } from "../types";
 
-interface QueueResponse {
-  readonly items: readonly ExpertQueueItem[];
-}
-
-export interface UseExpertQueueResult extends CorrelationMeta {
+export interface UseExpertQueueResult {
   readonly items: readonly ExpertQueueItem[];
   readonly stats: ExpertQueueStats;
   readonly isLoading: boolean;
@@ -28,27 +25,28 @@ function computeStats(items: readonly ExpertQueueItem[]): ExpertQueueStats {
   };
 }
 
-export function useExpertQueue(): UseExpertQueueResult {
+export function useExpertQueue(token: string | null): UseExpertQueueResult {
   const [items, setItems] = useState<readonly ExpertQueueItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [corrId, setCorrId] = useState("-");
-  const [requestId, setRequestId] = useState("-");
 
   const fetchQueue = useCallback(async () => {
+    if (!token) {
+      setItems([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiRequest<QueueResponse>("/api/expert/queue", { method: "GET" });
-      setItems(response.data.items);
-      setCorrId(response.corrId);
-      setRequestId(response.requestId);
+      const response = await listPendingReviews(token);
+      setItems(response.items as readonly ExpertQueueItem[]);
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : "Queue load failed");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     void fetchQueue();
@@ -61,9 +59,7 @@ export function useExpertQueue(): UseExpertQueueResult {
       isLoading,
       error,
       refetch: fetchQueue,
-      corrId,
-      requestId,
     }),
-    [corrId, error, fetchQueue, isLoading, items, requestId]
+    [error, fetchQueue, isLoading, items]
   );
 }

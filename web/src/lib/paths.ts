@@ -1,18 +1,21 @@
 /* BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated. */
+// Dinamik segment içeren route'lar için yardımcı fonksiyonlar.
+// Sabit route'lar routes.ts'de tanımlıdır.
 
 export const paths = {
   home: "/",
   auth: {
-    login: "/auth/login",
-    logout: "/auth/logout",
+    login: "/login",
   },
-  expertPortal: {
-    dashboard: "/expert-portal",
-    queue: "/expert-portal/queue",
-    review: (reviewId: string) => `/expert-portal/reviews/${encodeURIComponent(reviewId)}`,
+  expert: {
+    queue: "/queue",
+    review: (reviewId: string) => `/review/${encodeURIComponent(reviewId)}`,
+    reviewDetail: (id: string) => `/reviews/${encodeURIComponent(id)}`,
   },
-  results: {
-    index: "/results",
-    detail: (resultId: string) => `/results/${encodeURIComponent(resultId)}`,
+  farmer: {
+    field: (id: string) => `/fields/${encodeURIComponent(id)}`,
+    mission: (id: string) => `/missions/${encodeURIComponent(id)}`,
+    result: (missionId: string) => `/results/${encodeURIComponent(missionId)}`,
+    createSubscription: "/subscriptions/create",
   },
 } as const;

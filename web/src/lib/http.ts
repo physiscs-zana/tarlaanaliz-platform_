@@ -1,6 +1,8 @@
 // BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+// KR-071: Correlation ID üretimi correlation.ts kanonik kaynağından yapılır.
 
 import { getPublicEnv } from './env';
+import { createCorrelationIds } from './correlation';
 
 export interface HttpRequestOptions extends Omit<RequestInit, 'headers'> {
   headers?: HeadersInit;
@@ -9,15 +11,12 @@ export interface HttpRequestOptions extends Omit<RequestInit, 'headers'> {
   token?: string | null;
 }
 
-function id(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
 export async function http<T>(path: string, options?: HttpRequestOptions): Promise<T> {
   const env = getPublicEnv();
   const url = `${env.NEXT_PUBLIC_API_BASE_URL}${path}`;
-  const requestId = options?.requestId ?? id('req');
-  const corrId = options?.corrId ?? id('corr');
+  const ids = createCorrelationIds();
+  const requestId = options?.requestId ?? ids.requestId;
+  const corrId = options?.corrId ?? ids.corrId;
 
   let headers: HeadersInit = {
     'content-type': 'application/json',
