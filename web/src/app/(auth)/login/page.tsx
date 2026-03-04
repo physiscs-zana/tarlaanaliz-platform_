@@ -7,7 +7,8 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { apiRequest } from "../../../lib/apiClient";
+import { apiRequest } from "@/lib/apiClient";
+import type { LoginResponse } from "@/hooks/useAuth";
 
 interface LoginPayload {
   readonly phone: string;
@@ -29,7 +30,7 @@ export default function LoginPage() {
     const payload: LoginPayload = { phone: phone.trim(), pin: pin.trim() };
 
     try {
-      await apiRequest<{ token: string; role: string }>("/api/auth/login", {
+      await apiRequest<LoginResponse>("/api/auth/login", {
         method: "POST",
         body: payload,
       });

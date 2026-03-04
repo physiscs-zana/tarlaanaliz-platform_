@@ -1,31 +1,15 @@
 // BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 // KR-019: Expert portal review akışı; güven eşiği aşılmayan sonuçlar kuyruğa girer.
-// KR-081: Contract-first tip tanımları.
+// KR-081: Contract-first tip tanımları — types.ts kanonik kaynaktır.
 
 import { http } from '@/lib/http';
+import type { ExpertQueueItem, ExpertReviewDetail } from '../types';
 
-export interface PendingReviewItem {
-  readonly reviewId: string;
-  readonly missionId: string;
-  readonly fieldName: string;
-  readonly priority: 'low' | 'medium' | 'high';
-  readonly status: 'queued' | 'in_review' | 'completed';
-  readonly createdAtIso: string;
-}
+/** PendingReviewItem artık ExpertQueueItem ile aynıdır (types.ts kanonik kaynak). */
+export type PendingReviewItem = ExpertQueueItem;
 
 export interface PendingReviewsResponse {
   readonly items: readonly PendingReviewItem[];
-}
-
-export interface ReviewDetail {
-  readonly reviewId: string;
-  readonly missionId: string;
-  readonly notes: string;
-  readonly confidenceScore: number;
-  readonly ndviData: Record<string, unknown> | null;
-  readonly ndreData: Record<string, unknown> | null;
-  readonly createdAtIso: string;
-  readonly updatedAtIso: string;
 }
 
 export interface ExpertReviewPayload {
@@ -41,8 +25,8 @@ export async function listPendingReviews(token: string): Promise<PendingReviewsR
   });
 }
 
-export async function getReviewDetail(reviewId: string, token: string): Promise<ReviewDetail> {
-  return http<ReviewDetail>(`/expert_portal/reviews/${reviewId}`, {
+export async function getReviewDetail(reviewId: string, token: string): Promise<ExpertReviewDetail> {
+  return http<ExpertReviewDetail>(`/expert_portal/reviews/${reviewId}`, {
     method: 'GET',
     token,
   });

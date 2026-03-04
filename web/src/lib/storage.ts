@@ -18,4 +18,5 @@ export function createLocalStorageAdapter(): StorageAdapter {
   };
 }
 
-export const tokenStorageKey = 'ta_auth_token';
+// Auth token yönetimi için authStorage.ts kanonik kaynaktır.
+// Token key: authStorage.ts tarafından yönetilir, burada tekrar tanımlanmaz.

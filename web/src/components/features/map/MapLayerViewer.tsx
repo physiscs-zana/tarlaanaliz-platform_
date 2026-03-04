@@ -1,4 +1,6 @@
 // BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+// NOT: Bu bileşen genel harita katman kontrolüdür (opacity/visibility).
+// Sonuç katmanları (ResultLayer + ThermalOverlay) için: features/results/components/MapLayerViewer.tsx
 'use client';
 
 import { useState } from 'react';

@@ -1,12 +1,14 @@
 /* BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated. */
 /* KR-081: Review kartı contract-first veri modeli ile taşınır. */
 
+import type { QueueItemStatus } from '../types';
+
 export interface ReviewCardData {
   readonly reviewId: string;
   readonly missionId: string;
   readonly fieldName: string;
   readonly createdAtIso: string;
-  readonly status: "queued" | "in_review" | "completed";
+  readonly status: QueueItemStatus;
 }
 
 export interface ReviewCardProps {

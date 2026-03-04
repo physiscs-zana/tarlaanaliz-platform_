@@ -1,32 +1,27 @@
 /* BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated. */
 /* KR-081: Review detail contract-first tip ile yüklenir. */
 /* KR-071: corr_id/request_id izleri request metadata olarak taşınır. */
+'use client';
 
 import { useCallback, useEffect, useState } from "react";
 
-import { apiRequest } from "../../../lib/apiClient";
-import type { CorrelationMeta, ExpertReviewDetail } from "../types";
+import { getReviewDetail } from "../services/expertReviewService";
+import type { ExpertReviewDetail } from "../types";
 
-interface ReviewResponse {
-  readonly item: ExpertReviewDetail;
-}
-
-export interface UseExpertReviewResult extends CorrelationMeta {
+export interface UseExpertReviewResult {
   readonly review: ExpertReviewDetail | null;
   readonly isLoading: boolean;
   readonly error: string | null;
   readonly refetch: () => Promise<void>;
 }
 
-export function useExpertReview(reviewId: string): UseExpertReviewResult {
+export function useExpertReview(reviewId: string, token: string | null): UseExpertReviewResult {
   const [review, setReview] = useState<ExpertReviewDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [corrId, setCorrId] = useState("-");
-  const [requestId, setRequestId] = useState("-");
 
   const fetchReview = useCallback(async () => {
-    if (!reviewId) {
+    if (!reviewId || !token) {
       setReview(null);
       setIsLoading(false);
       return;
@@ -36,18 +31,14 @@ export function useExpertReview(reviewId: string): UseExpertReviewResult {
     setError(null);
 
     try {
-      const response = await apiRequest<ReviewResponse>(`/api/expert/reviews/${encodeURIComponent(reviewId)}`, {
-        method: "GET",
-      });
-      setReview(response.data.item);
-      setCorrId(response.corrId);
-      setRequestId(response.requestId);
+      const detail = await getReviewDetail(reviewId, token);
+      setReview(detail as ExpertReviewDetail);
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : "Review load failed");
     } finally {
       setIsLoading(false);
     }
-  }, [reviewId]);
+  }, [reviewId, token]);
 
   useEffect(() => {
     void fetchReview();
@@ -58,7 +49,5 @@ export function useExpertReview(reviewId: string): UseExpertReviewResult {
     isLoading,
     error,
     refetch: fetchReview,
-    corrId,
-    requestId,
   };
 }

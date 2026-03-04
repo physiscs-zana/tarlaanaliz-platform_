@@ -1,7 +1,10 @@
 // BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+// KR-033: Auth artefact lifecycle — authStorage.ts kanonik kaynaktır.
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
+
+import { setAuthToken, getAuthToken, clearAuthStorage } from '@/lib/authStorage';
 
 export type AuthRole = 'farmer' | 'expert' | 'pilot' | 'admin';
 
@@ -16,67 +19,67 @@ export interface LoginInput {
   pin: string;
 }
 
+export interface LoginResponse {
+  readonly access_token: string;
+  readonly user: AuthUser;
+}
+
 export interface AuthState {
   token: string | null;
   user: AuthUser | null;
 }
 
-export interface TokenStorage {
-  getToken: () => string | null;
-  setToken: (token: string) => void;
-  clearToken: () => void;
+const AUTH_TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 saat
+
+function setCookie(name: string, value: string, maxAgeSec: number): void {
+  if (typeof document !== 'undefined') {
+    document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=${maxAgeSec};SameSite=Lax`;
+  }
 }
 
-const TOKEN_KEY = 'ta_auth_token';
-
-function createBrowserTokenStorage(): TokenStorage {
-  return {
-    getToken: () => (typeof window === 'undefined' ? null : window.localStorage.getItem(TOKEN_KEY)),
-    setToken: (token) => {
-      if (typeof window !== 'undefined') window.localStorage.setItem(TOKEN_KEY, token);
-    },
-    clearToken: () => {
-      if (typeof window !== 'undefined') window.localStorage.removeItem(TOKEN_KEY);
-    }
-  };
+function clearCookie(name: string): void {
+  if (typeof document !== 'undefined') {
+    document.cookie = `${name}=;path=/;max-age=0`;
+  }
 }
 
-interface UseAuthOptions {
-  tokenStorage?: TokenStorage;
-}
-
-export function useAuth(options?: UseAuthOptions) {
-  const tokenStorage = useMemo(() => options?.tokenStorage ?? createBrowserTokenStorage(), [options?.tokenStorage]);
-
+export function useAuth() {
   const [state, setState] = useState<AuthState>({
-    token: tokenStorage.getToken(),
-    user: null
+    token: getAuthToken(),
+    user: null,
   });
 
-  const login = useCallback(
-    async (input: LoginInput) => {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ phone: input.phone, pin: input.pin })
-      });
+  const login = useCallback(async (input: LoginInput) => {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ phone: input.phone, pin: input.pin }),
+    });
 
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
+    if (!response.ok) {
+      throw new Error('Login failed');
+    }
 
-      const data = (await response.json()) as { access_token: string; user: AuthUser };
-      tokenStorage.setToken(data.access_token);
-      setState({ token: data.access_token, user: data.user });
-      return data;
-    },
-    [tokenStorage]
-  );
+    const data = (await response.json()) as LoginResponse;
+
+    // authStorage.ts kanonik kaynak — TTL'li JSON formatında saklanır
+    setAuthToken(data.access_token, AUTH_TOKEN_TTL_MS);
+
+    // Middleware ta_token ve ta_role cookie'lerini okur
+    const maxAgeSec = Math.floor(AUTH_TOKEN_TTL_MS / 1000);
+    setCookie('ta_token', data.access_token, maxAgeSec);
+    setCookie('ta_role', data.user.role, maxAgeSec);
+
+    setState({ token: data.access_token, user: data.user });
+    return data;
+  }, []);
 
   const logout = useCallback(() => {
-    tokenStorage.clearToken();
+    clearAuthStorage();
+    clearCookie('ta_token');
+    clearCookie('ta_role');
     setState({ token: null, user: null });
-  }, [tokenStorage]);
+  }, []);
 
   const isAuthenticated = Boolean(state.token);
 
@@ -84,6 +87,6 @@ export function useAuth(options?: UseAuthOptions) {
     ...state,
     isAuthenticated,
     login,
-    logout
+    logout,
   };
 }

@@ -4,8 +4,9 @@
 
 import type { Metadata } from "next";
 
-import { apiRequest } from "../../../../lib/apiClient";
-import type { ExpertReviewDetail } from "../../../../features/expert-portal/types";
+import { getReviewDetail } from "@/features/expert-portal/services/expertReviewService";
+import type { ExpertReviewDetail } from "@/features/expert-portal/types";
+import { cookies } from "next/headers";
 
 interface ReviewPageParams {
   readonly reviewId: string;
@@ -15,23 +16,17 @@ interface ReviewPageProps {
   readonly params: ReviewPageParams;
 }
 
-interface ReviewResponse {
-  readonly item: ExpertReviewDetail;
-}
-
 export const metadata: Metadata = {
   title: "Expert Review",
 };
 
 export default async function ExpertReviewDetailPage({ params }: ReviewPageProps) {
   const reviewId = params.reviewId;
+  const token = cookies().get("ta_token")?.value ?? "";
 
   let review: ExpertReviewDetail | null = null;
   try {
-    const response = await apiRequest<ReviewResponse>(`/api/expert/reviews/${encodeURIComponent(reviewId)}`, {
-      method: "GET",
-    });
-    review = response.data.item;
+    review = await getReviewDetail(reviewId, token);
   } catch {
     review = null;
   }

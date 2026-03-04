@@ -26,6 +26,9 @@ export interface ExpertReviewDetail {
   readonly reviewId: string;
   readonly missionId: string;
   readonly notes: string;
+  readonly confidenceScore: number;
+  readonly ndviData: Record<string, unknown> | null;
+  readonly ndreData: Record<string, unknown> | null;
   readonly createdAtIso: string;
   readonly updatedAtIso: string;
 }
