@@ -1,26 +1,29 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # KR-050: Telefon + 6 haneli PIN (sabit uzunluk, yalnızca rakam).
+# KR-050: Brute force koruması — 16 hata → 30 dakika kilit (SC-SEC-02).
 # KR-081: contract-first auth; no email/TCKN/OTP.
 # SC-SEC-02: 16 başarısız giriş → 30 dakika kilitleme.
 
 from __future__ import annotations
 
+import logging
+import threading
 import time
+from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field, field_validator
 
-from src.infrastructure.security.jwt_handler import JWTHandler, JWTSettings
-from src.presentation.api.settings import settings
+LOGGER = logging.getLogger("api.auth")
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 # KR-050: Sabit 6 haneli sayısal PIN (v1.2.0 — eski: 4-12 chars)
 _PIN_LENGTH = 6
-_MAX_FAILED_LOGIN_ATTEMPTS = 16   # SC-SEC-02: 16 hata → 30 dakika kilit
-_LOCKOUT_DURATION_SECONDS = 30 * 60  # SC-SEC-02: 30 dakika
+_MAX_FAILED_LOGIN_ATTEMPTS = 16   # KR-050 / SC-SEC-02: 16 hata → 30 dakika kilit
+_LOCKOUT_DURATION_SECONDS = 30 * 60  # 30 dakika
 
 
 class PhonePinLoginRequest(BaseModel):
@@ -133,13 +136,103 @@ class _InMemoryPhonePinAuthService:
         return AuthTokenResponse(access_token=access_token, subject=subject)
 
 
+# ---------------------------------------------------------------------------
+# KR-050 / SC-SEC-02: Brute force lockout — process-local store
+# ---------------------------------------------------------------------------
+@dataclass
+class LoginAttemptTracker:
+    """Tracks failed login attempts per phone number for brute force protection.
+
+    KR-050: 16 failed attempts → 30 minute lockout.
+    SC-SEC-02: Brute force 16 fail → 30 min lock.
+    """
+
+    _lock: threading.Lock = field(default_factory=threading.Lock)
+    _attempts: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
+    _lockouts: dict[str, float] = field(default_factory=dict)
+
+    def is_locked(self, phone: str) -> tuple[bool, int]:
+        """Check if phone is locked out. Returns (is_locked, retry_after_seconds)."""
+        with self._lock:
+            lockout_until = self._lockouts.get(phone)
+            if lockout_until is not None:
+                now = time.monotonic()
+                if now < lockout_until:
+                    return True, max(1, int(lockout_until - now))
+                # Lockout expired — clear state
+                del self._lockouts[phone]
+                self._attempts.pop(phone, None)
+            return False, 0
+
+    def record_failure(self, phone: str) -> tuple[bool, int]:
+        """Record a failed login. Returns (is_now_locked, retry_after_seconds)."""
+        now = time.monotonic()
+        with self._lock:
+            attempts = self._attempts[phone]
+            # Prune old attempts outside lockout window
+            window_start = now - _LOCKOUT_DURATION_SECONDS
+            self._attempts[phone] = [t for t in attempts if t > window_start]
+            self._attempts[phone].append(now)
+
+            if len(self._attempts[phone]) >= _MAX_FAILED_LOGIN_ATTEMPTS:
+                self._lockouts[phone] = now + _LOCKOUT_DURATION_SECONDS
+                LOGGER.warning(
+                    "AUTH.LOCKOUT",
+                    extra={
+                        "event": "AUTH.LOCKOUT",
+                        "phone_hash": phone[-4:],
+                        "attempts": len(self._attempts[phone]),
+                    },
+                )
+                return True, _LOCKOUT_DURATION_SECONDS
+            return False, 0
+
+    def record_success(self, phone: str) -> None:
+        """Clear attempts on successful login."""
+        with self._lock:
+            self._attempts.pop(phone, None)
+            self._lockouts.pop(phone, None)
+
+
+_LOGIN_TRACKER = LoginAttemptTracker()
+
+
 def get_phone_pin_auth_service() -> PhonePinAuthService:
     return _InMemoryPhonePinAuthService()
 
 
 @router.post("/phone-pin/login", response_model=AuthTokenResponse)
-def phone_pin_login(payload: PhonePinLoginRequest, service: PhonePinAuthService = Depends(get_phone_pin_auth_service)) -> AuthTokenResponse:
-    return service.login(phone=payload.phone, pin=payload.pin)
+def phone_pin_login(
+    payload: PhonePinLoginRequest,
+    response: Response,
+    service: PhonePinAuthService = Depends(get_phone_pin_auth_service),
+) -> AuthTokenResponse:
+    # KR-050 / SC-SEC-02: Check lockout before attempting login
+    locked, retry_after = _LOGIN_TRACKER.is_locked(payload.phone)
+    if locked:
+        response.headers["Retry-After"] = str(retry_after)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many failed login attempts. Please try again later.",
+        )
+
+    try:
+        result = service.login(phone=payload.phone, pin=payload.pin)
+    except HTTPException as exc:
+        if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+            # Record failed attempt
+            now_locked, lockout_retry = _LOGIN_TRACKER.record_failure(payload.phone)
+            if now_locked:
+                response.headers["Retry-After"] = str(lockout_retry)
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Too many failed login attempts. Please try again later.",
+                ) from exc
+        raise
+
+    # Success — clear attempts
+    _LOGIN_TRACKER.record_success(payload.phone)
+    return result
 
 
 @router.post("/phone-pin/refresh", response_model=AuthTokenResponse)

@@ -79,4 +79,17 @@ async def receive_provider_webhook(
     service: PaymentWebhookService = Depends(get_payment_webhook_service),
 ) -> PaymentWebhookResponse:
     raw_body = await request.body()
-    return service.process(payload=payload, signature=x_provider_signature, raw_body=raw_body)
+    result = service.process(payload=payload, signature=x_provider_signature, raw_body=raw_body)
+    # KR-033 §8: PAYMENT.WEBHOOK_PAID audit event
+    if result.accepted:
+        corr_id = getattr(request.state, "corr_id", None)
+        LOGGER.info(
+            "PAYMENT.WEBHOOK_PAID",
+            extra={
+                "event": "PAYMENT.WEBHOOK_PAID",
+                "provider_event_id": payload.provider_event_id,
+                "payment_intent_id": payload.payment_intent_id,
+                "corr_id": corr_id,
+            },
+        )
+    return result

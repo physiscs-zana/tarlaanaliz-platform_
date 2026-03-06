@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # NOTE: This is a presentation-layer projection of payment status with HTTP-friendly
 # values. The canonical payment states are defined in core.domain.entities.payment_intent.PaymentStatus
-# (PAYMENT_PENDING, PAID, REJECTED, EXPIRED, CANCELLED, REFUNDED).
+# (PAYMENT_PENDING, PAID, REJECTED, CANCELLED, REFUNDED).
 # This HTTP-layer enum maps to a simplified view for API consumers.
 class PaymentStatus(str, Enum):
     """Payment states for KR-033 flow (HTTP-layer projection)."""
@@ -61,9 +61,22 @@ class RequestContext(BaseModel):
     user_id: str | None = None
 
 
+class MarkPaidRequest(BaseModel):
+    """KR-033 §8: admin_note zorunlu; PAYMENT.MARK_PAID audit event'inde admin_note ve admin_user_id alanları zorunludur."""
+
+    admin_note: str = Field(min_length=1, max_length=500)
+
+
 class RejectPaymentRequest(BaseModel):
     """Admin rejection payload."""
 
+    reason: str = Field(min_length=3, max_length=500)
+
+
+class RefundPaymentRequest(BaseModel):
+    """KR-033 Kural-4: PAID → REFUNDED; refund_amount_kurus ve reason zorunlu."""
+
+    refund_amount_kurus: int = Field(gt=0)
     reason: str = Field(min_length=3, max_length=500)
 
 
@@ -76,6 +89,10 @@ class PaymentIntentCreateRequest(BaseModel):
     field_ids: list[UUID] = Field(min_length=1)
 
 
+class CancelIntentRequest(BaseModel):
+    """KR-033 §5: Payment intent cancel payload."""
+
+    reason: str = Field(min_length=3, max_length=500)
 
 
 class ReceiptUploadRequest(BaseModel):
@@ -84,6 +101,17 @@ class ReceiptUploadRequest(BaseModel):
     filename: str = Field(min_length=1, max_length=256)
     content_type: str | None = Field(default=None, max_length=128)
     content_base64: str = Field(min_length=1)
+
+
+class PaymentInstructionsResponse(BaseModel):
+    """KR-033 §5: Payment instructions (IBAN, description format, etc.)."""
+
+    iban: str = ""
+    bank_name: str = ""
+    description_format: str = ""
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
 class PaymentIntentResponse(BaseModel):
     """Payment intent read model."""
 
@@ -173,33 +201,58 @@ class AuditEvent(BaseModel):
 class PaymentService(Protocol):
     """Application-layer payment service port."""
 
-    def create_intent(self, *, actor_user_id: str, payload: PaymentIntentCreateRequest, corr_id: str | None) -> PaymentIntentResponse:
-        ...
+    def create_intent(
+        self, *, actor_user_id: str, payload: PaymentIntentCreateRequest, corr_id: str | None
+    ) -> PaymentIntentResponse: ...
 
-    def upload_receipt(self, *, actor_user_id: str, intent_id: UUID, filename: str, content_type: str | None, content: bytes, corr_id: str | None) -> PaymentIntentResponse:
-        ...
+    def upload_receipt(
+        self,
+        *,
+        actor_user_id: str,
+        intent_id: UUID,
+        filename: str,
+        content_type: str | None,
+        content: bytes,
+        corr_id: str | None,
+    ) -> PaymentIntentResponse: ...
 
-    def get_intent(self, *, actor_user_id: str, intent_id: UUID, corr_id: str | None) -> PaymentIntentResponse:
-        ...
+    def get_intent(self, *, actor_user_id: str, intent_id: UUID, corr_id: str | None) -> PaymentIntentResponse: ...
 
-    def list_pending_payments(self, *, corr_id: str | None) -> list[PaymentIntentResponse]:
-        ...
+    def list_pending_payments(self, *, corr_id: str | None) -> list[PaymentIntentResponse]: ...
 
-    def approve_payment(self, *, actor_user_id: str, payment_id: UUID, corr_id: str | None) -> PaymentIntentResponse:
-        ...
+    def approve_payment(
+        self, *, actor_user_id: str, payment_id: UUID, admin_note: str, corr_id: str | None
+    ) -> PaymentIntentResponse: ...
 
-    def reject_payment(self, *, actor_user_id: str, payment_id: UUID, reason: str, corr_id: str | None) -> PaymentIntentResponse:
-        ...
+    def reject_payment(
+        self, *, actor_user_id: str, payment_id: UUID, reason: str, corr_id: str | None
+    ) -> PaymentIntentResponse: ...
+
+    def refund_payment(
+        self, *, actor_user_id: str, payment_id: UUID, refund_amount_kurus: int, reason: str, corr_id: str | None
+    ) -> PaymentIntentResponse: ...
+
+    def cancel_intent(
+        self, *, actor_user_id: str, intent_id: UUID, reason: str, corr_id: str | None
+    ) -> PaymentIntentResponse: ...
+
+    def get_payment_instructions(
+        self, *, actor_user_id: str, intent_id: UUID, corr_id: str | None
+    ) -> PaymentInstructionsResponse: ...
+
+    def list_intents(
+        self, *, status_filter: str | None, field_id: UUID | None, corr_id: str | None
+    ) -> list[PaymentIntentResponse]: ...
 
 
 class CalibrationService(Protocol):
     """Application-layer calibration service port."""
 
-    def create_record(self, *, actor_user_id: str, payload: CalibrationRecordCreateRequest, corr_id: str | None) -> CalibrationRecordResponse:
-        ...
+    def create_record(
+        self, *, actor_user_id: str, payload: CalibrationRecordCreateRequest, corr_id: str | None
+    ) -> CalibrationRecordResponse: ...
 
-    def get_record(self, *, record_id: UUID, corr_id: str | None) -> CalibrationRecordResponse | None:
-        ...
+    def get_record(self, *, record_id: UUID, corr_id: str | None) -> CalibrationRecordResponse | None: ...
 
     def list_records(
         self,
@@ -209,18 +262,17 @@ class CalibrationService(Protocol):
         field_id: UUID | None,
         start_at: datetime | None,
         end_at: datetime | None,
-    ) -> list[CalibrationRecordResponse]:
-        ...
+    ) -> list[CalibrationRecordResponse]: ...
 
 
 class QCService(Protocol):
     """Application-layer QC service port."""
 
-    def create_report(self, *, actor_user_id: str, payload: QCReportCreateRequest, corr_id: str | None) -> QCReportResponse:
-        ...
+    def create_report(
+        self, *, actor_user_id: str, payload: QCReportCreateRequest, corr_id: str | None
+    ) -> QCReportResponse: ...
 
-    def get_report(self, *, report_id: UUID, corr_id: str | None) -> QCReportResponse | None:
-        ...
+    def get_report(self, *, report_id: UUID, corr_id: str | None) -> QCReportResponse | None: ...
 
     def list_reports(
         self,
@@ -230,35 +282,35 @@ class QCService(Protocol):
         status_filter: QCStatus | None,
         start_at: datetime | None,
         end_at: datetime | None,
-    ) -> list[QCReportResponse]:
-        ...
+    ) -> list[QCReportResponse]: ...
 
 
 class SLAMetricsService(Protocol):
     """Application-layer SLA metrics service port."""
 
-    def get_summary(self, *, start_at: datetime | None, end_at: datetime | None, corr_id: str | None) -> SLASummaryResponse:
-        ...
+    def get_summary(
+        self, *, start_at: datetime | None, end_at: datetime | None, corr_id: str | None
+    ) -> SLASummaryResponse: ...
 
-    def list_breaches(self, *, start_at: datetime | None, end_at: datetime | None, corr_id: str | None) -> list[SLABreachResponse]:
-        ...
+    def list_breaches(
+        self, *, start_at: datetime | None, end_at: datetime | None, corr_id: str | None
+    ) -> list[SLABreachResponse]: ...
 
 
 class AuditPublisher(Protocol):
     """Audit sink port."""
 
-    def publish(self, event: AuditEvent) -> None:
-        ...
+    def publish(self, event: AuditEvent) -> None: ...
 
 
 class MetricsCollector(Protocol):
     """Metrics sink port."""
 
-    def observe_http(self, *, route: str, method: str, status_code: int, latency_ms: float, corr_id: str | None) -> None:
-        ...
+    def observe_http(
+        self, *, route: str, method: str, status_code: int, latency_ms: float, corr_id: str | None
+    ) -> None: ...
 
-    def observe_status(self, *, route: str, status_code: int, corr_id: str | None) -> None:
-        ...
+    def observe_status(self, *, route: str, status_code: int, corr_id: str | None) -> None: ...
 
 
 @dataclass
@@ -283,7 +335,9 @@ class InMemoryAuditPublisher:
 class NoOpMetricsCollector:
     """Default collector when no metrics backend is bound."""
 
-    def observe_http(self, *, route: str, method: str, status_code: int, latency_ms: float, corr_id: str | None) -> None:
+    def observe_http(
+        self, *, route: str, method: str, status_code: int, latency_ms: float, corr_id: str | None
+    ) -> None:
         logger.debug(
             "http_observed",
             extra={
@@ -342,6 +396,7 @@ def get_current_user(request: Request) -> CurrentUser:
         user_dict = user_state
     elif hasattr(user_state, "__dataclass_fields__"):
         from dataclasses import asdict
+
         user_dict = asdict(user_state)
     else:
         user_dict = {
@@ -426,11 +481,14 @@ def get_metrics_collector(request: Request) -> MetricsCollector:
 __all__ = [
     "AuditEvent",
     "AuditPublisher",
+    "CancelIntentRequest",
     "CalibrationRecordCreateRequest",
     "CalibrationRecordResponse",
     "CalibrationService",
     "CurrentUser",
+    "MarkPaidRequest",
     "MetricsCollector",
+    "PaymentInstructionsResponse",
     "PaymentIntentCreateRequest",
     "PaymentIntentResponse",
     "PaymentService",
@@ -440,6 +498,7 @@ __all__ = [
     "QCService",
     "QCStatus",
     "ReceiptUploadRequest",
+    "RefundPaymentRequest",
     "RejectPaymentRequest",
     "RequestContext",
     "SLABreachResponse",
