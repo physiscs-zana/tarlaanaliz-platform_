@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # KR-028: Mission lifecycle transitions — PLANNED→ASSIGNED→ACKED→FLOWN→UPLOADED→ANALYZING→DONE
 # KR-033: PLANNED→ASSIGNED geçişi için payment_intent.status==PAID hard gate (caller sorumluluğu)
 """

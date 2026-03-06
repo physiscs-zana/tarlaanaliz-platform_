@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/entities/pilot.py
 # DESC: Pilot; kapasite (work_days, daily_capacity), bolge atamasi, Drone.
 # SSOT: KR-015 (drone pilotlari), KR-015-1 (kapasite), KR-015-2 (seed/pull), KR-034 (drone bagimsizlik)

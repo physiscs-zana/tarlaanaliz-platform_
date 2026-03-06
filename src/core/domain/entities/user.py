@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/entities/user.py
 # DESC: User; telefon + PIN kimlik dogrulama (email/TCKN/OTP yok).
 # SSOT: TARLAANALIZ_SSOT_v1_1_0.txt — KR-050 (kimlik), KR-063 (11 rol, v1.1.0)

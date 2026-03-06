@@ -5,11 +5,11 @@ import { Badge } from '@/components/ui/badge';
 /** KR-033: Kanonik odeme durumu enum'u (SSOT ile birebir). */
 export type PaymentStatus = 'PAYMENT_PENDING' | 'PAID' | 'REJECTED' | 'CANCELLED' | 'REFUNDED';
 
-const BADGE_VARIANT: Record<PaymentStatus, string> = {
+const BADGE_VARIANT: Record<PaymentStatus, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   PAYMENT_PENDING: 'warning',
   PAID: 'success',
   REJECTED: 'danger',
-  CANCELLED: 'secondary',
+  CANCELLED: 'default',
   REFUNDED: 'info',
 } as const;
 
