@@ -10,6 +10,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from src.presentation.api.dependencies import (
+    AuditEvent,
+    AuditPublisher,
     CancelIntentRequest,
     CurrentUser,
     MetricsCollector,
@@ -18,6 +20,7 @@ from src.presentation.api.dependencies import (
     PaymentIntentResponse,
     PaymentService,
     ReceiptUploadRequest,
+    get_audit_publisher,
     get_current_user,
     get_metrics_collector,
     get_payment_service,
@@ -44,6 +47,7 @@ def create_payment_intent(
     response: Response,
     user: CurrentUser = Depends(get_current_user),
     service: PaymentService = Depends(get_payment_service),
+    audit: AuditPublisher = Depends(get_audit_publisher),
     metrics: MetricsCollector = Depends(get_metrics_collector),
 ) -> PaymentIntentResponse:
     # KR-033: intent creation precedes receipt and approval.
@@ -52,6 +56,16 @@ def create_payment_intent(
     response.headers["X-Correlation-Id"] = corr_id or ""
     try:
         intent = service.create_intent(actor_user_id=user.user_id, payload=payload, corr_id=corr_id)
+        # KR-033 §8: PAYMENT.INTENT_CREATED audit event
+        audit.publish(
+            AuditEvent(
+                event_type="PAYMENT.INTENT_CREATED",
+                actor_user_id=user.user_id,
+                subject_id=str(intent.intent_id),
+                corr_id=corr_id,
+                details={"status": intent.status},
+            )
+        )
         _observe(request, metrics, started, status.HTTP_201_CREATED)
         return intent
     except HTTPException as exc:
@@ -95,6 +109,7 @@ def cancel_payment_intent(
     response: Response,
     user: CurrentUser = Depends(get_current_user),
     service: PaymentService = Depends(get_payment_service),
+    audit: AuditPublisher = Depends(get_audit_publisher),
     metrics: MetricsCollector = Depends(get_metrics_collector),
 ) -> PaymentIntentResponse:
     """KR-033 §5: Odeme intent iptal (PAYMENT_PENDING -> CANCELLED)."""
@@ -103,6 +118,16 @@ def cancel_payment_intent(
     response.headers["X-Correlation-Id"] = corr_id or ""
     try:
         intent = service.cancel_intent(actor_user_id=user.user_id, intent_id=intent_id, reason=payload.reason, corr_id=corr_id)
+        # KR-033 §8: PAYMENT.CANCELLED audit event
+        audit.publish(
+            AuditEvent(
+                event_type="PAYMENT.CANCELLED",
+                actor_user_id=user.user_id,
+                subject_id=str(intent_id),
+                corr_id=corr_id,
+                details={"reason": payload.reason, "status": intent.status},
+            )
+        )
         _observe(request, metrics, started, status.HTTP_200_OK)
         return intent
     except HTTPException as exc:
