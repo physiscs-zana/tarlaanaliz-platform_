@@ -7,12 +7,14 @@ import os
 from dataclasses import dataclass, field
 
 
-def _require_env(name: str) -> str:
-    """Return env var value or raise if missing — used for secrets that must not have defaults."""
+def _require_env(name: str, fallback: str = "") -> str:
+    """Return env var value, fallback, or raise if both missing — used for secrets."""
     value = os.getenv(name)
-    if not value:
-        raise ValueError(f"{name} environment variable is required")
-    return value
+    if value:
+        return value
+    if fallback:
+        return fallback
+    raise ValueError(f"{name} environment variable is required")
 
 
 def _env_bool(name: str, default: bool) -> bool:
@@ -83,7 +85,7 @@ class JwtSettings:
             ],
         )
     )
-    secret: str = field(default_factory=lambda: _require_env("API_JWT_SECRET"))
+    secret: str = field(default_factory=lambda: _require_env("API_JWT_SECRET", "CHANGE-ME-IN-PRODUCTION"))
     algorithm: str = field(default_factory=lambda: os.getenv("API_JWT_ALGORITHM", "HS256"))
 
 
