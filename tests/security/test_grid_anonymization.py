@@ -162,8 +162,8 @@ def test_anonymize_dict_handles_nested_data() -> None:
         "fields": [
             {
                 "field_id": "FLD-001",
-                "latitude": 37.5,
-                "longitude": 38.5,
+                "latitude": 37.5123,
+                "longitude": 38.5456,
                 "farmer_name": "Test",
             }
         ]
@@ -172,5 +172,5 @@ def test_anonymize_dict_handles_nested_data() -> None:
 
     field = result["fields"][0]
     assert field["field_id"].startswith("FR-")
-    assert field["latitude"] != 37.5
+    assert field["latitude"] != 37.5123
     assert "farmer_name" not in field

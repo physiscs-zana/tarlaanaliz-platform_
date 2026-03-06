@@ -33,7 +33,9 @@ class PaymentWebhookResponse(BaseModel):
 
 
 class PaymentWebhookService(Protocol):
-    def process(self, payload: PaymentWebhookPayload, signature: str | None) -> PaymentWebhookResponse: ...
+    def process(
+        self, payload: PaymentWebhookPayload, signature: str | None, raw_body: bytes | None = None
+    ) -> PaymentWebhookResponse: ...
 
 
 @dataclass(slots=True)

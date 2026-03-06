@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-041: API middleware configuration; JWT, CORS, rate-limit, anomaly settings.
 """API settings for middleware and app wiring."""
 
 from __future__ import annotations

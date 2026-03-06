@@ -113,7 +113,7 @@ class PIIFilterMiddleware(BaseHTTPMiddleware):
         user = getattr(request.state, "user", None)
         user_roles: set[str] = set()
         if user is not None:
-            user_roles = set(getattr(request.state, "roles", []))
+            user_roles = set(getattr(user, "roles", []))
 
         # PII gormeye yetkili roller bypass
         if user_roles & _PII_ALLOWED_ROLES:
