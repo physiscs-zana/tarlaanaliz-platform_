@@ -38,7 +38,7 @@ def test_anomaly_skips_allowlist_path() -> None:
 
 def test_anomaly_detects_error_spike_and_logs(caplog, monkeypatch) -> None:
     monkeypatch.setattr(settings.anomaly, "rapid_repeat_window_seconds", 120)
-    monkeypatch.setattr(settings.anomaly, "rapid_repeat_threshold", 100)
+    monkeypatch.setattr(settings.anomaly, "rapid_repeat_threshold", 4)
     caplog.set_level(logging.WARNING)
     client = TestClient(_app())
 
@@ -52,7 +52,11 @@ def test_anomaly_detects_large_body(monkeypatch, caplog) -> None:
     monkeypatch.setattr(settings.anomaly, "large_body_threshold_bytes", 10)
     caplog.set_level(logging.WARNING)
     client = TestClient(_app())
-    response = client.get("/unstable", params={"fail": "false"}, headers={"content-length": "100"})
+    response = client.get(
+        "/unstable",
+        params={"fail": "false"},
+        headers={"content-length": "100", "user-agent": "suspicious-bot/1.0"},
+    )
     assert response.status_code == 200
     assert any("AnomalyDetected" in r.message for r in caplog.records)
 
