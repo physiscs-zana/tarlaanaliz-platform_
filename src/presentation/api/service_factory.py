@@ -1,5 +1,6 @@
-# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
-"""Service factory: startup'ta gercek servis instance'lari olusturur."""
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# KR-081: Service container wiring for dependency injection.
+"""Service factory: creates real service instances at startup."""
 
 from __future__ import annotations
 
@@ -11,10 +12,10 @@ logger = structlog.get_logger(__name__)
 
 
 class ServiceContainer:
-    """Tum application servislerini barindirir.
+    """Holds all application service instances.
 
-    Lifespan'de olusturulur ve app.state.services'e atanir.
-    Endpoint dependency'leri bu container'dan servis alir.
+    Created during lifespan and assigned to app.state.services.
+    Endpoint dependencies retrieve services from this container.
     """
 
     def __init__(self) -> None:
@@ -44,15 +45,15 @@ async def create_service_container(
     event_bus: Any = None,
     storage: Any = None,
 ) -> ServiceContainer:
-    """Application servislerini olusturur ve container'a kaydeder.
+    """Create application services and register them in the container.
 
     Args:
-        db_session_factory: SQLAlchemy async session factory (None ise in-memory).
-        event_bus: EventBus instance (None ise stub).
-        storage: StorageService instance (None ise stub).
+        db_session_factory: SQLAlchemy async session factory (None means in-memory).
+        event_bus: EventBus instance (None means stub).
+        storage: StorageService instance (None means stub).
 
     Returns:
-        Doldurulmus ServiceContainer.
+        Populated ServiceContainer.
     """
     container = ServiceContainer()
 

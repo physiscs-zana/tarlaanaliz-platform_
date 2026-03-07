@@ -89,7 +89,11 @@ def handle(command: ApprovePaymentCommand, *, ctx: RequestContext, deps: Approve
     # KR-081: PaymentIntent payload contract-first şema ile doğrulanır.
     deps.contract_validator.validate(
         schema_key="payment_intent",
-        payload={"payment_intent_id": command.payment_intent_id, "payment_ref": command.payment_ref, "receipt_ref": command.receipt_ref},
+        payload={
+            "payment_intent_id": command.payment_intent_id,
+            "payment_ref": command.payment_ref,
+            "receipt_ref": command.receipt_ref,
+        },
     )
 
     # KR-033: PaymentIntent olmadan paid transition yok.

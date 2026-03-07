@@ -25,8 +25,8 @@ class _EvidenceStore:
 
 
 class _SchemaRegistry:
-    def get_schema(self, schema_id: str) -> dict[str, object]:
-        assert schema_id == "analysis_job"
+    def get_by_key(self, schema_key: str) -> dict[str, object]:
+        assert schema_key == "analysis_job"
         return {
             "type": "object",
             "properties": {"job_id": {"type": "string"}},
@@ -39,6 +39,7 @@ class _FakeJsonschema:
     class ValidationError(Exception):
         def __init__(self, message: str) -> None:
             super().__init__(message)
+            self.message = message
             self.path = []
             self.schema_path = []
 
@@ -57,14 +58,14 @@ def test_calibration_gate_blocks_without_evidence() -> None:
 def test_contract_validator_valid_payload(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "jsonschema", _FakeJsonschema())
     validator = ContractValidatorService(registry=_SchemaRegistry())
-    result = validator.validate(schema_id="analysis_job", payload={"job_id": "j-1"}, correlation_id="c-1")
+    result = validator.validate(schema_key="analysis_job", payload={"job_id": "j-1"}, correlation_id="c-1")
     assert result.ok is True
 
 
 def test_contract_validator_invalid_payload(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "jsonschema", _FakeJsonschema())
     validator = ContractValidatorService(registry=_SchemaRegistry())
-    result = validator.validate(schema_id="analysis_job", payload={}, correlation_id="c-1")
+    result = validator.validate(schema_key="analysis_job", payload={}, correlation_id="c-1")
     assert result.ok is False
     assert result.error is not None
 

@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-081: AssignMission command handler tests.
 """
 Amaç: Test modülü; davranış doğrulama ve regresyon engeli.
 Sorumluluk: Bağlamına göre beklenen sorumlulukları yerine getirir; SSOT v1.0.0 ile uyumlu kalır.
@@ -57,9 +58,16 @@ class _Idempotency:
 
 
 @dataclass
+class _ContractValidator:
+    def validate(self, *, schema_key: str, payload: dict[str, object]) -> None:
+        pass
+
+
+@dataclass
 class _Deps:
     mission_service: _MissionService
     planning_capacity: _PlanningCapacity
+    contract_validator: _ContractValidator
     audit_log: _Audit
     idempotency: _Idempotency | None
 
@@ -77,7 +85,7 @@ def _ctx(assign_mission, *roles: str):
 
 def test_assign_mission_requires_role() -> None:
     assign_mission = _load_assign_module()
-    deps = _Deps(_MissionService(), _PlanningCapacity(), _Audit(), _Idempotency())
+    deps = _Deps(_MissionService(), _PlanningCapacity(), _ContractValidator(), _Audit(), _Idempotency())
     cmd = assign_mission.AssignMissionCommand(mission_id="m1", pilot_id="p1")
 
     with pytest.raises(PermissionError, match="forbidden"):
@@ -88,7 +96,7 @@ def test_assign_mission_uses_idempotency_cache() -> None:
     assign_mission = _load_assign_module()
     idem = _Idempotency()
     idem.set(key="idem-1", value={"mission_id": "m1", "pilot_id": "p1", "status": "assigned"})
-    deps = _Deps(_MissionService(), _PlanningCapacity(), _Audit(), idem)
+    deps = _Deps(_MissionService(), _PlanningCapacity(), _ContractValidator(), _Audit(), idem)
     cmd = assign_mission.AssignMissionCommand(mission_id="m1", pilot_id="p1", idempotency_key="idem-1")
 
     result = assign_mission.handle(cmd, ctx=_ctx(assign_mission, "admin"), deps=deps)
@@ -100,7 +108,7 @@ def test_assign_mission_uses_idempotency_cache() -> None:
 
 def test_assign_mission_runs_capacity_and_audit() -> None:
     assign_mission = _load_assign_module()
-    deps = _Deps(_MissionService(), _PlanningCapacity(), _Audit(), _Idempotency())
+    deps = _Deps(_MissionService(), _PlanningCapacity(), _ContractValidator(), _Audit(), _Idempotency())
     cmd = assign_mission.AssignMissionCommand(mission_id="m2", pilot_id="p2", idempotency_key="idem-2")
 
     result = assign_mission.handle(cmd, ctx=_ctx(assign_mission, "ops"), deps=deps)

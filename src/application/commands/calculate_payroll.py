@@ -60,7 +60,11 @@ def handle(
     # KR-081: payroll payload contract-first şema ile doğrulanır.
     deps.contract_validator.validate(
         schema_key="payroll",
-        payload={"period_start": command.period_start, "period_end": command.period_end, "actor_type": command.actor_type},
+        payload={
+            "period_start": command.period_start,
+            "period_end": command.period_end,
+            "actor_type": command.actor_type,
+        },
     )
 
     calculated = deps.payroll_service.calculate_payroll(

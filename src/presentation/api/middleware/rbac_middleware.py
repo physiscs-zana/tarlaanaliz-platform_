@@ -1,12 +1,12 @@
-# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
-# KR-063: Merkezi RBAC middleware — her request'te rol kontrolu yapilir.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# KR-063: Central RBAC middleware - role check on every request.
 """RBAC (Role-Based Access Control) middleware.
 
-KR-063: Gercek yetki kontrolu backend'de yapilir.
-Frontend RBAC'i gorsellestirme icindir.
+KR-063: Real authorization is enforced on the backend.
+Frontend RBAC is for visualization only.
 
-Route prefix'lerine gore izin verilen rolleri kontrol eder.
-Bypass route'lar (auth, health, docs) atlanir.
+Checks allowed roles based on route prefixes.
+Bypass routes (auth, health, docs) are skipped.
 """
 
 from __future__ import annotations
@@ -21,13 +21,13 @@ from starlette.responses import JSONResponse, Response
 logger = structlog.get_logger(__name__)
 
 
-# Route prefix → izin verilen roller mapping'i
+# Route prefix -> allowed roles mapping
 _ROUTE_ROLES: list[tuple[str, frozenset[str]]] = [
-    # Admin endpoint'leri
+    # Admin endpoints
     ("/api/v1/admin/", frozenset({"CENTRAL_ADMIN", "BILLING_ADMIN"})),
     # Expert portal
     ("/api/v1/expert/", frozenset({"EXPERT", "CENTRAL_ADMIN"})),
-    # Ingest (edge kiosk) — mTLS ile de korumali
+    # Ingest (edge kiosk) - also protected by mTLS
     ("/api/v1/ingest/", frozenset({"STATION_OPERATOR", "CENTRAL_ADMIN"})),
     # Pilot
     ("/api/v1/pilots", frozenset({"PILOT", "CENTRAL_ADMIN"})),
@@ -39,34 +39,88 @@ _ROUTE_ROLES: list[tuple[str, frozenset[str]]] = [
     # Training feedback
     ("/api/v1/training-feedback/", frozenset({"AI_SERVICE", "EXPERT", "CENTRAL_ADMIN"})),
     # Fields
-    ("/api/v1/fields", frozenset({
-        "FARMER_SINGLE", "FARMER_MEMBER", "COOP_OWNER", "COOP_ADMIN",
-        "COOP_AGRONOMIST", "CENTRAL_ADMIN",
-    })),
+    (
+        "/api/v1/fields",
+        frozenset(
+            {
+                "FARMER_SINGLE",
+                "FARMER_MEMBER",
+                "COOP_OWNER",
+                "COOP_ADMIN",
+                "COOP_AGRONOMIST",
+                "CENTRAL_ADMIN",
+            }
+        ),
+    ),
     # Missions
-    ("/api/v1/missions", frozenset({
-        "FARMER_SINGLE", "FARMER_MEMBER", "COOP_OWNER", "COOP_ADMIN",
-        "PILOT", "CENTRAL_ADMIN",
-    })),
+    (
+        "/api/v1/missions",
+        frozenset(
+            {
+                "FARMER_SINGLE",
+                "FARMER_MEMBER",
+                "COOP_OWNER",
+                "COOP_ADMIN",
+                "PILOT",
+                "CENTRAL_ADMIN",
+            }
+        ),
+    ),
     # Payments
-    ("/api/v1/payments", frozenset({
-        "FARMER_SINGLE", "FARMER_MEMBER", "COOP_OWNER",
-        "BILLING_ADMIN", "CENTRAL_ADMIN",
-    })),
+    (
+        "/api/v1/payments",
+        frozenset(
+            {
+                "FARMER_SINGLE",
+                "FARMER_MEMBER",
+                "COOP_OWNER",
+                "BILLING_ADMIN",
+                "CENTRAL_ADMIN",
+            }
+        ),
+    ),
     # Subscriptions
-    ("/api/v1/subscriptions", frozenset({
-        "FARMER_SINGLE", "FARMER_MEMBER", "COOP_OWNER", "COOP_ADMIN", "CENTRAL_ADMIN",
-    })),
+    (
+        "/api/v1/subscriptions",
+        frozenset(
+            {
+                "FARMER_SINGLE",
+                "FARMER_MEMBER",
+                "COOP_OWNER",
+                "COOP_ADMIN",
+                "CENTRAL_ADMIN",
+            }
+        ),
+    ),
     # Results
-    ("/api/v1/results", frozenset({
-        "FARMER_SINGLE", "FARMER_MEMBER", "COOP_OWNER", "COOP_ADMIN",
-        "COOP_AGRONOMIST", "EXPERT", "CENTRAL_ADMIN",
-    })),
+    (
+        "/api/v1/results",
+        frozenset(
+            {
+                "FARMER_SINGLE",
+                "FARMER_MEMBER",
+                "COOP_OWNER",
+                "COOP_ADMIN",
+                "COOP_AGRONOMIST",
+                "EXPERT",
+                "CENTRAL_ADMIN",
+            }
+        ),
+    ),
     # Parcels
-    ("/api/v1/parcels", frozenset({
-        "FARMER_SINGLE", "FARMER_MEMBER", "COOP_OWNER", "COOP_ADMIN",
-        "COOP_AGRONOMIST", "CENTRAL_ADMIN",
-    })),
+    (
+        "/api/v1/parcels",
+        frozenset(
+            {
+                "FARMER_SINGLE",
+                "FARMER_MEMBER",
+                "COOP_OWNER",
+                "COOP_ADMIN",
+                "COOP_AGRONOMIST",
+                "CENTRAL_ADMIN",
+            }
+        ),
+    ),
 ]
 
 _BYPASS_PREFIXES = (
@@ -81,17 +135,17 @@ _BYPASS_PREFIXES = (
 
 
 class RBACMiddleware(BaseHTTPMiddleware):
-    """Merkezi rol tabanli erisim kontrolu (KR-063).
+    """Central role-based access control (KR-063).
 
-    JWT middleware'den sonra calisir.
-    request.state.roles listesini _ROUTE_ROLES ile karsilastirir.
-    Eslesme yoksa 403 Forbidden doner.
+    Runs after JWT middleware.
+    Compares request.state.roles list against _ROUTE_ROLES.
+    Returns 403 Forbidden if no match.
     """
 
     async def dispatch(self, request: Request, call_next: Any) -> Response:
         path = request.url.path
 
-        # Bypass kontrol
+        # Bypass check
         for prefix in _BYPASS_PREFIXES:
             if path.startswith(prefix):
                 return await call_next(request)
@@ -100,15 +154,15 @@ class RBACMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        # JWT bypass ise (user yok) → bir sonraki middleware'e birak
+        # JWT bypass (no user) -> pass to next middleware
         user = getattr(request.state, "user", None)
         if user is None:
             return await call_next(request)
 
-        # Kullanici rolleri
+        # User roles
         user_roles = set(getattr(request.state, "roles", []))
 
-        # Route eslesmesi bul
+        # Find route match
         for route_prefix, allowed_roles in _ROUTE_ROLES:
             if path.startswith(route_prefix):
                 if not user_roles.intersection(allowed_roles):
@@ -123,10 +177,10 @@ class RBACMiddleware(BaseHTTPMiddleware):
                     return JSONResponse(
                         status_code=403,
                         content={
-                            "detail": "Forbidden — insufficient role",
+                            "detail": "Forbidden - insufficient role",
                             "corr_id": corr_id,
                         },
                     )
-                break  # Eslesme bulundu, izin verildi
+                break  # Match found, access granted
 
         return await call_next(request)

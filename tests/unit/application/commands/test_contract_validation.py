@@ -1,25 +1,25 @@
-# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
-# KR-081: Contract validation testleri — her command handler'da validate cagrilir.
-"""Command handler contract validation testleri."""
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# KR-081: Contract validation tests - validate is called in every command handler.
+"""Command handler contract validation tests."""
 
 from __future__ import annotations
 
+import importlib
 from dataclasses import dataclass, field
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
 
-import importlib
-
 
 # ---------------------------------------------------------------------------
 # Mock Protocol implementations
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class _MockContractValidator:
-    """ContractValidatorPort mock — cagrilari kaydeder."""
+    """ContractValidatorPort mock - records calls."""
 
     calls: list[dict[str, Any]] = field(default_factory=list)
     should_raise: bool = False
@@ -35,7 +35,9 @@ class _MockAuditLog:
     entries: list[dict[str, Any]] = field(default_factory=list)
 
     def log(self, *, action: str, correlation_id: str, actor_id: str, payload: dict[str, Any]) -> None:
-        self.entries.append({"action": action, "correlation_id": correlation_id, "actor_id": actor_id, "payload": payload})
+        self.entries.append(
+            {"action": action, "correlation_id": correlation_id, "actor_id": actor_id, "payload": payload}
+        )
 
 
 class _MockIdempotency:
@@ -51,13 +53,19 @@ class _MockIdempotency:
 
 # --- Domain service mocks ---
 
+
 @dataclass
 class _MockFieldService:
     calls: int = 0
 
     def create_field(
-        self, *, owner_id: str, name: str, parcel_ref: str,
-        geometry: dict[str, Any], correlation_id: str,
+        self,
+        *,
+        owner_id: str,
+        name: str,
+        parcel_ref: str,
+        geometry: dict[str, Any],
+        correlation_id: str,
     ) -> dict[str, Any]:
         self.calls += 1
         return {"field_id": "fld-test-1", "owner_id": owner_id, "name": name}
@@ -91,8 +99,13 @@ class _MockPaymentService:
         return self._intent
 
     def approve_payment(
-        self, *, payment_intent_id: str, payment_ref: str, receipt_ref: str,
-        approved_by: str, correlation_id: str,
+        self,
+        *,
+        payment_intent_id: str,
+        payment_ref: str,
+        receipt_ref: str,
+        approved_by: str,
+        correlation_id: str,
     ) -> dict[str, Any]:
         return {"payment_intent_id": payment_intent_id, "status": "paid"}
 
@@ -116,8 +129,9 @@ class _MockMissionLifecycleManager:
 
 
 # ---------------------------------------------------------------------------
-# Deps containers — field isimleri her handler'in Protocol'une gore
+# Deps containers - field names match each handler's Protocol
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class _CreateFieldDeps:
@@ -172,19 +186,21 @@ class _ScheduleMissionDeps:
 # Module loaders
 # ---------------------------------------------------------------------------
 
+
 def _load(module_name: str):
     try:
         return importlib.import_module(f"src.application.commands.{module_name}")
     except (SyntaxError, ModuleNotFoundError) as exc:
-        pytest.skip(f"application package import edilemiyor: {exc}")
+        pytest.skip(f"application package cannot be imported: {exc}")
 
 
 # ============================================================
 # TESTS — CreateField
 # ============================================================
 
+
 class TestCreateFieldContractValidation:
-    """create_field command handler contract validation testleri."""
+    """create_field command handler contract validation tests."""
 
     @staticmethod
     def _ctx(mod):
@@ -254,8 +270,9 @@ class TestCreateFieldContractValidation:
 # TESTS — AssignMission
 # ============================================================
 
+
 class TestAssignMissionContractValidation:
-    """assign_mission command handler contract validation testleri."""
+    """assign_mission command handler contract validation tests."""
 
     @staticmethod
     def _ctx(mod):
@@ -312,8 +329,9 @@ class TestAssignMissionContractValidation:
 # TESTS — ApprovePayment
 # ============================================================
 
+
 class TestApprovePaymentContractValidation:
-    """approve_payment contract validation testleri."""
+    """approve_payment contract validation tests."""
 
     @staticmethod
     def _ctx(mod):
@@ -322,7 +340,9 @@ class TestApprovePaymentContractValidation:
     @staticmethod
     def _cmd(mod):
         return mod.ApprovePaymentCommand(
-            payment_intent_id="pi-1", payment_ref="ref-1", receipt_ref="rcpt-1",
+            payment_intent_id="pi-1",
+            payment_ref="ref-1",
+            receipt_ref="rcpt-1",
         )
 
     def test_validate_called_with_payment_intent_key(self) -> None:
@@ -371,8 +391,9 @@ class TestApprovePaymentContractValidation:
 # TESTS — CalculatePayroll
 # ============================================================
 
+
 class TestCalculatePayrollContractValidation:
-    """calculate_payroll contract validation testleri."""
+    """calculate_payroll contract validation tests."""
 
     @staticmethod
     def _ctx(mod):
@@ -381,7 +402,9 @@ class TestCalculatePayrollContractValidation:
     @staticmethod
     def _cmd(mod):
         return mod.CalculatePayrollCommand(
-            period_start="2026-01-01", period_end="2026-01-31", actor_type="pilot",
+            period_start="2026-01-01",
+            period_end="2026-01-31",
+            actor_type="pilot",
         )
 
     def test_validate_called_with_payroll_key(self) -> None:
@@ -430,8 +453,9 @@ class TestCalculatePayrollContractValidation:
 # TESTS — CreateSubscription
 # ============================================================
 
+
 class TestCreateSubscriptionContractValidation:
-    """create_subscription contract validation testleri."""
+    """create_subscription contract validation tests."""
 
     @staticmethod
     def _ctx(mod):
@@ -489,8 +513,9 @@ class TestCreateSubscriptionContractValidation:
 # TESTS — ScheduleMission
 # ============================================================
 
+
 class TestScheduleMissionContractValidation:
-    """schedule_mission contract validation testleri."""
+    """schedule_mission contract validation tests."""
 
     @staticmethod
     def _ctx(mod):

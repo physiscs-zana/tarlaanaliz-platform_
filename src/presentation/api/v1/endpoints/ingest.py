@@ -1,22 +1,23 @@
-# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
-# KR-072: Dataset ingestion pipeline — intake manifest kabul ve dataset oluşturma.
-# KR-073: İki aşamalı AV tarama gate.
-# KR-071: mTLS zorunlu (middleware'de kontrol edilir).
-"""Edge kiosk intake manifest ve dataset ingestion endpoint'leri."""
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# KR-072: Dataset ingestion pipeline - intake manifest acceptance and dataset creation.
+# KR-073: Two-phase AV scan gate.
+# KR-071: mTLS required (checked in middleware).
+"""Edge kiosk intake manifest and dataset ingestion endpoints."""
 
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from typing import Any, Optional, Protocol
+from typing import Any, Protocol
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request, status
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
 
 
 # --- Request / Response DTOs ---
+
 
 class FileHashEntry(BaseModel):
     file_path: str = Field(min_length=1)
@@ -25,7 +26,8 @@ class FileHashEntry(BaseModel):
 
 
 class IntakeManifestRequest(BaseModel):
-    """Edge kiosk'tan gelen intake manifest (KR-072)."""
+    """Intake manifest from edge kiosk (KR-072)."""
+
     batch_id: str = Field(min_length=10, max_length=64)
     kiosk_id: str = Field(min_length=3, max_length=64)
     drone_serial: str = Field(min_length=3, max_length=64)
@@ -58,6 +60,7 @@ class DatasetListResponse(BaseModel):
 
 # --- Service Protocol ---
 
+
 class IngestService(Protocol):
     async def accept_manifest(
         self, *, manifest: IntakeManifestRequest, kiosk_cert_cn: str, correlation_id: str
@@ -72,7 +75,8 @@ class IngestService(Protocol):
     ) -> DatasetStatusResponse: ...
 
 
-# --- In-Memory Stub (Öncelik 3'te gerçek impl ile değiştirilecek) ---
+# --- In-Memory Stub (will be replaced with real impl in Priority 3) ---
+
 
 @dataclass(slots=True)
 class _InMemoryIngestService:
@@ -118,7 +122,7 @@ def get_ingest_service(request: Request) -> IngestService:
 
 
 def _get_kiosk_cn(request: Request) -> str:
-    """mTLS sertifikasından CN çıkar (middleware tarafından set edilir)."""
+    """Extract CN from mTLS certificate (set by middleware)."""
     mtls_info = getattr(request.state, "mtls_client_info", None)
     if mtls_info and hasattr(mtls_info, "common_name"):
         return str(mtls_info.common_name)
@@ -131,34 +135,33 @@ def _get_corr_id(request: Request) -> str:
 
 # --- Endpoints ---
 
+
 @router.post(
     "/manifests",
     response_model=DatasetResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Intake manifest kabul et (KR-072, KR-071 mTLS zorunlu)",
+    summary="Accept intake manifest (KR-072, KR-071 mTLS required)",
 )
 async def accept_intake_manifest(
     request: Request,
     manifest: IntakeManifestRequest,
     service: IngestService = Depends(get_ingest_service),
 ) -> DatasetResponse:
-    """Edge kiosk'tan intake manifest kabul eder ve dataset oluşturur.
+    """Accept intake manifest from edge kiosk and create dataset.
 
-    mTLS middleware tarafından cihaz kimliği doğrulanır (KR-071).
-    AV1 tarama sonucu CLEAN olmalıdır (KR-073).
-    Minimum 4 spektral band zorunludur (KR-018).
+    Device identity is verified by mTLS middleware (KR-071).
+    AV1 scan result must be CLEAN (KR-073).
+    Minimum 4 spectral bands required (KR-018).
     """
     kiosk_cn = _get_kiosk_cn(request)
     corr_id = _get_corr_id(request)
-    return await service.accept_manifest(
-        manifest=manifest, kiosk_cert_cn=kiosk_cn, correlation_id=corr_id
-    )
+    return await service.accept_manifest(manifest=manifest, kiosk_cert_cn=kiosk_cn, correlation_id=corr_id)
 
 
 @router.get(
     "/datasets/{dataset_id}",
     response_model=DatasetStatusResponse,
-    summary="Dataset durumunu sorgula (KR-072)",
+    summary="Query dataset status (KR-072)",
 )
 async def get_dataset_status(
     dataset_id: str,
@@ -170,7 +173,7 @@ async def get_dataset_status(
 @router.get(
     "/datasets",
     response_model=DatasetListResponse,
-    summary="Mission'a ait dataset'leri listele",
+    summary="List datasets by mission",
 )
 async def list_datasets(
     mission_id: str,
@@ -188,7 +191,7 @@ class TransitionRequest(BaseModel):
 @router.post(
     "/datasets/{dataset_id}/transition",
     response_model=DatasetStatusResponse,
-    summary="Dataset durum geçişi (KR-072 state machine)",
+    summary="Dataset state transition (KR-072 state machine)",
 )
 async def transition_dataset(
     dataset_id: str,

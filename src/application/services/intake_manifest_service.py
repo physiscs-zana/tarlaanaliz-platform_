@@ -1,16 +1,15 @@
-# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
-# KR-072: Intake manifest kabul ve dataset oluşturma.
-# KR-073: AV1 tarama sonucu doğrulama.
-# KR-018: Minimum band kontrolü.
-"""Intake manifest doğrulama ve dataset oluşturma servisi."""
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# KR-072: Intake manifest acceptance and dataset creation.
+# KR-073: AV1 scan result validation.
+# KR-018: Minimum band check.
+"""Intake manifest validation and dataset creation service."""
 
 from __future__ import annotations
 
-import hashlib
 import json
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Protocol
 
 import structlog
@@ -23,7 +22,9 @@ class DatasetRepositoryPort(Protocol):
 
 
 class StorageServicePort(Protocol):
-    async def upload_blob(self, *, bucket: str, key: str, content: bytes, content_type: str, metadata: dict[str, str] | None) -> Any: ...
+    async def upload_blob(
+        self, *, bucket: str, key: str, content: bytes, content_type: str, metadata: dict[str, str] | None
+    ) -> Any: ...
 
 
 class AuditLogPort(Protocol):
@@ -38,14 +39,14 @@ class ManifestValidationResult:
 
 
 class IntakeManifestService:
-    """Intake manifest kabul ve dataset oluşturma (KR-072).
+    """Intake manifest acceptance and dataset creation (KR-072).
 
-    Edge kiosk'tan gelen manifest'i doğrular:
-    1. AV1 tarama sonucu CLEAN (KR-073)
-    2. Minimum 4 spektral band (KR-018)
-    3. Dosya hash'lerinin SHA-256 formatında olması
-    4. İmza doğrulaması
-    Başarılıysa Dataset entity oluşturur (RAW_INGESTED durumunda).
+    Validates the manifest received from edge kiosk:
+    1. AV1 scan result is CLEAN (KR-073)
+    2. Minimum 4 spectral bands (KR-018)
+    3. File hashes are in SHA-256 format
+    4. Signature verification
+    On success, creates a Dataset entity (RAW_INGESTED state).
     """
 
     def __init__(
@@ -75,24 +76,24 @@ class IntakeManifestService:
         kiosk_cert_cn: str,
         correlation_id: str = "",
     ) -> ManifestValidationResult:
-        """Intake manifest'i doğrular ve dataset oluşturur.
+        """Validate intake manifest and create dataset.
 
         Returns:
-            ManifestValidationResult: Doğrulama sonucu ve dataset_id.
+            ManifestValidationResult: Validation result and dataset_id.
         """
         from src.core.domain.entities.dataset import Dataset
 
         errors: list[str] = []
 
-        # KR-073: AV1 tarama sonucu kontrolü
+        # KR-073: AV1 scan result check
         if av_scan_result != "CLEAN":
             errors.append(f"AV1 tarama sonucu CLEAN değil: {av_scan_result}")
 
-        # KR-018: Minimum 4 band kontrolü
+        # KR-018: Minimum 4 band check
         if len(available_bands) < 4:
             errors.append(f"Minimum 4 spektral band gerekli, mevcut: {len(available_bands)}")
 
-        # Dosya hash format kontrolü
+        # File hash format check
         for f in files:
             h = f.get("sha256", "")
             if len(h) != 64:
@@ -111,7 +112,7 @@ class IntakeManifestService:
             )
             return ManifestValidationResult(ok=False, dataset_id="", errors=errors)
 
-        # Dataset oluştur
+        # Create dataset
         dataset = Dataset.create(
             mission_id=uuid.UUID(mission_id),
             field_id=uuid.UUID(field_id),
@@ -129,13 +130,13 @@ class IntakeManifestService:
             "signature": signature,
             "captured_at": captured_at,
             "kiosk_cert_cn": kiosk_cert_cn,
-            "accepted_at": datetime.now(timezone.utc).isoformat(),
+            "accepted_at": datetime.now(datetime.UTC).isoformat(),
         }
         dataset.manifest = manifest_data
 
         await self._dataset_repo.save(dataset)
 
-        # Manifest'i storage'a kaydet
+        # Save manifest to storage
         manifest_key = f"manifests/{dataset.dataset_id}/{batch_id}.json"
         await self._storage.upload_blob(
             bucket="tarlaanaliz-ingest",

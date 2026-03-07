@@ -96,6 +96,7 @@ async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
     # --- Service container ---
     from src.presentation.api.service_factory import create_service_container
+
     service_container = await create_service_container()
     _app.state.services = service_container
 

@@ -1,14 +1,14 @@
-# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
-# KR-070: Worker tam izolasyon — inbound HTTP yasak; queue consume-only.
-# KR-072: Dataset CALIBRATED_SCANNED_CENTER_OK → DISPATCHED_TO_WORKER geçişi.
-# KR-018: Kalibrasyon hard gate.
-"""Worker dispatch service: dataset'i worker kuyruğuna gönderir."""
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# KR-070: Worker full isolation - inbound HTTP forbidden; queue consume-only.
+# KR-072: Dataset CALIBRATED_SCANNED_CENTER_OK -> DISPATCHED_TO_WORKER transition.
+# KR-018: Calibration hard gate.
+"""Worker dispatch service: dispatches dataset to worker queue."""
 
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 import structlog
@@ -38,14 +38,14 @@ class DispatchResult:
 
 
 class WorkerDispatchService:
-    """Dataset'i analiz için worker kuyruğuna gönderir (KR-070, KR-072).
+    """Dispatches dataset to worker queue for analysis (KR-070, KR-072).
 
-    Akış:
-    1. Dataset'in CALIBRATED_SCANNED_CENTER_OK durumunda olduğunu doğrula
-    2. is_ready_for_analysis kontrolü (kalibrasyon, AV raporları, hash)
-    3. AnalysisJob oluştur
-    4. Dataset'i DISPATCHED_TO_WORKER durumuna geçir
-    5. AnalysisRequested event'i yayınla (worker consume edecek)
+    Flow:
+    1. Verify dataset is in CALIBRATED_SCANNED_CENTER_OK state
+    2. Check is_ready_for_analysis (calibration, AV reports, hash)
+    3. Create AnalysisJob
+    4. Transition dataset to DISPATCHED_TO_WORKER state
+    5. Publish AnalysisRequested event (worker will consume)
     """
 
     def __init__(
@@ -69,22 +69,22 @@ class WorkerDispatchService:
         model_version: str = "1.0",
         correlation_id: str = "",
     ) -> DispatchResult:
-        """Dataset'i worker kuyruğuna gönder.
+        """Dispatch dataset to worker queue.
 
         Args:
-            dataset_id: Gönderilecek dataset.
-            crop_type: Ürün tipi (analiz parametresi).
-            analysis_type: Analiz tipi (standard, detailed).
-            model_id: YZ model kimliği.
-            model_version: Model versiyonu.
-            correlation_id: İzleme ID.
+            dataset_id: Dataset to dispatch.
+            crop_type: Crop type (analysis parameter).
+            analysis_type: Analysis type (standard, detailed).
+            model_id: AI model identifier.
+            model_version: Model version.
+            correlation_id: Tracing ID.
 
         Returns:
-            DispatchResult: Gönderim sonucu.
+            DispatchResult: Dispatch result.
 
         Raises:
-            ValueError: Dataset analiz için hazır değilse.
-            RuntimeError: Dataset bulunamazsa.
+            ValueError: If dataset is not ready for analysis.
+            RuntimeError: If dataset is not found.
         """
         from src.core.domain.entities.analysis_job import AnalysisJob, AnalysisJobStatus
         from src.core.domain.events.analysis_events import AnalysisRequested
@@ -92,19 +92,19 @@ class WorkerDispatchService:
 
         dataset = await self._dataset_repo.get_by_id(dataset_id)
         if dataset is None:
-            raise RuntimeError(f"Dataset bulunamadı: {dataset_id}")
+            raise RuntimeError(f"Dataset not found: {dataset_id}")
 
         if not dataset.is_ready_for_analysis:
             raise ValueError(
-                f"Dataset analiz için hazır değil. "
-                f"Durum: {dataset.status}, "
-                f"Kalibrasyon: {dataset.is_calibrated}, "
+                f"Dataset not ready for analysis. "
+                f"Status: {dataset.status}, "
+                f"Calibration: {dataset.is_calibrated}, "
                 f"AV1: {dataset.av1_report_uri is not None}, "
                 f"AV2: {dataset.av2_report_uri is not None}, "
-                f"Bantlar: {len(dataset.available_bands)}"
+                f"Bands: {len(dataset.available_bands)}"
             )
 
-        # AnalysisJob oluştur
+        # Create AnalysisJob
         job_id = uuid.uuid4()
         band_count = len(dataset.available_bands)
         band_class = "EXTENDED_5BAND" if band_count >= 5 else "BASIC_4BAND"
@@ -122,21 +122,21 @@ class WorkerDispatchService:
             available_bands=dataset.available_bands,
             band_class=band_class,
             status=AnalysisJobStatus.PENDING,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         await self._job_repo.save(job)
 
-        # Dataset durumunu güncelle
+        # Update dataset status
         dataset.transition_to(
             DatasetStatus.DISPATCHED_TO_WORKER,
             worker_job_id=job_id,
-            manifest_update={"dispatched_at": datetime.now(timezone.utc).isoformat()},
+            manifest_update={"dispatched_at": datetime.now(UTC).isoformat()},
         )
         await self._dataset_repo.save(dataset)
 
-        # Event yayınla — worker bu event'i consume edecek
+        # Publish event - worker will consume this event
         event = AnalysisRequested(
             mission_id=dataset.mission_id,
             field_id=dataset.field_id,
@@ -158,5 +158,5 @@ class WorkerDispatchService:
             dataset_id=str(dataset_id),
             analysis_job_id=str(job_id),
             status="DISPATCHED_TO_WORKER",
-            dispatched_at=datetime.now(timezone.utc).isoformat(),
+            dispatched_at=datetime.now(UTC).isoformat(),
         )

@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# KR-081: Contract schema registry for contract-first validation.
 # PATH: src/infrastructure/contracts/schema_registry.py
 # DESC: Contract şemalarını (JSON Schema) versiyonlu yükleyen ve cache'leyen bileşen.
 """
@@ -211,9 +213,7 @@ class SchemaRegistry:
         schema_key örnekleri: "field", "mission", "analysis_job", "payment_intent"
         En yüksek versiyon numarasına sahip şemayı döner.
         """
-        matching = [
-            (name, ver) for name, ver in self._schemas if name == schema_key
-        ]
+        matching = [(name, ver) for name, ver in self._schemas if name == schema_key]
         if not matching:
             raise SchemaNotFoundError(
                 f"Şema bulunamadı: '{schema_key}'. Kayıtlı: {sorted(set(n for n, _ in self._schemas))}"

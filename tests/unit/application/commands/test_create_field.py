@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-081: CreateField command handler tests.
 """
 Amaç: Test modülü; davranış doğrulama ve regresyon engeli.
 Sorumluluk: Bağlamına göre beklenen sorumlulukları yerine getirir; SSOT v1.0.0 ile uyumlu kalır.
@@ -57,8 +58,15 @@ class _Idempotency:
 
 
 @dataclass
+class _ContractValidator:
+    def validate(self, *, schema_key: str, payload: dict[str, object]) -> None:
+        pass
+
+
+@dataclass
 class _Deps:
     field_service: _FieldService
+    contract_validator: _ContractValidator
     audit_log: _Audit
     idempotency: _Idempotency | None
 
@@ -76,7 +84,7 @@ def _ctx(create_field, *roles: str):
 
 def test_create_field_requires_allowed_role() -> None:
     create_field = _load_create_field_module()
-    deps = _Deps(_FieldService(), _Audit(), _Idempotency())
+    deps = _Deps(_FieldService(), _ContractValidator(), _Audit(), _Idempotency())
     cmd = create_field.CreateFieldCommand(
         owner_id="u1",
         name="Field A",
@@ -90,7 +98,7 @@ def test_create_field_requires_allowed_role() -> None:
 
 def test_create_field_validates_name() -> None:
     create_field = _load_create_field_module()
-    deps = _Deps(_FieldService(), _Audit(), _Idempotency())
+    deps = _Deps(_FieldService(), _ContractValidator(), _Audit(), _Idempotency())
     cmd = create_field.CreateFieldCommand(
         owner_id="u1",
         name=" ",
@@ -106,7 +114,7 @@ def test_create_field_idempotent_cache_hit() -> None:
     create_field = _load_create_field_module()
     idem = _Idempotency()
     idem.set(key="idem-field", value={"field_id": "f1", "owner_id": "u1", "name": "Field A"})
-    deps = _Deps(_FieldService(), _Audit(), idem)
+    deps = _Deps(_FieldService(), _ContractValidator(), _Audit(), idem)
     cmd = create_field.CreateFieldCommand(
         owner_id="u1",
         name="Field A",

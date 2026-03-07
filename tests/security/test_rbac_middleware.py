@@ -1,10 +1,10 @@
-# KR-063: RBAC middleware testleri.
-"""RBAC middleware testleri."""
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# KR-063: RBAC middleware tests.
+"""RBAC middleware tests."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from unittest.mock import AsyncMock
 
 import pytest
 from starlette.testclient import TestClient
@@ -28,28 +28,29 @@ def client(app):
 
 
 class TestRBACMiddleware:
-    """RBAC middleware testleri."""
+    """RBAC middleware tests."""
 
     def test_health_bypass(self, client):
         resp = client.get("/health")
         assert resp.status_code == 200
 
     def test_pricing_public_access(self, client):
-        """Pricing endpoint'i public -- rol kontrolu yok."""
+        """Pricing endpoint is public -- no role check."""
         resp = client.get("/api/v1/pricing/active")
         # JWT bypass olmasa bile RBAC bypass olmali
         assert resp.status_code != 403
 
     def test_admin_requires_central_admin(self, client, app):
-        """Admin endpoint'leri CENTRAL_ADMIN gerektirir."""
-        # PILOT rolu ile admin'e erisim -> 403
-        # Not: JWT middleware bypass ile test etmek zor, bu yuzden
-        # dogrudan middleware'i test etmek daha iyi
+        """Admin endpoints require CENTRAL_ADMIN role."""
+        # PILOT role accessing admin -> 403
+        # Note: Testing with JWT middleware bypass is difficult,
+        # so testing the middleware directly is better
         pass
 
     def test_fields_farmer_access(self):
-        """FARMER_SINGLE fields endpoint'ine erisebilir."""
-        from src.presentation.api.middleware.rbac_middleware import RBACMiddleware, _ROUTE_ROLES
+        """FARMER_SINGLE can access fields endpoint."""
+        from src.presentation.api.middleware.rbac_middleware import _ROUTE_ROLES
+
         # Route mapping kontrolu
         for prefix, roles in _ROUTE_ROLES:
             if "/fields" in prefix:
@@ -58,8 +59,9 @@ class TestRBACMiddleware:
                 break
 
     def test_ingest_requires_station_operator(self):
-        """Ingest endpoint'leri STATION_OPERATOR gerektirir."""
+        """Ingest endpoints require STATION_OPERATOR role."""
         from src.presentation.api.middleware.rbac_middleware import _ROUTE_ROLES
+
         for prefix, roles in _ROUTE_ROLES:
             if "/ingest" in prefix:
                 assert "STATION_OPERATOR" in roles
@@ -67,8 +69,9 @@ class TestRBACMiddleware:
                 break
 
     def test_admin_denies_farmer(self):
-        """Admin endpoint'leri farmer'a kapali."""
+        """Admin endpoints are closed to farmer roles."""
         from src.presentation.api.middleware.rbac_middleware import _ROUTE_ROLES
+
         for prefix, roles in _ROUTE_ROLES:
             if "/admin/" in prefix:
                 assert "FARMER_SINGLE" not in roles
