@@ -44,7 +44,12 @@ class _InMemoryFieldService:
         return []
 
 
-def get_field_service() -> FieldService:
+def get_field_service(request: Request) -> FieldService:
+    services = getattr(request.app.state, "services", None)
+    if services is not None:
+        svc = services.get("field_service")
+        if svc is not None:
+            return svc
     return _InMemoryFieldService()
 
 
@@ -66,7 +71,11 @@ def create_field(
     return service.create(owner_subject=subject, payload=payload)
 
 
-@router.get("", response_model=list[FieldResponse])
-def list_fields(request: Request, service: FieldService = Depends(get_field_service)) -> list[FieldResponse]:
+class FieldListResponse(BaseModel):
+    items: list[FieldResponse]
+
+
+@router.get("", response_model=FieldListResponse)
+def list_fields(request: Request, service: FieldService = Depends(get_field_service)) -> FieldListResponse:
     subject = _require_authenticated_subject(request)
-    return service.list_by_owner(owner_subject=subject)
+    return FieldListResponse(items=service.list_by_owner(owner_subject=subject))

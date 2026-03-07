@@ -40,7 +40,12 @@ class _InMemoryPilotService:
         return [PilotResponse(pilot_id="plt-1", display_name="Demo Pilot", active=True, regions=["marmara"])]
 
 
-def get_pilot_service() -> PilotService:
+def get_pilot_service(request: Request) -> PilotService:
+    services = getattr(request.app.state, "services", None)
+    if services is not None:
+        svc = services.get("pilot_service")
+        if svc is not None:
+            return svc
     return _InMemoryPilotService()
 
 

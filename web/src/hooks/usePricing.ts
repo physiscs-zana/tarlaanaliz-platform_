@@ -30,7 +30,7 @@ export function usePricing(): UsePricingResult {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiRequest<{ items: PriceBookEntry[] }>('/admin/pricing', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
+      const res = await apiRequest<{ items: PriceBookEntry[] }>('/pricing/active', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
       setEntries(res.data?.items ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fiyat bilgisi alınamadı');

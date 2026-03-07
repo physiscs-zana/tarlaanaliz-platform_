@@ -41,7 +41,12 @@ class _InMemoryAdminPricingService:
         return PublishPricingSnapshotResponse(snapshot_id=payload.snapshot_id, published=True)
 
 
-def get_admin_pricing_service() -> AdminPricingService:
+def get_admin_pricing_service(request: Request) -> AdminPricingService:
+    services = getattr(request.app.state, "services", None)
+    if services is not None:
+        svc = services.get("admin_pricing_service")
+        if svc is not None:
+            return svc
     return _InMemoryAdminPricingService()
 
 

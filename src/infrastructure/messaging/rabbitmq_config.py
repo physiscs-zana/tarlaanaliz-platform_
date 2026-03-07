@@ -54,6 +54,8 @@ DOMAIN_EVENTS_QUEUE = "domain.events.general"
 ANALYSIS_EVENTS_QUEUE = "domain.events.analysis"
 MISSION_EVENTS_QUEUE = "domain.events.mission"
 PAYMENT_EVENTS_QUEUE = "domain.events.payment"
+INGEST_EVENTS_QUEUE = "domain.events.ingest"
+WORKER_DISPATCH_QUEUE = "worker.dispatch.jobs"
 
 # Training feedback kuyrukları
 TRAINING_FEEDBACK_SUBMIT_QUEUE = "training.feedback.submit"
@@ -71,6 +73,8 @@ PAYMENT_ROUTING_KEY = "event.payment.#"
 TRAINING_SUBMIT_ROUTING_KEY = "feedback.submit"
 TRAINING_EXPORT_ROUTING_KEY = "feedback.export"
 NOTIFICATION_ROUTING_KEY = "notification.#"
+INGEST_ROUTING_KEY = "event.ingest.#"
+WORKER_DISPATCH_ROUTING_KEY = "worker.dispatch.#"
 
 # ------------------------------------------------------------------
 # Varsayılan parametreler
@@ -154,6 +158,11 @@ def get_default_topology() -> list[ExchangeConfig]:
                     routing_key=PAYMENT_ROUTING_KEY,
                     dead_letter_exchange=f"{DOMAIN_EVENTS_EXCHANGE}{DLX_SUFFIX}",
                 ),
+                QueueConfig(
+                    name=INGEST_EVENTS_QUEUE,
+                    routing_key=INGEST_ROUTING_KEY,
+                    dead_letter_exchange=f"{DOMAIN_EVENTS_EXCHANGE}{DLX_SUFFIX}",
+                ),
             ],
         ),
         # -- Training Feedback Exchange --
@@ -182,6 +191,19 @@ def get_default_topology() -> list[ExchangeConfig]:
                 QueueConfig(
                     name=NOTIFICATION_EXPERT_QUEUE,
                     routing_key=NOTIFICATION_ROUTING_KEY,
+                ),
+            ],
+        ),
+        # -- Worker Dispatch Exchange --
+        ExchangeConfig(
+            name="worker.dispatch",
+            exchange_type="topic",
+            durable=True,
+            queues=[
+                QueueConfig(
+                    name=WORKER_DISPATCH_QUEUE,
+                    routing_key=WORKER_DISPATCH_ROUTING_KEY,
+                    dead_letter_exchange="worker.dispatch.dlx",
                 ),
             ],
         ),

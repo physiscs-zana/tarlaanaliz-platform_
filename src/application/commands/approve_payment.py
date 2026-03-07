@@ -56,8 +56,13 @@ class IdempotencyPort(Protocol):
     def set(self, *, key: str, value: dict[str, Any]) -> None: ...
 
 
+class ContractValidatorPort(Protocol):
+    def validate(self, *, schema_key: str, payload: dict[str, Any]) -> None: ...
+
+
 class ApprovePaymentDeps(Protocol):
     payment_service: PaymentServicePort
+    contract_validator: ContractValidatorPort
     audit_log: AuditLogPort
     idempotency: IdempotencyPort | None
 
@@ -80,6 +85,12 @@ def handle(command: ApprovePaymentCommand, *, ctx: RequestContext, deps: Approve
                 approved_by=str(cached["approved_by"]),
                 correlation_id=ctx.correlation_id,
             )
+
+    # KR-081: PaymentIntent payload contract-first şema ile doğrulanır.
+    deps.contract_validator.validate(
+        schema_key="payment_intent",
+        payload={"payment_intent_id": command.payment_intent_id, "payment_ref": command.payment_ref, "receipt_ref": command.receipt_ref},
+    )
 
     # KR-033: PaymentIntent olmadan paid transition yok.
     intent = deps.payment_service.get_payment_intent(payment_intent_id=command.payment_intent_id)

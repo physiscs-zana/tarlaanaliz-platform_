@@ -6,29 +6,101 @@
 # matematiksel olarak kanitlar. CI pipeline'da dogrulanir.
 #
 # Format: <sha256_hash>  <dosya_yolu>
-# Yeniden uretim: sha256sum <dosya> >> CONTRACTS_SHA256.txt
+# Yeniden uretim: cd contracts && find schemas enums api -type f | sort | xargs sha256sum
+# Dogrulama: cd contracts && sha256sum -c ../CONTRACTS_SHA256.txt
+#
+# Contract Version: 2.0.1
+# Tarih: 2026-03-07
 # =============================================================================
 
-# --- Contract Schemas (KR-081) ---
-# analysis_job.v1.schema.json ve analysis_result.v1.schema.json
-# SSOT icerisinde gomulu olarak tanimlanmistir (KR-081.1 / KR-081.2)
+# --- Shared Schemas ---
+c30fdfc68419f8a48386c8fce702919c41e94c4558fbdd8fafcb6c61cff5d837  schemas/shared/address.v1.schema.json
+e13304465fb70b0e555c9f0cc2b7f21506849b96a0947b708c8076892f18f43d  schemas/shared/geojson.v1.schema.json
+a7528d7ab20762ca84fc89140b63610e294e3c101988894729d487eb48014073  schemas/shared/money.v1.schema.json
 
-# Asagidaki hash'ler, contracts dizini olusturuldugunda
-# gercek dosya hash'leri ile guncellenmelidir.
+# --- Core Schemas ---
+97f59ba25a477a456be592a5489a28a5578f40e6c50905ef9c8a588ffc73eaee  schemas/core/field.v1.schema.json
+4acb1dc6915b738bcc2b7b92f1ca608435ae728b9605c019cb9eaa505304b0a0  schemas/core/mission.v1.schema.json
+e1fb807556954a9860dfd112736874f48d8abb799b261cb7cfd522d57a0c6c4e  schemas/core/user.v1.schema.json
+558838abbc18df2019ed79707a7b4baff0ea4f76fc89750e0f3d7b3fa0798969  schemas/core/user_pii.v1.schema.json
 
-# PLACEHOLDER — CI pipeline aktif oldugunda doldurulacak:
-# <sha256>  shared/contracts/analysis_job.v1.schema.json
-# <sha256>  shared/contracts/analysis_result.v1.schema.json
-# <sha256>  shared/contracts/ai_feedback.v1.schema.json
+# --- Edge Schemas ---
+36fd36cb79c7f3c842ead2ecbfcc746fb0756c73be04981e7b6e53da85db44d7  schemas/edge/calibration_result.v1.schema.json
+1f472f2e31a1ada416eec5b640f8b23e1c41255ddc869c6dd1b3f60af8d071a5  schemas/edge/dataset_manifest.v1.schema.json
+43cf179832a541823cc2a0d1afd302efffa894d729d78f075860f13fea85af35  schemas/edge/edge_metadata.v1.schema.json
+c5b2de6d21d032a406ef5aafa0156bc066688ef2d8691399f393b729ec8d486e  schemas/edge/intake_manifest.v1.schema.json
+2cc06add9ba39d642b90bd9b4033a5ac189c03b3b79f8112dcdc01729115f6de  schemas/edge/qc_report.v1.schema.json
+4fe93e07a623cbe740cb7a8043e8e9d50e6bf5baf3d811e8f8224e8de692a1f3  schemas/edge/quarantine_event.v1.schema.json
+ce4ff58ba57bcbf5f38ca4247b63320c0396d8e5305b74d9be6aec444db181b9  schemas/edge/scan_report.v1.schema.json
+3a152d232388762d33061d9d06c774f7d73523151daa0bb8620137e35f754993  schemas/edge/transfer_batch.v1.schema.json
+aa729a3abd2930350734e5e0d4508b52a5379d8adf492ed04428cf91931f5619  schemas/edge/verification_report.v1.schema.json
+
+# --- Worker Schemas ---
+579da646da653af78cbfcf4beda4b947802fa27af78d3b9a06a432e47c10b828  schemas/worker/analysis_job.v1.schema.json
+f6ea0a24f2c3bd77ddeed5cd2b7f031dd39a7f7293e5d5a3b986131adb47889d  schemas/worker/analysis_result.v1.schema.json
+7f9bce65ad8dcd9d95464f53ff7db397c46eb014dfe533d7a9a14b04d08fb3d6  schemas/worker/thermal_analysis_result.v1.schema.json
 
 # --- Event Schemas ---
-# <sha256>  shared/contracts/events/mission_events.v1.schema.json
-# <sha256>  shared/contracts/events/payment_events.v1.schema.json
-# <sha256>  shared/contracts/events/subscription_events.v1.schema.json
+174de972f658a315962611343c9c5a5daa4886f1b40b9953839b63367c40f515  schemas/events/analysis_completed.v1.schema.json
+d132731e1ba13a829c7a9c38338b6b32bae361cd301c4e4d65e90ebc5e29bb41  schemas/events/dataset_analyzed.v1.schema.json
+cd32cae257875f1cdb6e13f9e35e08919dbb79396c1896f8a1d49b14da2b7a47  schemas/events/dataset_calibrated.v1.schema.json
+0f6594e0347150173aa129210eaeb8485b1840f42c4e7cb91aab101b4a1ee6a1  schemas/events/dataset_dispatched.v1.schema.json
+e1dcec73ca94f1897fc6874bdc12d9e594a1a4da666fbbc78ba70d260cbd9b7f  schemas/events/dataset_ingested.v1.schema.json
+1e5fe123b074b71a034a9c1e0c6c927f5ad8bb91b52ee953b95063f3994e227f  schemas/events/dataset_scanned.v1.schema.json
+92b890fd3d9acbfcf57245fe11feaed2e07bcd43e202b751ad2c1e086d56813a  schemas/events/dataset_verified.v1.schema.json
+37faff58b7586569ef420799d68dd749e77e32451e499d5547385b237b9a7e58  schemas/events/derived_published.v1.schema.json
+f89c16e9d1e549e94db55f90dd31be425d675d8e67e38c79e443d3bad9434a1a  schemas/events/field_created.v1.schema.json
+206b76f4cf7502ae3d3b61823a2ae4e1b8b18debffaecd903ba0d2b27a0bbea5  schemas/events/mission_assigned.v1.schema.json
 
-# --- Dataset Ingest Schemas (KR-081 / KR-072) ---
-03e5e92786b0ec342495bf2a5d4dbc3b051e19460df9ab5f53a77163c5ef3374  contracts/schemas/edge/dataset_ingest_request.v1.schema.json
-b3c0169cfcdef05a6a7b6e0a0051f2ebe2ee0ca24263a53653c7a5ce671884b1  contracts/schemas/edge/dataset_ingest_response.v1.schema.json
+# --- Platform Schemas ---
+33214d09c51001fc2c2c0c1e1c5087ab31d6e5959d7802f1cbf1510ee70ca477  schemas/platform/calibrated_dataset_manifest.v1.schema.json
+3120ef67dbf5dc70025644f762b07496a9d5d513a964d1da817ebc975fab3c79  schemas/platform/calibration_result.v1.schema.json
+4a5b15229a3825f643cd5475a54a08fdd23d855a1c069be2cf9be5ca901ac3da  schemas/platform/evidence_bundle_ref.v1.schema.json
+aaf76866f72b31c1d992e794a542b558b6b728f455857fcd2d257f05819e76d3  schemas/platform/layer_registry.v1.schema.json
+4083050a4f6885288b4f8fbc86ed7116253cfe197cd988f9eafebe6f290b7de4  schemas/platform/payment_intent.v1.schema.json
+c0d39e196fc3943a8ede81943ab06ed14117431aea6407ca2a554bcb1b3fcac3  schemas/platform/payment_intent.v2.schema.json
+c931a2d0104aa5330d70c1670e26e63343c467266522ada3d99406791e463b00  schemas/platform/payroll.v1.schema.json
+205c854e2056567ff53be92bb32d3176ca84721b83d0fad73cfaea082546456f  schemas/platform/pricing.v1.schema.json
+48068214c33dcc49dfbd437b20943ae01c804d2c7a9dc7be86ef03b67c221960  schemas/platform/qc_report.v1.schema.json
+6ef3c05110037c73b4eeec7fd8992b6f57e0f45016c499f04e6691041de26b6c  schemas/platform/subscription.v1.schema.json
+68cdbfefdd0ed19cc2acec0bb8789f6b3185000001c5b7924c568a1bab5e5688  schemas/platform/training_feedback.v1.schema.json
 
-# --- Dogrulama Komutu ---
-# sha256sum -c CONTRACTS_SHA256.txt
+# --- Dataset Schemas ---
+787c29eaf1748019d5631e7e0eea70e24a525ec232af117fc8199d64d5dc7b7c  schemas/datasets/attestation.v1.schema.json
+cb0d5a85815aadc323e5d1847c3fd3c7c239d896707c005773a93220ce9528b2  schemas/datasets/calibration_certificate.v1.schema.json
+9bfcca240d3963e5ea79aca1dc7206713a804d4a09c99434434c95becbc263da  schemas/datasets/dataset.v1.schema.json
+73f21c8c518e8804e756aac310769dc708593d615580fce5a457c766dacddb6a  schemas/datasets/dataset_manifest.v1.schema.json
+eb3996ffab6b951f1c114e51fce3d726e2265b4299d25df03a657c808192adb7  schemas/datasets/evidence_bundle_ref.v1.schema.json
+b450ee0934a27e6717b2324d19a4544ebfa906d7c4fbd98a73acd8019aaf1b20  schemas/datasets/qc_report.v1.schema.json
+9583757f00978b6f6a10d65fc089c03e567b02c0ee5ad81874e79312fea67649  schemas/datasets/scan_report.v1.schema.json
+5d58d5f5fe0bb0fd082f97953168678d679c9ec236b7a78925f3c9cd50ce8ee0  schemas/datasets/transfer_batch.v1.schema.json
+111af808bdb24052f1a345738ec7140e7891482d3a4df412e5ea52dc23fd81ba  schemas/datasets/verification_report.v1.schema.json
+
+# --- Enums ---
+c76bf83b2032d8fb1244ea09049e7724639926039ef2d33061bf4bcd74e50ed5  enums/analysis_type.enum.v1.json
+3361e3f16b0a1a7f437357a41b76c273c37d80bb88426f7ada5c49dff33eb8e4  enums/crop_type.enum.v1.json
+174b6bb0d1b84fbac79084bec43632ed238a4272e29510ac8c9a011bcdd0c0d6  enums/dataset_status.enum.v1.json
+d4ffbe07badafe3a425c459fd77ab1552857cc29754d5e888b9460ae290c0aa1  enums/drone_type.enum.v1.json
+6f3e4a8a45d5f820a78239036c82f10447e46a8cf1c8fc259c8da7ed43e4513a  enums/mission_status.enum.v1.json
+84f23a13b81059a47daecef8484f1d38c7d123058c58a5165d2db6364763b585  enums/payment_method.enum.v1.json
+952a2be1f9adf015cd59e86d0b4938f84dc8d5404aa073b418bcbe2500313d8f  enums/payment_status.enum.v1.json
+b0dba4dcdaef57a5f7507891aba4a18b714b3da67f080dd2714943462341711c  enums/payment_status.enum.v2.json
+4d385742e81a80621870615ff7d199d1636e16ec9e803c8ac02e5f4a6369d1ff  enums/payment_target_type.enum.v1.json
+466a109a5c9e7ae8f6c8810a87965098a53e7fa038f9c16b900085dcbe08454c  enums/qc_status.enum.v1.json
+9100d2e06b0e63cbfbd5c3ef654140506024a6f6c9f3b544dd54154e420635c1  enums/quarantine_decision.enum.v1.json
+3c68d8d553ed76995febfd9df8863ea1d26f25569851aa499e4f23135eef88e2  enums/role.enum.v1.json
+1eef3d022b08b0cc7a936041da62fe95b7457ab26a4fdbd2d6d4797fbb0ed595  enums/scan_stage.enum.v1.json
+9a28f265200088e9df20baf937206ee37c2a81ec4fef46457696903e816358ca  enums/threat_type.enum.v1.json
+c18a92c9e375857db094d1fba2becee2b122f914923f394783ceeece6747a3e6  enums/user_role.enum.v1.json
+be59fbe1462a3bd474c13e42433fcb807b890fb7498f87dd5087c6b91b95d0f9  enums/verification_status.enum.v1.json
+
+# --- API Specs ---
+62dbb8fd6a80f6adba92e47e2537d7fc689dfc28206fbaa16ab1f18d92d67f46  api/edge_local.v1.yaml
+8b007f86054ac8071334530cf9329c70a828aaac687c4d78b596fabf82e4082d  api/platform_internal.v1.yaml
+6b75ccbf2004f831dadbfeb4cfc1cf51de738afaa82e63b1dacd524ac81afa1f  api/platform_public.v1.yaml
+
+# --- API Components ---
+a992260b403233857fafa3a3115f08fda828dcd931d63dcd3b64a1ab71713ef5  api/components/parameters.yaml
+b0bf80f4087247514519c08cde8ec38c94355384156edb9721ebdb039a5a5cc8  api/components/responses.yaml
+2d16b7e375ed42b82dd5339667b8655e4b658518b9de1ecb38156a725b912daf  api/components/schemas.yaml
+27e148044bad0532c4f8cd3cf0e6f5397640b38ca15e00ba441ba8af4e95021a  api/components/security_schemes.yaml

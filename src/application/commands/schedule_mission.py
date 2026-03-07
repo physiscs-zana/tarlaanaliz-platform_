@@ -47,9 +47,14 @@ class IdempotencyPort(Protocol):
     def set(self, *, key: str, value: dict[str, Any]) -> None: ...
 
 
+class ContractValidatorPort(Protocol):
+    def validate(self, *, schema_key: str, payload: dict[str, Any]) -> None: ...
+
+
 class ScheduleMissionDeps(Protocol):
     mission_lifecycle_manager: MissionLifecyclePort
     planning_capacity: PlanningCapacityPort
+    contract_validator: ContractValidatorPort
     audit_log: AuditLogPort
     idempotency: IdempotencyPort | None
 
@@ -67,6 +72,12 @@ def handle(command: ScheduleMissionCommand, *, ctx: RequestContext, deps: Schedu
                 status=str(cached["status"]),
                 correlation_id=ctx.correlation_id,
             )
+
+    # KR-081: mission payload contract-first şema ile doğrulanır.
+    deps.contract_validator.validate(
+        schema_key="mission",
+        payload={"subscription_id": command.subscription_id, "scheduled_for": command.scheduled_for},
+    )
 
     # KR-015: zamanlama kapasite kontrolü planlama servisi üzerinden yapılır.
     deps.planning_capacity.ensure_slot_available(

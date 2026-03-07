@@ -28,7 +28,7 @@ export function useWeatherBlock(): UseWeatherBlockResult {
     setError(null);
     setSuccess(false);
     try {
-      await apiRequest('/api/pilot/weather-block', { method: 'POST', body: report, headers: { Authorization: `Bearer ${token}` } });
+      await apiRequest('/weather-block-reports', { method: 'POST', body: report, headers: { Authorization: `Bearer ${token}` } });
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bildirim gönderilemedi');

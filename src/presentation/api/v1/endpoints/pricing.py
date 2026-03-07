@@ -44,7 +44,12 @@ class _InMemoryPricingService:
         )
 
 
-def get_pricing_service() -> PricingService:
+def get_pricing_service(request: Request) -> PricingService:
+    services = getattr(request.app.state, "services", None)
+    if services is not None:
+        svc = services.get("pricing_service")
+        if svc is not None:
+            return svc
     return _InMemoryPricingService()
 
 

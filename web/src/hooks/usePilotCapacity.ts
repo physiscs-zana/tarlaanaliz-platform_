@@ -31,7 +31,7 @@ export function usePilotCapacity(): UsePilotCapacityResult {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiRequest<PilotCapacity>('/api/pilot/capacity', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
+      const res = await apiRequest<PilotCapacity>('/pilots', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
       setCapacity(res.data ?? DEFAULT_CAPACITY);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kapasite bilgisi alınamadı');

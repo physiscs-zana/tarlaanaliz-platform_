@@ -33,7 +33,7 @@ export function useAuditLogs(): UseAuditLogsResult {
       const params = new URLSearchParams();
       if (filters?.eventName) params.set('event_name', filters.eventName);
       const qs = params.toString();
-      const url = `/admin/audit${qs ? `?${qs}` : ''}`;
+      const url = `/admin/audit/logs${qs ? `?${qs}` : ''}`;
       const res = await apiRequest<{ items: AuditLogEntry[] }>(url, { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
       setLogs(res.data?.items ?? []);
     } catch (err) {

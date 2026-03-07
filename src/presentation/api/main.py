@@ -21,6 +21,7 @@ from src.presentation.api.middleware.grid_anonymizer import GridAnonymizerMiddle
 from src.presentation.api.middleware.jwt_middleware import JwtMiddleware
 from src.presentation.api.middleware.mtls_verifier import MTLSVerifierMiddleware
 from src.presentation.api.middleware.pii_filter import PIIFilterMiddleware
+from src.presentation.api.middleware.rbac_middleware import RBACMiddleware
 from src.presentation.api.middleware.rate_limit_middleware import RateLimitMiddleware
 from src.presentation.api.settings import settings
 from src.presentation.api.v1.endpoints import (
@@ -32,6 +33,7 @@ from src.presentation.api.v1.endpoints import (
     expert_portal_router,
     experts_router,
     fields_router,
+    ingest_router,
     missions_router,
     parcels_router,
     payment_webhooks_router,
@@ -50,8 +52,59 @@ from src.presentation.api.v1.endpoints import (
 
 @asynccontextmanager
 async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    """Lifecycle hooks for startup/shutdown tasks."""
+    """Lifecycle hooks for startup/shutdown tasks.
+
+    Startup:
+      1. SchemaRegistry: contracts/ submodule'den şemaları yükler (KR-081)
+      2. ContractValidatorService + Adapter: command handler'lara enjekte edilir
+      3. app.state üzerinden paylaşılır
+    Shutdown:
+      - Kaynaklar temizlenir
+    """
+    from pathlib import Path
+
+    from src.application.services.contract_validator_service import ContractValidatorService
+    from src.infrastructure.contracts import ContractValidatorAdapter, SchemaRegistry
+
+    import structlog
+
+    logger = structlog.get_logger("lifespan")
+
+    # --- KR-081: Schema yükleme ---
+    registry = SchemaRegistry()
+    contracts_base = Path(__file__).resolve().parents[3] / "contracts"
+
+    if contracts_base.exists():
+        schemas_dir = contracts_base / "schemas"
+        enums_dir = contracts_base / "enums"
+        total = 0
+        if schemas_dir.exists():
+            total += registry.load_directory(schemas_dir, recursive=True)
+        if enums_dir.exists():
+            total += registry.load_directory(enums_dir, recursive=True)
+        logger.info("contracts_loaded", total=total, schemas=registry.list_schemas()[:5])
+    else:
+        logger.warning("contracts_submodule_missing", path=str(contracts_base))
+
+    # --- Contract validator wiring ---
+    validator_service = ContractValidatorService(registry)
+    validator_adapter = ContractValidatorAdapter(validator_service)
+
+    _app.state.schema_registry = registry
+    _app.state.contract_validator_service = validator_service
+    _app.state.contract_validator = validator_adapter
+
+    # --- Service container ---
+    from src.presentation.api.service_factory import create_service_container
+    service_container = await create_service_container()
+    _app.state.services = service_container
+
+    logger.info("lifespan_started", schemas_registered=len(registry.list_schemas()))
+
     yield
+
+    registry.clear()
+    logger.info("lifespan_shutdown")
 
 
 async def _corr_id_middleware(request: Request, call_next: Callable[..., Any]) -> Response:
@@ -102,14 +155,16 @@ def create_app() -> FastAPI:
     # 2. CORS
     # 3. mTLS Verifier (KR-071 — before auth for ingest endpoints)
     # 4. JWT Authentication
-    # 5. Rate Limiting
-    # 6. Anomaly Detection
-    # 7. PII Filter (KR-066 — after auth, before response)
-    # 8. Grid Anonymizer (KR-083 — after auth, before response)
+    # 5. RBAC (KR-063 — merkezi rol tabanli erisim kontrolu)
+    # 6. Rate Limiting
+    # 7. Anomaly Detection
+    # 8. PII Filter (KR-066 — after auth, before response)
+    # 9. Grid Anonymizer (KR-083 — after auth, before response)
     app.middleware("http")(_corr_id_middleware)
     add_cors_middleware(app)
     app.add_middleware(MTLSVerifierMiddleware)
     app.add_middleware(JwtMiddleware)
+    app.add_middleware(RBACMiddleware)
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(AnomalyDetectionMiddleware)
     app.add_middleware(PIIFilterMiddleware)
@@ -141,6 +196,7 @@ def create_app() -> FastAPI:
     app.include_router(training_feedback_router, prefix="/api/v1")
     app.include_router(weather_block_reports_router, prefix="/api/v1")
     app.include_router(weather_blocks_router, prefix="/api/v1")
+    app.include_router(ingest_router, prefix="/api/v1")
 
     _register_exception_handlers(app)
     return app

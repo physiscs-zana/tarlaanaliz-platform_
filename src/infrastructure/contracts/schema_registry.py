@@ -115,8 +115,10 @@ class SchemaRegistry:
     def load_from_file(self, file_path: Path) -> tuple[str, str]:
         """Tek bir JSON Schema dosyasını yükler.
 
-        Dosya adı formatı: <schema_name>.<version>.json
-        Örnek: MissionAssigned.1.0.0.json
+        Desteklenen dosya adı formatları:
+          - <name>.v<N>.schema.json  → (name, "v<N>")   — contracts repo standardı
+          - <name>.enum.v<N>.json    → (name, "v<N>")   — enum dosyaları
+          - <name>.v<N>.json         → (name, "v<N>")   — eski enum formatı
 
         Args:
             file_path: Şema dosyasının yolu.
@@ -132,14 +134,8 @@ class SchemaRegistry:
         if not file_path.exists():
             raise FileNotFoundError(f"Şema dosyası bulunamadı: {file_path}")
 
-        parts = file_path.stem.rsplit(".", maxsplit=1)
-        if len(parts) < 2:
-            raise ValueError(
-                f"Dosya adı formatı geçersiz: '{file_path.name}'. Beklenen format: <schema_name>.<version>.json"
-            )
-
-        schema_name = parts[0]
-        version = parts[1]
+        stem = file_path.stem  # e.g. "field.v1.schema" or "crop_type.enum.v1" or "payment_status.v2"
+        schema_name, version = self._parse_filename(stem, file_path.name)
 
         content = file_path.read_text(encoding="utf-8")
         schema = json.loads(content)
@@ -147,11 +143,42 @@ class SchemaRegistry:
 
         return (schema_name, version)
 
-    def load_directory(self, directory: Path) -> int:
+    @staticmethod
+    def _parse_filename(stem: str, original_name: str) -> tuple[str, str]:
+        """Dosya adından (schema_name, version) çıkarır.
+
+        Örnekler:
+          "field.v1.schema"          → ("field", "v1")
+          "crop_type.enum.v1"        → ("crop_type", "v1")
+          "payment_status.v2"        → ("payment_status", "v2")
+          "payment_intent.v2.schema" → ("payment_intent", "v2")
+        """
+        parts = stem.split(".")
+        # .schema suffix'ini kaldır
+        if parts and parts[-1] == "schema":
+            parts = parts[:-1]
+        # .enum suffix'ini kaldır (version'dan önce)
+        # Şimdi son eleman version olmalı (v1, v2, vN)
+        version_idx = -1
+        for i, part in enumerate(parts):
+            if part.startswith("v") and part[1:].isdigit():
+                version_idx = i
+                break
+        if version_idx < 1:
+            raise ValueError(
+                f"Dosya adı formatı geçersiz: '{original_name}'. "
+                f"Beklenen: <name>.v<N>.schema.json veya <name>.enum.v<N>.json"
+            )
+        schema_name = ".".join(parts[:version_idx]).replace(".enum", "")
+        version = parts[version_idx]
+        return (schema_name, version)
+
+    def load_directory(self, directory: Path, *, recursive: bool = False) -> int:
         """Dizindeki tüm .json şema dosyalarını yükler.
 
         Args:
             directory: Şema dosyalarının bulunduğu dizin.
+            recursive: True ise alt dizinleri de tarar.
 
         Returns:
             Yüklenen şema sayısı.
@@ -162,8 +189,9 @@ class SchemaRegistry:
         if not directory.exists():
             raise FileNotFoundError(f"Şema dizini bulunamadı: {directory}")
 
+        pattern = "**/*.json" if recursive else "*.json"
         count = 0
-        for file_path in sorted(directory.glob("*.json")):
+        for file_path in sorted(directory.glob(pattern)):
             try:
                 self.load_from_file(file_path)
                 count += 1
@@ -174,8 +202,24 @@ class SchemaRegistry:
                     error=str(exc),
                 )
 
-        logger.info("schema_directory_loaded", directory=str(directory), count=count)
+        logger.info("schema_directory_loaded", directory=str(directory), count=count, recursive=recursive)
         return count
+
+    def get_by_key(self, schema_key: str) -> dict[str, Any]:
+        """schema_key ile son versiyonu döner (ContractValidatorPort uyumu).
+
+        schema_key örnekleri: "field", "mission", "analysis_job", "payment_intent"
+        En yüksek versiyon numarasına sahip şemayı döner.
+        """
+        matching = [
+            (name, ver) for name, ver in self._schemas if name == schema_key
+        ]
+        if not matching:
+            raise SchemaNotFoundError(
+                f"Şema bulunamadı: '{schema_key}'. Kayıtlı: {sorted(set(n for n, _ in self._schemas))}"
+            )
+        latest = sorted(matching, key=lambda x: x[1])[-1]
+        return self._schemas[latest]
 
     def clear(self) -> None:
         """Tüm cache'lenmiş şemaları temizler."""

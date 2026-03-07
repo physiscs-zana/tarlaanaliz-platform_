@@ -43,7 +43,12 @@ class _InMemoryWeatherBlockService:
         )
 
 
-def get_weather_block_service() -> WeatherBlockService:
+def get_weather_block_service(request: Request) -> WeatherBlockService:
+    services = getattr(request.app.state, "services", None)
+    if services is not None:
+        svc = services.get("weather_block_service")
+        if svc is not None:
+            return svc
     return _InMemoryWeatherBlockService()
 
 

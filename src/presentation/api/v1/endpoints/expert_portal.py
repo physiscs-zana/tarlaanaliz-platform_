@@ -46,7 +46,12 @@ class _InMemoryExpertPortalService:
         return ReviewSubmitResponse(review_id=review_id, submitted_at=datetime.now(timezone.utc))
 
 
-def get_expert_portal_service() -> ExpertPortalService:
+def get_expert_portal_service(request: Request) -> ExpertPortalService:
+    services = getattr(request.app.state, "services", None)
+    if services is not None:
+        svc = services.get("expert_portal_service")
+        if svc is not None:
+            return svc
     return _InMemoryExpertPortalService()
 
 

@@ -478,6 +478,37 @@ def get_metrics_collector(request: Request) -> MetricsCollector:
     return collector
 
 
+# --- KR-081: Dependency injection helpers for service container ---
+
+
+def require_authenticated_subject(request: Request) -> str:
+    """JWT middleware tarafindan set edilen authenticated user subject'ini doner."""
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    return str(getattr(user, "subject", ""))
+
+
+def get_user_roles(request: Request) -> list[str]:
+    """Authenticated user'in rollerini doner."""
+    return list(getattr(request.state, "roles", []))
+
+
+def get_correlation_id(request: Request) -> str:
+    """Correlation ID doner."""
+    return str(getattr(request.state, "corr_id", ""))
+
+
+def get_contract_validator(request: Request) -> Any:
+    """ContractValidatorAdapter'i app.state'den alir."""
+    return getattr(request.app.state, "contract_validator", None)
+
+
+def get_schema_registry(request: Request) -> Any:
+    """SchemaRegistry'yi app.state'den alir."""
+    return getattr(request.app.state, "schema_registry", None)
+
+
 __all__ = [
     "AuditEvent",
     "AuditPublisher",
@@ -506,12 +537,17 @@ __all__ = [
     "SLASummaryResponse",
     "get_audit_publisher",
     "get_calibration_service",
+    "get_contract_validator",
+    "get_correlation_id",
     "get_current_user",
     "get_metrics_collector",
     "get_payment_service",
     "get_qc_service",
     "get_request_context",
+    "get_schema_registry",
     "get_sla_metrics_service",
+    "get_user_roles",
+    "require_authenticated_subject",
     "require_permissions",
     "require_roles",
 ]

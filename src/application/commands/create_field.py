@@ -53,8 +53,13 @@ class IdempotencyPort(Protocol):
     def set(self, *, key: str, value: dict[str, Any]) -> None: ...
 
 
+class ContractValidatorPort(Protocol):
+    def validate(self, *, schema_key: str, payload: dict[str, Any]) -> None: ...
+
+
 class CreateFieldDeps(Protocol):
     field_service: FieldServicePort
+    contract_validator: ContractValidatorPort
     audit_log: AuditLogPort
     idempotency: IdempotencyPort | None
 
@@ -62,6 +67,12 @@ class CreateFieldDeps(Protocol):
 def handle(command: CreateFieldCommand, *, ctx: RequestContext, deps: CreateFieldDeps) -> CreateFieldResult:
     if not {"admin", "ops", "farmer"}.intersection(ctx.roles):
         raise PermissionError("forbidden")
+
+    # KR-081: field payload contract-first şema ile doğrulanır.
+    deps.contract_validator.validate(
+        schema_key="field",
+        payload={"name": command.name, "geometry": command.geometry},
+    )
 
     if not command.name.strip():
         raise ValueError("field_name_required")

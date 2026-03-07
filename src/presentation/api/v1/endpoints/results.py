@@ -47,7 +47,12 @@ class _InMemoryResultsService:
         )
 
 
-def get_results_service() -> ResultsService:
+def get_results_service(request: Request) -> ResultsService:
+    services = getattr(request.app.state, "services", None)
+    if services is not None:
+        svc = services.get("results_service")
+        if svc is not None:
+            return svc
     return _InMemoryResultsService()
 
 

@@ -9,6 +9,7 @@ from src.presentation.api.v1.endpoints.calibration import router as calibration_
 from src.presentation.api.v1.endpoints.expert_portal import router as expert_portal_router
 from src.presentation.api.v1.endpoints.experts import router as experts_router
 from src.presentation.api.v1.endpoints.fields import router as fields_router
+from src.presentation.api.v1.endpoints.ingest import router as ingest_router
 from src.presentation.api.v1.endpoints.missions import router as missions_router
 from src.presentation.api.v1.endpoints.parcels import router as parcels_router
 from src.presentation.api.v1.endpoints.payment_webhooks import router as payment_webhooks_router
@@ -32,6 +33,7 @@ __all__: list[str] = [
     "expert_portal_router",
     "experts_router",
     "fields_router",
+    "ingest_router",
     "missions_router",
     "parcels_router",
     "payment_webhooks_router",

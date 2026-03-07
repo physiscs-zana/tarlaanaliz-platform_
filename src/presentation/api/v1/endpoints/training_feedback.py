@@ -42,7 +42,12 @@ class _InMemoryTrainingFeedbackService:
         )
 
 
-def get_training_feedback_service() -> TrainingFeedbackService:
+def get_training_feedback_service(request: Request) -> TrainingFeedbackService:
+    services = getattr(request.app.state, "services", None)
+    if services is not None:
+        svc = services.get("training_feedback_service")
+        if svc is not None:
+            return svc
     return _InMemoryTrainingFeedbackService()
 
 

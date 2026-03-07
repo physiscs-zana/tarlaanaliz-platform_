@@ -99,7 +99,12 @@ class _InMemorySubscriptionService:
         )
 
 
-def get_subscription_service() -> SubscriptionService:
+def get_subscription_service(request: Request) -> SubscriptionService:
+    services = getattr(request.app.state, "services", None)
+    if services is not None:
+        svc = services.get("subscription_service")
+        if svc is not None:
+            return svc
     return _InMemorySubscriptionService()
 
 

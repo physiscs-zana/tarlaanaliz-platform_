@@ -26,7 +26,9 @@ from .subscription_scheduler import SeasonSlotBuilder, SubscriptionScheduler
 from .training_export_service import TrainingExportService
 from .training_feedback_service import TrainingFeedbackService
 from .weather_block_service import WeatherBlockService
+from .intake_manifest_service import IntakeManifestService
 from .weekly_window_scheduler import WeeklyWindowScheduler
+from .worker_dispatch_service import WorkerDispatchService
 
 __all__ = [
     "AuditLogService",
@@ -47,4 +49,6 @@ __all__ = [
     "TrainingFeedbackService",
     "WeatherBlockService",
     "WeeklyWindowScheduler",
+    "IntakeManifestService",
+    "WorkerDispatchService",
 ]

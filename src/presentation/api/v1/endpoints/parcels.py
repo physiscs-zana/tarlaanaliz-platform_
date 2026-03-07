@@ -37,7 +37,12 @@ class _InMemoryParcelLookupService:
         )
 
 
-def get_parcel_lookup_service() -> ParcelLookupService:
+def get_parcel_lookup_service(request: Request) -> ParcelLookupService:
+    services = getattr(request.app.state, "services", None)
+    if services is not None:
+        svc = services.get("parcel_lookup_service")
+        if svc is not None:
+            return svc
     return _InMemoryParcelLookupService()
 
 

@@ -43,9 +43,14 @@ class AuditLogPort(Protocol):
     def log(self, *, action: str, correlation_id: str, actor_id: str, payload: dict[str, Any]) -> None: ...
 
 
+class ContractValidatorPort(Protocol):
+    def validate(self, *, schema_key: str, payload: dict[str, Any]) -> None: ...
+
+
 class CreateSubscriptionDeps(Protocol):
     subscription_service: SubscriptionServicePort
     payment_service: PaymentServicePort | None
+    contract_validator: ContractValidatorPort
     audit_log: AuditLogPort
 
 
@@ -54,6 +59,12 @@ def handle(
 ) -> CreateSubscriptionResult:
     if not {"admin", "ops", "farmer"}.intersection(ctx.roles):
         raise PermissionError("forbidden")
+
+    # KR-081: subscription payload contract-first şema ile doğrulanır.
+    deps.contract_validator.validate(
+        schema_key="subscription",
+        payload={"field_id": command.field_id, "plan_id": command.plan_id},
+    )
 
     target_status = command.requested_status.lower()
 

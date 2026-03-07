@@ -41,7 +41,12 @@ class _InMemoryExpertService:
         return [ExpertResponse(expert_id="exp-1", display_name="Demo Expert", expertise_tags=["crop"], active=True)]
 
 
-def get_expert_service() -> ExpertService:
+def get_expert_service(request: Request) -> ExpertService:
+    services = getattr(request.app.state, "services", None)
+    if services is not None:
+        svc = services.get("expert_service")
+        if svc is not None:
+            return svc
     return _InMemoryExpertService()
 
 

@@ -55,7 +55,12 @@ class _InMemoryAdminAuditService:
         return AuditExportResponse(export_id="audit-export-queued")
 
 
-def get_admin_audit_service() -> AdminAuditService:
+def get_admin_audit_service(request: Request) -> AdminAuditService:
+    services = getattr(request.app.state, "services", None)
+    if services is not None:
+        svc = services.get("admin_audit_service")
+        if svc is not None:
+            return svc
     return _InMemoryAdminAuditService()
 
 

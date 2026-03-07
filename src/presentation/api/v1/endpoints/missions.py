@@ -46,7 +46,12 @@ class _InMemoryMissionService:
         return []
 
 
-def get_mission_service() -> MissionService:
+def get_mission_service(request: Request) -> MissionService:
+    services = getattr(request.app.state, "services", None)
+    if services is not None:
+        svc = services.get("mission_service")
+        if svc is not None:
+            return svc
     return _InMemoryMissionService()
 
 
